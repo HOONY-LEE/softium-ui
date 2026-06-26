@@ -5,6 +5,7 @@ import { resolveMessages } from '../i18n';
 import type { LocaleKey, TableMessages } from '../i18n';
 import { Body } from './Body';
 import { Header } from './Header';
+import { Toolbar } from './Toolbar';
 import { TableContext } from './context';
 
 export interface TableProps<T> {
@@ -15,6 +16,8 @@ export interface TableProps<T> {
   messages?: Partial<TableMessages>;
   /** override the empty-state content */
   emptyText?: ReactNode;
+  /** show the column-control toolbar (visibility / rename / pin / reset). Default true. */
+  toolbar?: boolean;
   /** extra class on the root element */
   className?: string;
 }
@@ -32,6 +35,7 @@ export function Table<T>({
   locale,
   messages,
   emptyText,
+  toolbar = true,
   className,
 }: TableProps<T>): ReactNode {
   const resolvedMessages = useMemo(() => resolveMessages(locale, messages), [locale, messages]);
@@ -46,6 +50,7 @@ export function Table<T>({
   return (
     <TableContext.Provider value={contextValue}>
       <div className={className ? `sft-table ${className}` : 'sft-table'}>
+        {toolbar && <Toolbar />}
         <div className="sft-table__scroll" role="table">
           <Header columns={columns} />
           <Body rows={rows} columns={columns} emptyText={emptyText ?? resolvedMessages.emptyText} />

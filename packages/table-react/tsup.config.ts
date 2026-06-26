@@ -7,5 +7,12 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   treeshake: true,
-  external: ['react', 'react-dom', '@softium/table-core'],
+  external: [
+    'react',
+    'react-dom',
+    '@softium/table-core',
+    '@dnd-kit/core',
+    '@dnd-kit/sortable',
+    '@dnd-kit/utilities',
+  ],
 });

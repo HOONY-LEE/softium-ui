@@ -10,5 +10,13 @@ export {
   createInitialColumnState,
   resolveColumns,
 } from './columns';
+export {
+  moveColumn,
+  patchColumnState,
+  setColumnLabelOverride,
+  setColumnPinned,
+  setColumnVisible,
+  setColumnWidth,
+} from './columnOps';
 export { buildRows } from './rows';
 export type { BuildRowsOptions } from './rows';

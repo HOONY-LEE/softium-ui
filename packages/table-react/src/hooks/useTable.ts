@@ -14,9 +14,15 @@
 
 import {
   type ColumnState,
+  type PinSide,
   buildRows,
   createInitialColumnState,
+  moveColumn,
   resolveColumns,
+  setColumnLabelOverride,
+  setColumnPinned,
+  setColumnVisible,
+  setColumnWidth,
 } from '@softium/table-core';
 import type { Row } from '@softium/table-core';
 import { useCallback, useMemo, useState } from 'react';
@@ -44,6 +50,19 @@ export interface TableInstance<T> {
   setColumnState: (updater: ColumnState[] | ColumnStateUpdater) => void;
   /** restore the default view state (all visible, declaration order) */
   resetColumnState: () => void;
+
+  // ── column gestures (each is columnState-only; data & columnDefs stay immutable) ──
+  /** show / hide a column */
+  setColumnVisible: (key: string, visible: boolean) => void;
+  /** drag-reorder: place `activeKey` where `overKey` currently sits */
+  moveColumn: (activeKey: string, overKey: string) => void;
+  /** pin a column left / right, or unpin with null */
+  setColumnPinned: (key: string, pinned: PinSide) => void;
+  /** set an explicit pixel width (from a resize handle) */
+  setColumnWidth: (key: string, width: number) => void;
+  /** rename for display only — writes labelOverride, never the original label */
+  renameColumn: (key: string, labelOverride: string | undefined) => void;
+
   /** the immutable column blueprints as supplied */
   readonly columns: ReactColumnDef<T>[];
   /** the original data array (referenced, never mutated) */
@@ -69,6 +88,31 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
     setColumnStateRaw(createInitialColumnState(columns));
   }, [columns]);
 
+  const setVisible = useCallback(
+    (key: string, visible: boolean) =>
+      setColumnStateRaw((prev) => setColumnVisible(prev, key, visible)),
+    [],
+  );
+  const move = useCallback(
+    (activeKey: string, overKey: string) =>
+      setColumnStateRaw((prev) => moveColumn(prev, activeKey, overKey)),
+    [],
+  );
+  const setPinned = useCallback(
+    (key: string, pinned: PinSide) =>
+      setColumnStateRaw((prev) => setColumnPinned(prev, key, pinned)),
+    [],
+  );
+  const setWidth = useCallback(
+    (key: string, width: number) => setColumnStateRaw((prev) => setColumnWidth(prev, key, width)),
+    [],
+  );
+  const rename = useCallback(
+    (key: string, labelOverride: string | undefined) =>
+      setColumnStateRaw((prev) => setColumnLabelOverride(prev, key, labelOverride)),
+    [],
+  );
+
   return useMemo<TableInstance<T>>(
     () => ({
       getRenderColumns: () => renderColumns,
@@ -76,9 +120,27 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
       getColumnState: () => columnState,
       setColumnState,
       resetColumnState,
+      setColumnVisible: setVisible,
+      moveColumn: move,
+      setColumnPinned: setPinned,
+      setColumnWidth: setWidth,
+      renameColumn: rename,
       columns,
       data,
     }),
-    [renderColumns, rows, columnState, setColumnState, resetColumnState, columns, data],
+    [
+      renderColumns,
+      rows,
+      columnState,
+      setColumnState,
+      resetColumnState,
+      setVisible,
+      move,
+      setPinned,
+      setWidth,
+      rename,
+      columns,
+      data,
+    ],
   );
 }

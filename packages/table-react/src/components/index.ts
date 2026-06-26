@@ -7,6 +7,7 @@ export { Table } from './Table';
 export type { TableProps } from './Table';
 export { Header } from './Header';
 export type { HeaderProps } from './Header';
+export { Toolbar } from './Toolbar';
 export { Body } from './Body';
 export type { BodyProps } from './Body';
 export { Row } from './Row';
