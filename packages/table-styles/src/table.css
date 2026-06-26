@@ -186,11 +186,18 @@
   overflow: auto;
 }
 
-/* rows are flex tracks; cells size via flex-basis (see cellStyle) */
+/* rows are flex tracks; cells size via flex-basis (see cellStyle).
+   default: size to content (horizontal scroll when columns exceed the container). */
 .sft-tr {
   display: flex;
   align-items: stretch;
   min-width: max-content;
+}
+
+/* fill mode (a column has flex): the row fills 100% so the flex column absorbs
+   the leftover space — no empty gap on the right. */
+.sft-table[data-fill] .sft-tr {
+  min-width: 100%;
 }
 
 /* body row separators via inset shadow (no layout height — keeps each row exactly

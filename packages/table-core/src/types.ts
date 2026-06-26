@@ -22,6 +22,10 @@ export interface ColumnDef<T, TNode = unknown> {
   type?: ColumnType;
   width?: number;
   minWidth?: number;
+  maxWidth?: number;
+  /** grow weight: a column with flex > 0 absorbs leftover horizontal space so the
+   *  table fills its container (no empty gap on the right). 0/undefined = fixed width. */
+  flex?: number;
   align?: ColumnAlign;
   sortable?: boolean;
   filterable?: boolean;
@@ -127,6 +131,8 @@ export interface ResolvedColumn<T, TNode = unknown> {
   pinned: PinSide;
   width?: number;
   minWidth?: number;
+  maxWidth?: number;
+  flex?: number;
   sortable: boolean;
   filterable: boolean;
   resizable: boolean;

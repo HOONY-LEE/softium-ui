@@ -65,6 +65,8 @@ export function Table<T>({
   const columns = table.getRenderColumns();
   const rows = table.getRows();
   const paginated = table.getPageSize() > 0;
+  // a flexible column makes the table fill its container instead of leaving a right gap
+  const fill = columns.some((c) => c.flex && c.flex > 0);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtual = useVirtualRows(scrollRef, {
@@ -90,7 +92,7 @@ export function Table<T>({
         {toolbar && <Toolbar actions={toolbarActions} />}
 
         {/* ── 카드: 헤더 + 바디 (the bordered scrolling grid) ── */}
-        <div className="sft-table">
+        <div className="sft-table" data-fill={fill || undefined}>
           <div className="sft-table__scroll" role="table" ref={scrollRef} style={scrollStyle}>
             <Header columns={columns} />
             {filterRow && <FilterRow columns={columns} />}

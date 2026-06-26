@@ -42,7 +42,7 @@ export function makeEmployees(count: number): Employee[] {
 
 export const employeeColumns: ReactColumnDef<Employee>[] = [
   { key: 'id', label: '사번', width: 110 },
-  { key: 'name', label: '사원명', width: 120 },
+  { key: 'name', label: '사원명', flex: 1, minWidth: 140 },
   { key: 'dept', label: '부서', width: 100, filterable: true },
   { key: 'position', label: '직급', width: 100 },
   { key: 'salary', label: '급여 (만원)', type: 'number', align: 'right', width: 130 },

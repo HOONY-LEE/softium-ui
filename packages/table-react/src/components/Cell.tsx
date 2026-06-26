@@ -45,8 +45,16 @@ export function Cell<T>({ row, column }: CellProps<T>): ReactNode {
 }
 
 export function cellStyle<T>(column: ResolvedReactColumn<T>): React.CSSProperties {
-  const width = column.width;
-  return width
-    ? { flex: `0 0 ${width}px`, width, minWidth: column.minWidth ?? width }
-    : { flex: '1 1 0', minWidth: column.minWidth ?? 80 };
+  const { width, minWidth, maxWidth, flex } = column;
+
+  // flexible column: grows to absorb leftover space (fills the container)
+  if (flex && flex > 0) {
+    return { flex: `${flex} 1 ${width ?? 0}px`, minWidth: minWidth ?? 0, maxWidth };
+  }
+  // fixed column
+  if (width) {
+    return { flex: `0 0 ${width}px`, width, minWidth: minWidth ?? width, maxWidth };
+  }
+  // width-less column behaves as flex:1 (legacy default)
+  return { flex: '1 1 0', minWidth: minWidth ?? 80, maxWidth };
 }

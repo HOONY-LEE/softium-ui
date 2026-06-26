@@ -97,6 +97,8 @@ export function resolveColumns<T, TNode>(
       pinned,
       width: s?.width ?? def.width,
       minWidth: def.minWidth,
+      maxWidth: def.maxWidth,
+      flex: def.flex,
       // interaction defaults: on unless opted out; filtering is opt-in via `filterable`
       sortable: def.sortable ?? true,
       filterable: def.filterable ?? false,
