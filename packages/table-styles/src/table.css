@@ -139,11 +139,11 @@
   color: var(--sft-color-text-on-accent);
 }
 
-/* horizontal scroll container */
+/* scroll container — both axes; a maxHeight (set by the height prop) enables
+   vertical scroll + virtualization, with the sticky header/filter row pinned. */
 .sft-table__scroll {
   width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: auto;
 }
 
 /* rows are flex tracks; cells size via flex-basis (see cellStyle) */
@@ -151,11 +151,25 @@
   display: flex;
   align-items: stretch;
   min-width: max-content;
-  border-bottom: 1px solid var(--sft-color-border);
 }
 
-.sft-tbody .sft-tr:last-child {
-  border-bottom: none;
+/* body row separators via inset shadow (no layout height — keeps each row exactly
+   --sft-table-row-height so virtualization math stays exact) */
+.sft-tbody .sft-tr {
+  box-shadow: inset 0 -1px 0 var(--sft-color-border);
+}
+
+/* virtualized window: the translated slice of rows inside the sized scroll area */
+.sft-tbody--virtual {
+  position: relative;
+}
+
+.sft-tbody__window {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  will-change: transform;
 }
 
 /* ── header ─────────────────────────────────────────────── */

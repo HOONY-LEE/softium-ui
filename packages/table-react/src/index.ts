@@ -17,6 +17,8 @@ export type {
   TableInstance,
   UseTableOptions,
 } from './hooks/useTable';
+export { useVirtualRows } from './hooks/useVirtualRows';
+export type { UseVirtualRowsOptions, VirtualWindow } from './hooks/useVirtualRows';
 
 // react-bound type aliases
 export type { ReactColumnDef, ResolvedReactColumn } from './types';

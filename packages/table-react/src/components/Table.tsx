@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import type { TableInstance } from '../hooks/useTable';
+import { useVirtualRows } from '../hooks/useVirtualRows';
 import { resolveMessages } from '../i18n';
 import type { LocaleKey, TableMessages } from '../i18n';
 import { Body } from './Body';
@@ -8,6 +9,8 @@ import { FilterRow } from './FilterRow';
 import { Header } from './Header';
 import { Toolbar } from './Toolbar';
 import { TableContext } from './context';
+
+const DEFAULT_ROW_HEIGHT = 40;
 
 export interface TableProps<T> {
   table: TableInstance<T>;
@@ -19,6 +22,12 @@ export interface TableProps<T> {
   emptyText?: ReactNode;
   /** show the column-control toolbar (visibility / rename / pin / reset). Default true. */
   toolbar?: boolean;
+  /** fixed viewport height (px). Enables vertical scroll + row virtualization. */
+  height?: number;
+  /** row height in px, must match the CSS row height. Default 40. */
+  rowHeight?: number;
+  /** opt out of virtualization even when `height` is set. Default false. */
+  disableVirtualization?: boolean;
   /** extra class on the root element */
   className?: string;
 }
@@ -37,6 +46,9 @@ export function Table<T>({
   messages,
   emptyText,
   toolbar = true,
+  height,
+  rowHeight = DEFAULT_ROW_HEIGHT,
+  disableVirtualization = false,
   className,
 }: TableProps<T>): ReactNode {
   const resolvedMessages = useMemo(() => resolveMessages(locale, messages), [locale, messages]);
@@ -44,19 +56,33 @@ export function Table<T>({
   const rows = table.getRows();
   const hasFilters = columns.some((c) => c.filterable);
 
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const virtual = useVirtualRows(scrollRef, {
+    count: rows.length,
+    rowHeight,
+    enabled: height != null && !disableVirtualization,
+  });
+
   const contextValue = useMemo(
     () => ({ table, messages: resolvedMessages }),
     [table, resolvedMessages],
   );
 
+  const scrollStyle = height != null ? { maxHeight: height } : undefined;
+
   return (
     <TableContext.Provider value={contextValue}>
       <div className={className ? `sft-table ${className}` : 'sft-table'}>
         {toolbar && <Toolbar />}
-        <div className="sft-table__scroll" role="table">
+        <div className="sft-table__scroll" role="table" ref={scrollRef} style={scrollStyle}>
           <Header columns={columns} />
           {hasFilters && <FilterRow columns={columns} />}
-          <Body rows={rows} columns={columns} emptyText={emptyText ?? resolvedMessages.emptyText} />
+          <Body
+            rows={rows}
+            columns={columns}
+            emptyText={emptyText ?? resolvedMessages.emptyText}
+            virtual={virtual}
+          />
         </div>
       </div>
     </TableContext.Provider>
