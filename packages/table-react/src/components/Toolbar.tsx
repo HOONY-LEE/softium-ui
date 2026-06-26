@@ -2,13 +2,17 @@ import type { PinSide } from '@softium/table-core';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTableContext } from './context';
 
+export interface ToolbarProps {
+  /** custom actions rendered on the right (e.g. a "+ Add" button) */
+  actions?: ReactNode;
+}
+
 /**
- * Toolbar — the column control surface. Visibility, rename (labelOverride), and pin
- * live here (form-like gestures); drag-reorder and resize live on the header itself
- * (spatial gestures). Every action routes through the table instance and only ever
- * mutates columnState.
+ * Toolbar — the table's control surface. Search on the left; column controls and any
+ * custom `actions` on the right. The column panel (visibility/rename/pin) and Reset
+ * route through the table instance and only ever mutate columnState.
  */
-export function Toolbar<T>(): ReactNode {
+export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
   const { table, messages } = useTableContext<T>();
   const [open, setOpen] = useState(false);
 
@@ -29,73 +33,83 @@ export function Toolbar<T>(): ReactNode {
 
   return (
     <div className="sft-toolbar">
-      <input
-        className="sft-toolbar__search"
-        type="search"
-        value={search.query}
-        placeholder={messages.searchPlaceholder}
-        onChange={(e) => table.setSearchQuery(e.target.value)}
-      />
-      <div className="sft-toolbar__spacer" />
-      <div className="sft-toolbar__group">
-        <button
-          type="button"
-          className="sft-btn"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-        >
-          ⚙ {messages.columns}
-        </button>
-        <button type="button" className="sft-btn sft-btn--ghost" onClick={table.resetColumnState}>
-          {messages.reset}
-        </button>
+      <div className="sft-toolbar__left">
+        <div className="sft-toolbar__search-wrap">
+          <span className="sft-toolbar__search-icon" aria-hidden="true">
+            ⌕
+          </span>
+          <input
+            className="sft-toolbar__search"
+            type="search"
+            value={search.query}
+            placeholder={messages.searchPlaceholder}
+            onChange={(e) => table.setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
 
-        {open && (
-          <div className="sft-panel" role="dialog" aria-label={messages.columns}>
-            {ordered.map((s) => {
-              const original = labelByKey.get(s.key) ?? s.key;
-              const pinned: PinSide = s.pinned ?? null;
-              return (
-                <div className="sft-panel__row" key={s.key}>
-                  <label className="sft-panel__visible">
+      <div className="sft-toolbar__right">
+        {actions}
+        <div className="sft-toolbar__group">
+          <button
+            type="button"
+            className="sft-btn"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            ⚙ {messages.columns}
+          </button>
+          <button type="button" className="sft-btn sft-btn--ghost" onClick={table.resetColumnState}>
+            {messages.reset}
+          </button>
+
+          {open && (
+            <div className="sft-panel" role="dialog" aria-label={messages.columns}>
+              {ordered.map((s) => {
+                const original = labelByKey.get(s.key) ?? s.key;
+                const pinned: PinSide = s.pinned ?? null;
+                return (
+                  <div className="sft-panel__row" key={s.key}>
+                    <label className="sft-panel__visible">
+                      <input
+                        type="checkbox"
+                        checked={s.visible}
+                        onChange={(e) => table.setColumnVisible(s.key, e.target.checked)}
+                      />
+                    </label>
                     <input
-                      type="checkbox"
-                      checked={s.visible}
-                      onChange={(e) => table.setColumnVisible(s.key, e.target.checked)}
+                      className="sft-panel__rename"
+                      type="text"
+                      value={s.labelOverride ?? ''}
+                      placeholder={original}
+                      onChange={(e) => table.renameColumn(s.key, e.target.value)}
                     />
-                  </label>
-                  <input
-                    className="sft-panel__rename"
-                    type="text"
-                    value={s.labelOverride ?? ''}
-                    placeholder={original}
-                    onChange={(e) => table.renameColumn(s.key, e.target.value)}
-                  />
-                  <div className="sft-panel__pins">
-                    <PinButton
-                      active={pinned === 'left'}
-                      title={messages.pinLeft}
-                      onClick={() =>
-                        table.setColumnPinned(s.key, pinned === 'left' ? null : 'left')
-                      }
-                    >
-                      ⇤
-                    </PinButton>
-                    <PinButton
-                      active={pinned === 'right'}
-                      title={messages.pinRight}
-                      onClick={() =>
-                        table.setColumnPinned(s.key, pinned === 'right' ? null : 'right')
-                      }
-                    >
-                      ⇥
-                    </PinButton>
+                    <div className="sft-panel__pins">
+                      <PinButton
+                        active={pinned === 'left'}
+                        title={messages.pinLeft}
+                        onClick={() =>
+                          table.setColumnPinned(s.key, pinned === 'left' ? null : 'left')
+                        }
+                      >
+                        ⇤
+                      </PinButton>
+                      <PinButton
+                        active={pinned === 'right'}
+                        title={messages.pinRight}
+                        onClick={() =>
+                          table.setColumnPinned(s.key, pinned === 'right' ? null : 'right')
+                        }
+                      >
+                        ⇥
+                      </PinButton>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

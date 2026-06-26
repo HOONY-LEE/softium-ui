@@ -19,40 +19,67 @@
   --sft-table-pinned-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
 }
 
-.sft-table {
+/* the outer container holds three separated blocks: toolbar / card / footer */
+.sft-table-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sft-space-3);
   font-family: var(--sft-font-family);
   font-size: var(--sft-table-font-size);
   line-height: var(--sft-line-height);
   color: var(--sft-color-text);
+}
+
+/* the bordered card wraps ONLY the header + body grid */
+.sft-table {
   background: var(--sft-color-bg);
   border: 1px solid var(--sft-color-border);
   border-radius: var(--sft-radius-md);
   overflow: hidden;
 }
 
-/* ── toolbar + column panel ─────────────────────────────── */
+/* ── toolbar (separated block, borderless) ──────────────── */
 .sft-toolbar {
   display: flex;
   align-items: center;
-  gap: var(--sft-space-2);
-  padding: var(--sft-space-2);
-  border-bottom: 1px solid var(--sft-color-border);
-  background: var(--sft-color-surface);
+  justify-content: space-between;
+  gap: var(--sft-space-3);
 }
 
-.sft-toolbar__spacer {
+.sft-toolbar__left {
   flex: 1;
+  min-width: 0;
+}
+
+.sft-toolbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+}
+
+.sft-toolbar__search-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 320px;
+  max-width: 100%;
+}
+
+.sft-toolbar__search-icon {
+  position: absolute;
+  left: var(--sft-space-3);
+  color: var(--sft-color-text-muted);
+  pointer-events: none;
 }
 
 .sft-toolbar__search {
-  width: 220px;
-  max-width: 45%;
+  width: 100%;
   font: inherit;
   color: var(--sft-color-text);
-  background: var(--sft-color-bg);
+  background: var(--sft-color-surface);
   border: 1px solid var(--sft-color-border);
-  border-radius: var(--sft-radius-sm);
-  padding: var(--sft-space-1) var(--sft-space-3);
+  border-radius: var(--sft-radius-md);
+  padding: var(--sft-space-2) var(--sft-space-3) var(--sft-space-2) var(--sft-space-6);
 }
 
 .sft-toolbar__search:focus {
@@ -378,23 +405,29 @@
   cursor: pointer;
 }
 
-/* ── footer region (totals · selection · pagination) ────── */
+/* ── footer (separated block): page size · pagination · totals ── */
 .sft-tfoot {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: var(--sft-space-3);
-  padding: var(--sft-space-2) var(--sft-space-3);
-  border-top: 1px solid var(--sft-color-border);
-  background: var(--sft-color-surface);
+  font-size: var(--sft-font-size-sm);
 }
 
-.sft-tfoot__info {
+.sft-tfoot__left {
+  justify-self: start;
+}
+
+.sft-tfoot__center {
+  justify-self: center;
+}
+
+.sft-tfoot__right {
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: var(--sft-space-3);
   color: var(--sft-color-text-secondary);
-  font-size: var(--sft-font-size-sm);
 }
 
 .sft-tfoot__selected {
@@ -402,22 +435,59 @@
   font-weight: var(--sft-font-weight-medium);
 }
 
-.sft-tfoot__pager {
+.sft-tfoot__pagesize {
+  font: inherit;
+  font-size: var(--sft-font-size-sm);
+  color: var(--sft-color-text);
+  background: var(--sft-color-surface);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-sm);
+  padding: var(--sft-space-1) var(--sft-space-2);
+  cursor: pointer;
+}
+
+/* numbered pager */
+.sft-pager {
   display: flex;
   align-items: center;
-  gap: var(--sft-space-2);
+  gap: 2px;
 }
 
-.sft-tfoot__page {
-  min-width: 96px;
-  text-align: center;
+.sft-pager__nav,
+.sft-pager__page {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 var(--sft-space-1);
+  border: 1px solid transparent;
+  border-radius: var(--sft-radius-sm);
+  background: transparent;
   color: var(--sft-color-text-secondary);
-  font-size: var(--sft-font-size-sm);
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--sft-duration-fast) var(--sft-ease);
 }
 
-.sft-tfoot .sft-btn:disabled {
+.sft-pager__nav:not(:disabled):hover,
+.sft-pager__page:not([data-active]):hover {
+  background: var(--sft-color-bg-hover);
+  color: var(--sft-color-text);
+}
+
+.sft-pager__page[data-active] {
+  background: var(--sft-color-accent);
+  border-color: var(--sft-color-accent);
+  color: var(--sft-color-text-on-accent);
+  font-weight: var(--sft-font-weight-medium);
+}
+
+.sft-pager__nav:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+.sft-pager__ellipsis {
+  padding: 0 var(--sft-space-1);
+  color: var(--sft-color-text-muted);
 }
 
 /* ── empty state ────────────────────────────────────────── */

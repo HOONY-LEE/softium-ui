@@ -50,7 +50,17 @@ export function TablePage({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      <Table table={table} locale={locale} selectable height={paginated ? undefined : 460} />
+      <Table
+        table={table}
+        locale={locale}
+        selectable
+        height={paginated ? undefined : 460}
+        toolbarActions={
+          <Button variant="primary" size="sm" iconLeft="＋">
+            {locale === 'ko' ? '직원 추가' : 'Add'}
+          </Button>
+        }
+      />
 
       <p className="code-note">
         <code>

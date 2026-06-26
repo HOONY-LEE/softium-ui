@@ -21,8 +21,12 @@ export interface TableProps<T> {
   messages?: Partial<TableMessages>;
   /** override the empty-state content */
   emptyText?: ReactNode;
-  /** show the column-control toolbar (visibility / rename / pin / reset). Default true. */
+  /** show the column-control toolbar (search + column controls). Default true. */
   toolbar?: boolean;
+  /** custom toolbar actions on the right (e.g. a "+ Add" button) */
+  toolbarActions?: ReactNode;
+  /** show the inline per-column filter row (opt-in). Default false. */
+  filterRow?: boolean;
   /** render a leading selection checkbox column. Default false. */
   selectable?: boolean;
   /** fixed viewport height (px). Enables vertical scroll + row virtualization. */
@@ -49,6 +53,8 @@ export function Table<T>({
   messages,
   emptyText,
   toolbar = true,
+  toolbarActions,
+  filterRow = false,
   selectable = false,
   height,
   rowHeight = DEFAULT_ROW_HEIGHT,
@@ -58,7 +64,6 @@ export function Table<T>({
   const resolvedMessages = useMemo(() => resolveMessages(locale, messages), [locale, messages]);
   const columns = table.getRenderColumns();
   const rows = table.getRows();
-  const hasFilters = columns.some((c) => c.filterable);
   const paginated = table.getPageSize() > 0;
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -77,26 +82,28 @@ export function Table<T>({
 
   const showFooter = paginated || selectable;
 
-  // four explicit regions: Toolbar / Header / Body / Footer (each a separate component)
+  // four separated regions: Toolbar / [Header + Body card] / Footer
   return (
     <TableContext.Provider value={contextValue}>
-      <div className={className ? `sft-table ${className}` : 'sft-table'}>
-        {/* ── 툴바 (toolbar): search + column controls ── */}
-        {toolbar && <Toolbar />}
+      <div className={className ? `sft-table-root ${className}` : 'sft-table-root'}>
+        {/* ── 툴바 (toolbar): search (left) · actions (right) ── */}
+        {toolbar && <Toolbar actions={toolbarActions} />}
 
-        {/* ── 헤더 + 바디 (header + body): the scrolling grid ── */}
-        <div className="sft-table__scroll" role="table" ref={scrollRef} style={scrollStyle}>
-          <Header columns={columns} />
-          {hasFilters && <FilterRow columns={columns} />}
-          <Body
-            rows={rows}
-            columns={columns}
-            emptyText={emptyText ?? resolvedMessages.emptyText}
-            virtual={virtual}
-          />
+        {/* ── 카드: 헤더 + 바디 (the bordered scrolling grid) ── */}
+        <div className="sft-table">
+          <div className="sft-table__scroll" role="table" ref={scrollRef} style={scrollStyle}>
+            <Header columns={columns} />
+            {filterRow && <FilterRow columns={columns} />}
+            <Body
+              rows={rows}
+              columns={columns}
+              emptyText={emptyText ?? resolvedMessages.emptyText}
+              virtual={virtual}
+            />
+          </div>
         </div>
 
-        {/* ── 푸터 (footer): totals, selection, pagination ── */}
+        {/* ── 푸터 (footer): page size (left) · pagination (center) · totals (right) ── */}
         {showFooter && <Footer />}
       </div>
     </TableContext.Provider>
