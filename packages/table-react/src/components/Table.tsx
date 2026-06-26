@@ -6,8 +6,8 @@ import { resolveMessages } from '../i18n';
 import type { LocaleKey, TableMessages } from '../i18n';
 import { Body } from './Body';
 import { FilterRow } from './FilterRow';
+import { Footer } from './Footer';
 import { Header } from './Header';
-import { Pagination } from './Pagination';
 import { Toolbar } from './Toolbar';
 import { TableContext } from './context';
 
@@ -75,10 +75,16 @@ export function Table<T>({
 
   const scrollStyle = height != null ? { maxHeight: height } : undefined;
 
+  const showFooter = paginated || selectable;
+
+  // four explicit regions: Toolbar / Header / Body / Footer (each a separate component)
   return (
     <TableContext.Provider value={contextValue}>
       <div className={className ? `sft-table ${className}` : 'sft-table'}>
+        {/* ── 툴바 (toolbar): search + column controls ── */}
         {toolbar && <Toolbar />}
+
+        {/* ── 헤더 + 바디 (header + body): the scrolling grid ── */}
         <div className="sft-table__scroll" role="table" ref={scrollRef} style={scrollStyle}>
           <Header columns={columns} />
           {hasFilters && <FilterRow columns={columns} />}
@@ -89,7 +95,9 @@ export function Table<T>({
             virtual={virtual}
           />
         </div>
-        {paginated && <Pagination />}
+
+        {/* ── 푸터 (footer): totals, selection, pagination ── */}
+        {showFooter && <Footer />}
       </div>
     </TableContext.Provider>
   );

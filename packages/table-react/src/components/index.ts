@@ -8,7 +8,7 @@ export type { TableProps } from './Table';
 export { Header } from './Header';
 export type { HeaderProps } from './Header';
 export { Toolbar } from './Toolbar';
-export { Pagination } from './Pagination';
+export { Footer } from './Footer';
 export { Body } from './Body';
 export type { BodyProps } from './Body';
 export { FilterRow } from './FilterRow';

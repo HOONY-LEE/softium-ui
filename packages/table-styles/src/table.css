@@ -378,8 +378,8 @@
   cursor: pointer;
 }
 
-/* ── pagination footer ──────────────────────────────────── */
-.sft-pagination {
+/* ── footer region (totals · selection · pagination) ────── */
+.sft-tfoot {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -389,30 +389,33 @@
   background: var(--sft-color-surface);
 }
 
-.sft-pagination__info {
+.sft-tfoot__info {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-3);
   color: var(--sft-color-text-secondary);
   font-size: var(--sft-font-size-sm);
 }
 
-.sft-pagination__selected {
+.sft-tfoot__selected {
   color: var(--sft-color-accent);
   font-weight: var(--sft-font-weight-medium);
 }
 
-.sft-pagination__controls {
+.sft-tfoot__pager {
   display: flex;
   align-items: center;
   gap: var(--sft-space-2);
 }
 
-.sft-pagination__page {
+.sft-tfoot__page {
   min-width: 96px;
   text-align: center;
   color: var(--sft-color-text-secondary);
   font-size: var(--sft-font-size-sm);
 }
 
-.sft-pagination .sft-btn:disabled {
+.sft-tfoot .sft-btn:disabled {
   opacity: 0.4;
   cursor: default;
 }

@@ -27,6 +27,8 @@ export interface TableMessages {
   renameColumn: string;
   /** selection summary, e.g. "{count} selected" */
   selectedCount: (count: number) => string;
+  /** total row count summary, e.g. "{count} rows" */
+  totalCount: (count: number) => string;
   /** pagination */
   rowsPerPage: string;
   /** page X of Y */
@@ -44,6 +46,7 @@ export const ko: TableMessages = {
   hideColumn: '컬럼 숨기기',
   renameColumn: '이름 변경',
   selectedCount: (count) => `${count}개 선택됨`,
+  totalCount: (count) => `전체 ${count.toLocaleString()}행`,
   rowsPerPage: '페이지당 행',
   pageOf: (page, total) => `${total} 페이지 중 ${page}`,
 };
@@ -59,6 +62,7 @@ export const en: TableMessages = {
   hideColumn: 'Hide column',
   renameColumn: 'Rename',
   selectedCount: (count) => `${count} selected`,
+  totalCount: (count) => `${count.toLocaleString()} rows`,
   rowsPerPage: 'Rows per page',
   pageOf: (page, total) => `Page ${page} of ${total}`,
 };
