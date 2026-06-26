@@ -7,6 +7,7 @@ import type { LocaleKey, TableMessages } from '../i18n';
 import { Body } from './Body';
 import { FilterRow } from './FilterRow';
 import { Header } from './Header';
+import { Pagination } from './Pagination';
 import { Toolbar } from './Toolbar';
 import { TableContext } from './context';
 
@@ -22,6 +23,8 @@ export interface TableProps<T> {
   emptyText?: ReactNode;
   /** show the column-control toolbar (visibility / rename / pin / reset). Default true. */
   toolbar?: boolean;
+  /** render a leading selection checkbox column. Default false. */
+  selectable?: boolean;
   /** fixed viewport height (px). Enables vertical scroll + row virtualization. */
   height?: number;
   /** row height in px, must match the CSS row height. Default 40. */
@@ -46,6 +49,7 @@ export function Table<T>({
   messages,
   emptyText,
   toolbar = true,
+  selectable = false,
   height,
   rowHeight = DEFAULT_ROW_HEIGHT,
   disableVirtualization = false,
@@ -55,6 +59,7 @@ export function Table<T>({
   const columns = table.getRenderColumns();
   const rows = table.getRows();
   const hasFilters = columns.some((c) => c.filterable);
+  const paginated = table.getPageSize() > 0;
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtual = useVirtualRows(scrollRef, {
@@ -64,8 +69,8 @@ export function Table<T>({
   });
 
   const contextValue = useMemo(
-    () => ({ table, messages: resolvedMessages }),
-    [table, resolvedMessages],
+    () => ({ table, messages: resolvedMessages, selectable }),
+    [table, resolvedMessages, selectable],
   );
 
   const scrollStyle = height != null ? { maxHeight: height } : undefined;
@@ -84,6 +89,7 @@ export function Table<T>({
             virtual={virtual}
           />
         </div>
+        {paginated && <Pagination />}
       </div>
     </TableContext.Provider>
   );

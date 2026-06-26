@@ -352,6 +352,58 @@
   box-shadow: var(--sft-table-pinned-shadow);
 }
 
+/* ── selection column ───────────────────────────────────── */
+.sft-th--select,
+.sft-td--select,
+.sft-filter-cell--select {
+  justify-content: center;
+  flex: none;
+}
+
+.sft-td--select input,
+.sft-th--select input {
+  cursor: pointer;
+}
+
+/* ── pagination footer ──────────────────────────────────── */
+.sft-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sft-space-3);
+  padding: var(--sft-space-2) var(--sft-space-3);
+  border-top: 1px solid var(--sft-color-border);
+  background: var(--sft-color-surface);
+}
+
+.sft-pagination__info {
+  color: var(--sft-color-text-secondary);
+  font-size: var(--sft-font-size-sm);
+}
+
+.sft-pagination__selected {
+  color: var(--sft-color-accent);
+  font-weight: var(--sft-font-weight-medium);
+}
+
+.sft-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+}
+
+.sft-pagination__page {
+  min-width: 96px;
+  text-align: center;
+  color: var(--sft-color-text-secondary);
+  font-size: var(--sft-font-size-sm);
+}
+
+.sft-pagination .sft-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* ── empty state ────────────────────────────────────────── */
 .sft-tbody--empty {
   display: flex;

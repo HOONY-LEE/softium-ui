@@ -13,7 +13,7 @@ type Theme = 'light' | 'dark';
 
 const i18n = {
   ko: {
-    badge: 'Phase 5 · 가상화 (1만 행)',
+    badge: 'Phase 6 · 선택·페이지네이션',
     title: 'softium-ui',
     subtitle: 'ERP 화면 전용 React 테이블 라이브러리',
     tableTitle: '사원 테이블',
@@ -23,7 +23,7 @@ const i18n = {
     roadmapTitle: '빌드 로드맵',
   },
   en: {
-    badge: 'Phase 5 · virtualization',
+    badge: 'Phase 6 · selection·pagination',
     title: 'softium-ui',
     subtitle: 'A React table library built for ERP screens',
     tableTitle: 'Employees',
@@ -46,7 +46,7 @@ const roadmap: { phase: string; ko: string; en: string; done: boolean }[] = [
   },
   { phase: '4', ko: '정렬 · 필터 · 검색', en: 'Sort · filter · search', done: true },
   { phase: '5', ko: '행 가상화 (1만 행)', en: 'Row virtualization (10k rows)', done: true },
-  { phase: '6', ko: '선택 · 페이지네이션', en: 'Selection · pagination', done: false },
+  { phase: '6', ko: '선택 · 페이지네이션', en: 'Selection · pagination', done: true },
   { phase: '7', ko: '영속화 · 테마', en: 'Persistence · theming', done: false },
 ];
 
@@ -64,7 +64,14 @@ export function App() {
   }, [theme, locale]);
 
   const data = useMemo<Employee[]>(() => makeEmployees(rowCount), [rowCount]);
-  const table = useTable({ data, columns: employeeColumns, getRowId: (r) => r.id });
+  const table = useTable({ data, columns: employeeColumns, getRowId: (r) => r.id, pageSize: 10 });
+
+  // small sets: paginate (10/page). huge set: virtualize the whole thing instead.
+  const paginated = rowCount < 10000;
+  useEffect(() => {
+    const want = paginated ? 10 : 0;
+    if (table.getPageSize() !== want) table.setPageSize(want);
+  }, [paginated, table]);
 
   return (
     <div className="page">
@@ -110,10 +117,11 @@ export function App() {
             ))}
           </fieldset>
         </div>
-        <Table table={table} locale={locale} height={460} />
+        <Table table={table} locale={locale} selectable height={paginated ? undefined : 460} />
         <p className="code-note">
           <code>
-            {rowCount.toLocaleString()} rows · {t.tableNote}
+            {rowCount.toLocaleString()} rows · {paginated ? 'pagination' : 'virtualized'} ·{' '}
+            {t.tableNote}
           </code>
         </p>
       </section>

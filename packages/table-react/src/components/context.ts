@@ -5,7 +5,12 @@ import type { TableMessages } from '../i18n';
 export interface TableContextValue<T> {
   table: TableInstance<T>;
   messages: TableMessages;
+  /** whether a leading selection checkbox column is rendered */
+  selectable: boolean;
 }
+
+/** fixed width (px) of the leading selection column */
+export const SELECT_COL_WIDTH = 44;
 
 // biome-ignore lint/suspicious/noExplicitAny: context is read through the typed useTableContext<T> accessor below.
 export const TableContext = createContext<TableContextValue<any> | null>(null);

@@ -8,10 +8,10 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { type ReactNode, type PointerEvent as ReactPointerEvent, useRef } from 'react';
+import { type ReactNode, type PointerEvent as ReactPointerEvent, useEffect, useRef } from 'react';
 import type { ResolvedReactColumn } from '../types';
 import { cellStyle } from './Cell';
-import { useTableContext } from './context';
+import { SELECT_COL_WIDTH, useTableContext } from './context';
 
 export interface HeaderProps<T> {
   columns: ResolvedReactColumn<T>[];
@@ -20,8 +20,17 @@ export interface HeaderProps<T> {
 const MIN_RESIZE_WIDTH = 48;
 
 export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
-  const { table } = useTableContext<T>();
+  const { table, selectable } = useTableContext<T>();
   const sortRules = table.getSortRules();
+
+  const pageRows = table.getRows();
+  const selectedOnPage = pageRows.filter((r) => r.selected).length;
+  const allSelected = pageRows.length > 0 && selectedOnPage === pageRows.length;
+  const someSelected = selectedOnPage > 0 && !allSelected;
+  const selectAllRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected;
+  }, [someSelected]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -35,6 +44,26 @@ export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
   return (
     <div className="sft-thead" role="rowgroup">
       <div className="sft-tr sft-tr--head" role="row">
+        {selectable && (
+          <div
+            className="sft-th sft-th--select"
+            role="columnheader"
+            style={{ flex: `0 0 ${SELECT_COL_WIDTH}px`, width: SELECT_COL_WIDTH }}
+          >
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              checked={allSelected}
+              aria-label="select all on page"
+              onChange={(e) =>
+                table.setRowsSelected(
+                  pageRows.map((r) => r.rowId),
+                  e.target.checked,
+                )
+              }
+            />
+          </div>
+        )}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext
             items={columns.map((c) => c.key)}

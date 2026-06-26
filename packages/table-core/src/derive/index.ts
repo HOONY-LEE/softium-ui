@@ -21,5 +21,7 @@ export {
 export { sortRows, toggleSort } from './sort';
 export { applyFilters, matchesFilter } from './filter';
 export { applySearch } from './search';
+export { clampPage, getPageCount, paginate } from './paginate';
+export type { PageSlice } from './paginate';
 export { buildRows } from './rows';
 export type { BuildRowsOptions } from './rows';

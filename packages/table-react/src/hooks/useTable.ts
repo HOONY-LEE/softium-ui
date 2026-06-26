@@ -23,7 +23,9 @@ import {
   applySearch,
   buildRows,
   createInitialColumnState,
+  getPageCount,
   moveColumn,
+  paginate,
   resolveColumns,
   setColumnLabelOverride,
   setColumnPinned,
@@ -43,6 +45,8 @@ export interface UseTableOptions<T> {
   getRowId?: (row: T) => string;
   /** seed the user view state (e.g. restored from localStorage). Defaults to all-visible. */
   initialColumnState?: ColumnState[];
+  /** rows per page. 0 / omitted disables pagination (render the whole set). */
+  pageSize?: number;
 }
 
 export type ColumnStateUpdater = (prev: ColumnState[]) => ColumnState[];
@@ -91,6 +95,25 @@ export interface TableInstance<T> {
   /** replace the whole search state */
   setSearch: (search: SearchState) => void;
 
+  // ── selection (keyed by stable rowId, so it survives paging/sort/filter) ──
+  isRowSelected: (rowId: string) => boolean;
+  toggleRowSelected: (rowId: string) => void;
+  setRowSelected: (rowId: string, selected: boolean) => void;
+  /** select/deselect a set of rows at once (e.g. the current page) */
+  setRowsSelected: (rowIds: string[], selected: boolean) => void;
+  clearSelection: () => void;
+  getSelectedIds: () => string[];
+  getSelectedCount: () => number;
+
+  // ── pagination (globalIndex stays absolute; displayIndex resets per page) ──
+  getPage: () => number;
+  setPage: (page: number) => void;
+  getPageSize: () => number;
+  setPageSize: (pageSize: number) => void;
+  getPageCount: () => number;
+  /** total rows after filter+search, before paging */
+  getTotalCount: () => number;
+
   /** the immutable column blueprints as supplied */
   readonly columns: ReactColumnDef<T>[];
   /** the original data array (referenced, never mutated) */
@@ -98,7 +121,7 @@ export interface TableInstance<T> {
 }
 
 export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
-  const { data, columns, getRowId, initialColumnState } = options;
+  const { data, columns, getRowId, initialColumnState, pageSize: initialPageSize = 0 } = options;
 
   const [columnState, setColumnStateRaw] = useState<ColumnState[]>(
     () => initialColumnState ?? createInitialColumnState(columns),
@@ -106,6 +129,9 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
   const [sortRules, setSortRulesRaw] = useState<SortRule[]>([]);
   const [filters, setFiltersRaw] = useState<Filter[]>([]);
   const [search, setSearchRaw] = useState<SearchState>({ query: '', scope: 'all' });
+  const [selection, setSelection] = useState<ReadonlySet<string>>(() => new Set());
+  const [page, setPageRaw] = useState(1);
+  const [pageSize, setPageSizeRaw] = useState(initialPageSize);
 
   const renderColumns = useMemo(() => resolveColumns(columns, columnState), [columns, columnState]);
 
@@ -118,13 +144,25 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
 
   const allKeys = useMemo(() => columns.map((c) => c.key), [columns]);
 
-  // derive pipeline: filter → search → sort → index. The original data is never mutated.
-  const rows = useMemo(() => {
+  // filter → search → sort, over copies. The original data is never mutated.
+  const processed = useMemo(() => {
     const filtered = applyFilters(data, filters, getType);
     const searched = applySearch(filtered, search, allKeys);
-    const sorted = sortRows(searched, sortRules, getType);
-    return buildRows(sorted, { getRowId });
-  }, [data, filters, search, sortRules, getType, allKeys, getRowId]);
+    return sortRows(searched, sortRules, getType);
+  }, [data, filters, search, sortRules, getType, allKeys]);
+
+  const totalCount = processed.length;
+  const pageCount = pageSize > 0 ? getPageCount(totalCount, pageSize) : 1;
+
+  // page slice → index (globalIndex absolute via offset) → apply selection flag
+  const rows = useMemo(() => {
+    const slice =
+      pageSize > 0 ? paginate(processed, page, pageSize) : { items: processed, offset: 0 };
+    const built = buildRows(slice.items, { getRowId, offset: slice.offset });
+    return selection.size === 0
+      ? built
+      : built.map((r) => (selection.has(r.rowId) ? { ...r, selected: true } : r));
+  }, [processed, page, pageSize, getRowId, selection]);
 
   const setColumnState = useCallback((updater: ColumnState[] | ColumnStateUpdater) => {
     setColumnStateRaw((prev) => (typeof updater === 'function' ? updater(prev) : updater));
@@ -175,6 +213,40 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
     [],
   );
 
+  const setRowSelected = useCallback((rowId: string, selected: boolean) => {
+    setSelection((prev) => {
+      const next = new Set(prev);
+      if (selected) next.add(rowId);
+      else next.delete(rowId);
+      return next;
+    });
+  }, []);
+  const toggleRowSelected = useCallback((rowId: string) => {
+    setSelection((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowId)) next.delete(rowId);
+      else next.add(rowId);
+      return next;
+    });
+  }, []);
+  const setRowsSelected = useCallback((rowIds: string[], selected: boolean) => {
+    setSelection((prev) => {
+      const next = new Set(prev);
+      for (const id of rowIds) {
+        if (selected) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  }, []);
+  const clearSelection = useCallback(() => setSelection(new Set()), []);
+
+  const setPage = useCallback((p: number) => setPageRaw(Math.max(1, Math.floor(p))), []);
+  const setPageSize = useCallback((size: number) => {
+    setPageSizeRaw(Math.max(0, Math.floor(size)));
+    setPageRaw(1);
+  }, []);
+
   return useMemo<TableInstance<T>>(
     () => ({
       getRenderColumns: () => renderColumns,
@@ -196,6 +268,19 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
       getSearch: () => search,
       setSearchQuery,
       setSearch: setSearchRaw,
+      isRowSelected: (rowId: string) => selection.has(rowId),
+      toggleRowSelected,
+      setRowSelected,
+      setRowsSelected,
+      clearSelection,
+      getSelectedIds: () => [...selection],
+      getSelectedCount: () => selection.size,
+      getPage: () => page,
+      setPage,
+      getPageSize: () => pageSize,
+      setPageSize,
+      getPageCount: () => pageCount,
+      getTotalCount: () => totalCount,
       columns,
       data,
     }),
@@ -216,6 +301,17 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
       setColumnFilter,
       search,
       setSearchQuery,
+      selection,
+      toggleRowSelected,
+      setRowSelected,
+      setRowsSelected,
+      clearSelection,
+      page,
+      setPage,
+      pageSize,
+      setPageSize,
+      pageCount,
+      totalCount,
       columns,
       data,
     ],
