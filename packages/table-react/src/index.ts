@@ -20,6 +20,9 @@ export type {
 export { useVirtualRows } from './hooks/useVirtualRows';
 export type { UseVirtualRowsOptions, VirtualWindow } from './hooks/useVirtualRows';
 
+// columnState persistence
+export { clearColumnState, loadColumnState, saveColumnState } from './persistence';
+
 // react-bound type aliases
 export type { ReactColumnDef, ResolvedReactColumn } from './types';
 

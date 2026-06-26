@@ -8,6 +8,7 @@
 
 export {
   createInitialColumnState,
+  reconcileColumnState,
   resolveColumns,
 } from './columns';
 export {

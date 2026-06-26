@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ColumnDef, ColumnState } from '../types';
-import { createInitialColumnState, resolveColumns } from './columns';
+import { createInitialColumnState, reconcileColumnState, resolveColumns } from './columns';
 
 interface Employee {
   name: string;
@@ -76,6 +76,28 @@ describe('resolveColumns', () => {
     resolveColumns(defs, state);
     expect(JSON.stringify(defs)).toBe(defsSnapshot);
     expect(JSON.stringify(state)).toBe(stateSnapshot);
+  });
+
+  it('reconcile keeps stored entries, drops removed cols, appends new ones', () => {
+    // stored state from before: dept was renamed/reordered, "salary" no longer stored
+    const stored: ColumnState[] = [
+      { key: 'name', visible: true, order: 1, labelOverride: '이름' },
+      { key: 'dept', visible: false, order: 0 },
+      { key: 'legacy', visible: true, order: 5 }, // column no longer in defs
+    ];
+    const reconciled = reconcileColumnState(defs, stored);
+    const byKey = new Map(reconciled.map((s) => [s.key, s]));
+
+    // kept
+    expect(byKey.get('name')?.labelOverride).toBe('이름');
+    expect(byKey.get('dept')?.visible).toBe(false);
+    // dropped
+    expect(byKey.has('legacy')).toBe(false);
+    // appended (salary wasn't in stored) with an order after the max stored order
+    expect(byKey.get('salary')).toBeDefined();
+    expect(byKey.get('salary')?.order).toBe(6);
+    // exactly the current defs' columns
+    expect(reconciled.map((s) => s.key).sort()).toEqual(['dept', 'name', 'salary']);
   });
 
   it('prefers a state width over the def width', () => {

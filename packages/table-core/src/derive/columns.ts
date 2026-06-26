@@ -23,6 +23,35 @@ export function createInitialColumnState<T, TNode>(defs: ColumnDef<T, TNode>[]):
   }));
 }
 
+/**
+ * Reconcile a persisted (e.g. localStorage) columnState against the current defs:
+ *   - keep stored entries for columns that still exist
+ *   - drop stored entries for columns that no longer exist
+ *   - append defaults for newly added columns (so a schema change never breaks)
+ *
+ * This makes persistence forward-compatible with evolving column definitions.
+ */
+export function reconcileColumnState<T, TNode>(
+  defs: ColumnDef<T, TNode>[],
+  stored: ColumnState[],
+): ColumnState[] {
+  const storedByKey = new Map(stored.map((s) => [s.key, s]));
+  const maxOrder = stored.reduce((m, s) => Math.max(m, s.order), -1);
+  let nextOrder = maxOrder + 1;
+
+  return defs.map((def) => {
+    const existing = storedByKey.get(def.key);
+    if (existing) return existing;
+    return {
+      key: def.key,
+      visible: true,
+      order: nextOrder++,
+      width: def.width,
+      pinned: null,
+    } satisfies ColumnState;
+  });
+}
+
 const PIN_GROUP: Record<'left' | 'none' | 'right', number> = {
   left: 0,
   none: 1,

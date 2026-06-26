@@ -26,6 +26,7 @@ import {
   getPageCount,
   moveColumn,
   paginate,
+  reconcileColumnState,
   resolveColumns,
   setColumnLabelOverride,
   setColumnPinned,
@@ -35,7 +36,8 @@ import {
   toggleSort,
 } from '@softium/table-core';
 import type { Row } from '@softium/table-core';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { clearColumnState, loadColumnState, saveColumnState } from '../persistence';
 import type { ReactColumnDef, ResolvedReactColumn } from '../types';
 
 export interface UseTableOptions<T> {
@@ -47,6 +49,8 @@ export interface UseTableOptions<T> {
   initialColumnState?: ColumnState[];
   /** rows per page. 0 / omitted disables pagination (render the whole set). */
   pageSize?: number;
+  /** localStorage key. When set, columnState is restored on mount and saved on change. */
+  persistKey?: string;
 }
 
 export type ColumnStateUpdater = (prev: ColumnState[]) => ColumnState[];
@@ -121,11 +125,34 @@ export interface TableInstance<T> {
 }
 
 export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
-  const { data, columns, getRowId, initialColumnState, pageSize: initialPageSize = 0 } = options;
+  const {
+    data,
+    columns,
+    getRowId,
+    initialColumnState,
+    pageSize: initialPageSize = 0,
+    persistKey,
+  } = options;
 
-  const [columnState, setColumnStateRaw] = useState<ColumnState[]>(
-    () => initialColumnState ?? createInitialColumnState(columns),
-  );
+  const [columnState, setColumnStateRaw] = useState<ColumnState[]>(() => {
+    // restore persisted state on mount, reconciled against current defs
+    if (persistKey) {
+      const stored = loadColumnState(persistKey);
+      if (stored) return reconcileColumnState(columns, stored);
+    }
+    return initialColumnState ?? createInitialColumnState(columns);
+  });
+
+  // persist on every columnState change (skip the very first commit — nothing changed yet)
+  const firstSave = useRef(true);
+  useEffect(() => {
+    if (!persistKey) return;
+    if (firstSave.current) {
+      firstSave.current = false;
+      return;
+    }
+    saveColumnState(persistKey, columnState);
+  }, [persistKey, columnState]);
   const [sortRules, setSortRulesRaw] = useState<SortRule[]>([]);
   const [filters, setFiltersRaw] = useState<Filter[]>([]);
   const [search, setSearchRaw] = useState<SearchState>({ query: '', scope: 'all' });
@@ -169,8 +196,9 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
   }, []);
 
   const resetColumnState = useCallback(() => {
+    if (persistKey) clearColumnState(persistKey);
     setColumnStateRaw(createInitialColumnState(columns));
-  }, [columns]);
+  }, [columns, persistKey]);
 
   const setVisible = useCallback(
     (key: string, visible: boolean) =>
