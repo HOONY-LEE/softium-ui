@@ -35,6 +35,11 @@ export interface TableMessages {
   rowsPerPage: string;
   /** page X of Y */
   pageOf: (page: number, total: number) => string;
+  /** pagination nav labels */
+  first: string;
+  back: string;
+  next: string;
+  last: string;
 }
 
 export const ko: TableMessages = {
@@ -52,6 +57,10 @@ export const ko: TableMessages = {
   perPage: (count) => `${count}개씩 보기`,
   rowsPerPage: '페이지당 행',
   pageOf: (page, total) => `${total} 페이지 중 ${page}`,
+  first: '처음',
+  back: '이전',
+  next: '다음',
+  last: '마지막',
 };
 
 export const en: TableMessages = {
@@ -69,6 +78,10 @@ export const en: TableMessages = {
   perPage: (count) => `${count} / page`,
   rowsPerPage: 'Rows per page',
   pageOf: (page, total) => `Page ${page} of ${total}`,
+  first: 'First',
+  back: 'Back',
+  next: 'Next',
+  last: 'Last',
 };
 
 export const locales = { ko, en } as const;

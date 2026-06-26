@@ -454,48 +454,68 @@
   cursor: pointer;
 }
 
-/* numbered pager */
+/* boxed pager (Back/Next/First/Last + numbered, windowed) */
 .sft-pager {
   display: flex;
   align-items: center;
-  gap: 2px;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--sft-space-1);
 }
 
-.sft-pager__nav,
-.sft-pager__page {
-  min-width: 30px;
-  height: 30px;
-  padding: 0 var(--sft-space-1);
-  border: 1px solid transparent;
-  border-radius: var(--sft-radius-sm);
-  background: transparent;
-  color: var(--sft-color-text-secondary);
-  font: inherit;
-  cursor: pointer;
-  transition: background var(--sft-duration-fast) var(--sft-ease);
-}
-
-.sft-pager__nav:not(:disabled):hover,
-.sft-pager__page:not([data-active]):hover {
-  background: var(--sft-color-bg-hover);
+.sft-pager__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sft-space-1);
+  min-width: 36px;
+  height: 36px;
+  padding: 0 var(--sft-space-2);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
+  background: var(--sft-color-surface);
   color: var(--sft-color-text);
-}
-
-.sft-pager__page[data-active] {
-  background: var(--sft-color-accent);
-  border-color: var(--sft-color-accent);
-  color: var(--sft-color-text-on-accent);
+  font: inherit;
   font-weight: var(--sft-font-weight-medium);
+  cursor: pointer;
+  transition: background var(--sft-duration-fast) var(--sft-ease), border-color
+    var(--sft-duration-fast) var(--sft-ease);
 }
 
-.sft-pager__nav:disabled {
-  opacity: 0.4;
+.sft-pager__btn:not(:disabled):hover {
+  background: var(--sft-color-bg-hover);
+}
+
+.sft-pager__btn:disabled {
+  opacity: 0.45;
   cursor: default;
 }
 
+.sft-pager__btn--nav {
+  padding: 0 var(--sft-space-3);
+  color: var(--sft-color-text-secondary);
+}
+
+.sft-pager__btn--page[data-active] {
+  background: var(--sft-color-accent);
+  border-color: var(--sft-color-accent);
+  color: var(--sft-color-text-on-accent);
+}
+
 .sft-pager__ellipsis {
-  padding: 0 var(--sft-space-1);
+  min-width: 24px;
+  text-align: center;
   color: var(--sft-color-text-muted);
+}
+
+/* drop the Back/Next/First/Last word labels on very narrow viewports */
+@media (max-width: 720px) {
+  .sft-pager__navlabel {
+    display: none;
+  }
+  .sft-pager__btn--nav {
+    padding: 0 var(--sft-space-2);
+  }
 }
 
 /* ── empty state ────────────────────────────────────────── */
