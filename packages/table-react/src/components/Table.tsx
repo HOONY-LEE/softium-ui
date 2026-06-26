@@ -4,6 +4,7 @@ import type { TableInstance } from '../hooks/useTable';
 import { resolveMessages } from '../i18n';
 import type { LocaleKey, TableMessages } from '../i18n';
 import { Body } from './Body';
+import { FilterRow } from './FilterRow';
 import { Header } from './Header';
 import { Toolbar } from './Toolbar';
 import { TableContext } from './context';
@@ -41,6 +42,7 @@ export function Table<T>({
   const resolvedMessages = useMemo(() => resolveMessages(locale, messages), [locale, messages]);
   const columns = table.getRenderColumns();
   const rows = table.getRows();
+  const hasFilters = columns.some((c) => c.filterable);
 
   const contextValue = useMemo(
     () => ({ table, messages: resolvedMessages }),
@@ -53,6 +55,7 @@ export function Table<T>({
         {toolbar && <Toolbar />}
         <div className="sft-table__scroll" role="table">
           <Header columns={columns} />
+          {hasFilters && <FilterRow columns={columns} />}
           <Body rows={rows} columns={columns} emptyText={emptyText ?? resolvedMessages.emptyText} />
         </div>
       </div>

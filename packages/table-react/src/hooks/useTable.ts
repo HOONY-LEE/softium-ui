@@ -14,7 +14,13 @@
 
 import {
   type ColumnState,
+  type ColumnType,
+  type Filter,
   type PinSide,
+  type SearchState,
+  type SortRule,
+  applyFilters,
+  applySearch,
   buildRows,
   createInitialColumnState,
   moveColumn,
@@ -23,6 +29,8 @@ import {
   setColumnPinned,
   setColumnVisible,
   setColumnWidth,
+  sortRows,
+  toggleSort,
 } from '@softium/table-core';
 import type { Row } from '@softium/table-core';
 import { useCallback, useMemo, useState } from 'react';
@@ -63,6 +71,26 @@ export interface TableInstance<T> {
   /** rename for display only — writes labelOverride, never the original label */
   renameColumn: (key: string, labelOverride: string | undefined) => void;
 
+  // ── sort / filter / search (derived; original data never mutated) ──
+  /** current sort rules, in priority order */
+  getSortRules: () => SortRule[];
+  /** click-to-sort cycle (none→asc→desc→none). `multi` keeps other sorts. */
+  toggleSort: (columnKey: string, multi?: boolean) => void;
+  /** replace all sort rules */
+  setSortRules: (rules: SortRule[]) => void;
+  /** current structured column filters */
+  getFilters: () => Filter[];
+  /** set or clear (null) the filter for one column */
+  setColumnFilter: (columnKey: string, filter: Filter | null) => void;
+  /** replace all filters */
+  setFilters: (filters: Filter[]) => void;
+  /** current global search state (separate from filters) */
+  getSearch: () => SearchState;
+  /** set the global search query (scope stays as-is) */
+  setSearchQuery: (query: string) => void;
+  /** replace the whole search state */
+  setSearch: (search: SearchState) => void;
+
   /** the immutable column blueprints as supplied */
   readonly columns: ReactColumnDef<T>[];
   /** the original data array (referenced, never mutated) */
@@ -75,10 +103,28 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
   const [columnState, setColumnStateRaw] = useState<ColumnState[]>(
     () => initialColumnState ?? createInitialColumnState(columns),
   );
+  const [sortRules, setSortRulesRaw] = useState<SortRule[]>([]);
+  const [filters, setFiltersRaw] = useState<Filter[]>([]);
+  const [search, setSearchRaw] = useState<SearchState>({ query: '', scope: 'all' });
 
   const renderColumns = useMemo(() => resolveColumns(columns, columnState), [columns, columnState]);
 
-  const rows = useMemo(() => buildRows(data, { getRowId }), [data, getRowId]);
+  // type lookup by column key (for typed sort/filter comparisons)
+  const getType = useMemo(() => {
+    const map = new Map<string, ColumnType>();
+    for (const def of columns) map.set(def.key, def.type ?? 'text');
+    return (key: string): ColumnType | undefined => map.get(key);
+  }, [columns]);
+
+  const allKeys = useMemo(() => columns.map((c) => c.key), [columns]);
+
+  // derive pipeline: filter → search → sort → index. The original data is never mutated.
+  const rows = useMemo(() => {
+    const filtered = applyFilters(data, filters, getType);
+    const searched = applySearch(filtered, search, allKeys);
+    const sorted = sortRows(searched, sortRules, getType);
+    return buildRows(sorted, { getRowId });
+  }, [data, filters, search, sortRules, getType, allKeys, getRowId]);
 
   const setColumnState = useCallback((updater: ColumnState[] | ColumnStateUpdater) => {
     setColumnStateRaw((prev) => (typeof updater === 'function' ? updater(prev) : updater));
@@ -113,6 +159,22 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
     [],
   );
 
+  const cycleSort = useCallback(
+    (columnKey: string, multi = false) =>
+      setSortRulesRaw((prev) => toggleSort(prev, columnKey, multi)),
+    [],
+  );
+  const setColumnFilter = useCallback((columnKey: string, filter: Filter | null) => {
+    setFiltersRaw((prev) => {
+      const others = prev.filter((f) => f.columnKey !== columnKey);
+      return filter ? [...others, filter] : others;
+    });
+  }, []);
+  const setSearchQuery = useCallback(
+    (query: string) => setSearchRaw((prev) => ({ ...prev, query })),
+    [],
+  );
+
   return useMemo<TableInstance<T>>(
     () => ({
       getRenderColumns: () => renderColumns,
@@ -125,6 +187,15 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
       setColumnPinned: setPinned,
       setColumnWidth: setWidth,
       renameColumn: rename,
+      getSortRules: () => sortRules,
+      toggleSort: cycleSort,
+      setSortRules: setSortRulesRaw,
+      getFilters: () => filters,
+      setColumnFilter,
+      setFilters: setFiltersRaw,
+      getSearch: () => search,
+      setSearchQuery,
+      setSearch: setSearchRaw,
       columns,
       data,
     }),
@@ -139,6 +210,12 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
       setPinned,
       setWidth,
       rename,
+      sortRules,
+      cycleSort,
+      filters,
+      setColumnFilter,
+      search,
+      setSearchQuery,
       columns,
       data,
     ],

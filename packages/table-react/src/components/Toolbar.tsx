@@ -25,8 +25,17 @@ export function Toolbar<T>(): ReactNode {
     [table],
   );
 
+  const search = table.getSearch();
+
   return (
     <div className="sft-toolbar">
+      <input
+        className="sft-toolbar__search"
+        type="search"
+        value={search.query}
+        placeholder={messages.searchPlaceholder}
+        onChange={(e) => table.setSearchQuery(e.target.value)}
+      />
       <div className="sft-toolbar__spacer" />
       <div className="sft-toolbar__group">
         <button

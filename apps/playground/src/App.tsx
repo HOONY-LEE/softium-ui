@@ -13,7 +13,7 @@ type Theme = 'light' | 'dark';
 
 const i18n = {
   ko: {
-    badge: 'Phase 3 · 컬럼 조작',
+    badge: 'Phase 4 · 정렬·필터·검색',
     title: 'softium-ui',
     subtitle: 'ERP 화면 전용 React 테이블 라이브러리',
     tableTitle: '사원 테이블',
@@ -23,7 +23,7 @@ const i18n = {
     roadmapTitle: '빌드 로드맵',
   },
   en: {
-    badge: 'Phase 3 · column ops',
+    badge: 'Phase 4 · sort·filter·search',
     title: 'softium-ui',
     subtitle: 'A React table library built for ERP screens',
     tableTitle: 'Employees',
@@ -44,7 +44,7 @@ const roadmap: { phase: string; ko: string; en: string; done: boolean }[] = [
     en: 'Column ops (DnD · pin · resize)',
     done: true,
   },
-  { phase: '4', ko: '정렬 · 필터 · 검색', en: 'Sort · filter · search', done: false },
+  { phase: '4', ko: '정렬 · 필터 · 검색', en: 'Sort · filter · search', done: true },
   { phase: '5', ko: '행 가상화 (1만 행)', en: 'Row virtualization (10k rows)', done: false },
   { phase: '6', ko: '선택 · 페이지네이션', en: 'Selection · pagination', done: false },
   { phase: '7', ko: '영속화 · 테마', en: 'Persistence · theming', done: false },

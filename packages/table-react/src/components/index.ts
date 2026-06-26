@@ -10,6 +10,8 @@ export type { HeaderProps } from './Header';
 export { Toolbar } from './Toolbar';
 export { Body } from './Body';
 export type { BodyProps } from './Body';
+export { FilterRow } from './FilterRow';
+export type { FilterRowProps } from './FilterRow';
 export { Row } from './Row';
 export type { RowProps } from './Row';
 export { Cell } from './Cell';

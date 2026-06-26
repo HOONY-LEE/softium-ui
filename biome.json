@@ -23,7 +23,8 @@
       "recommended": true,
       "a11y": {
         "useSemanticElements": "off",
-        "useFocusableInteractive": "off"
+        "useFocusableInteractive": "off",
+        "useKeyWithClickEvents": "off"
       },
       "suspicious": {
         "noExplicitAny": "error"

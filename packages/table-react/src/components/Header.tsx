@@ -21,6 +21,7 @@ const MIN_RESIZE_WIDTH = 48;
 
 export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
   const { table } = useTableContext<T>();
+  const sortRules = table.getSortRules();
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -39,13 +40,20 @@ export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
             items={columns.map((c) => c.key)}
             strategy={horizontalListSortingStrategy}
           >
-            {columns.map((column) => (
-              <HeaderCell
-                key={column.key}
-                column={column}
-                onResize={(width) => table.setColumnWidth(column.key, width)}
-              />
-            ))}
+            {columns.map((column) => {
+              const ruleIndex = sortRules.findIndex((r) => r.columnKey === column.key);
+              const rule = ruleIndex === -1 ? undefined : sortRules[ruleIndex];
+              return (
+                <HeaderCell
+                  key={column.key}
+                  column={column}
+                  sortDirection={rule?.direction}
+                  sortPriority={sortRules.length > 1 && rule ? ruleIndex + 1 : undefined}
+                  onResize={(width) => table.setColumnWidth(column.key, width)}
+                  onSort={(multi) => table.toggleSort(column.key, multi)}
+                />
+              );
+            })}
           </SortableContext>
         </DndContext>
       </div>
@@ -55,10 +63,19 @@ export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
 
 interface HeaderCellProps<T> {
   column: ResolvedReactColumn<T>;
+  sortDirection?: 'asc' | 'desc';
+  sortPriority?: number;
   onResize: (width: number) => void;
+  onSort: (multi: boolean) => void;
 }
 
-function HeaderCell<T>({ column, onResize }: HeaderCellProps<T>): ReactNode {
+function HeaderCell<T>({
+  column,
+  sortDirection,
+  sortPriority,
+  onResize,
+  onSort,
+}: HeaderCellProps<T>): ReactNode {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: column.key,
     disabled: column.pinned !== null, // pinned columns stay put
@@ -105,10 +122,24 @@ function HeaderCell<T>({ column, onResize }: HeaderCellProps<T>): ReactNode {
       data-dragging={isDragging || undefined}
       style={style}
     >
-      <span className="sft-th__label" {...attributes} {...listeners}>
-        {column.renderHeader
-          ? column.renderHeader({ column: column.def, displayLabel: column.displayLabel })
-          : column.displayLabel}
+      <span
+        className="sft-th__label"
+        {...attributes}
+        {...listeners}
+        onClick={column.sortable ? (e) => onSort(e.shiftKey) : undefined}
+        data-sortable={column.sortable || undefined}
+      >
+        <span className="sft-th__text">
+          {column.renderHeader
+            ? column.renderHeader({ column: column.def, displayLabel: column.displayLabel })
+            : column.displayLabel}
+        </span>
+        {sortDirection && (
+          <span className="sft-th__sort" aria-hidden="true">
+            {sortDirection === 'asc' ? '▲' : '▼'}
+            {sortPriority ? <sup>{sortPriority}</sup> : null}
+          </span>
+        )}
       </span>
       {column.resizable !== false && (
         <span

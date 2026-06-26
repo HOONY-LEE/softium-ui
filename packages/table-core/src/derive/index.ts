@@ -18,5 +18,8 @@ export {
   setColumnVisible,
   setColumnWidth,
 } from './columnOps';
+export { sortRows, toggleSort } from './sort';
+export { applyFilters, matchesFilter } from './filter';
+export { applySearch } from './search';
 export { buildRows } from './rows';
 export type { BuildRowsOptions } from './rows';
