@@ -17,12 +17,35 @@ body {
 }
 
 .page {
-  max-width: 880px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: var(--sft-space-6) var(--sft-space-4) var(--sft-space-6);
   display: flex;
   flex-direction: column;
   gap: var(--sft-space-5);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sft-space-3);
+  margin-bottom: var(--sft-space-3);
+  flex-wrap: wrap;
+}
+
+.card-head h2 {
+  margin: 0;
+}
+
+.code-note {
+  margin: var(--sft-space-3) 0 0;
+  color: var(--sft-color-text-muted);
+}
+
+.code-note code {
+  font-family: var(--sft-font-family-mono);
+  font-size: var(--sft-font-size-sm);
 }
 
 .topbar {

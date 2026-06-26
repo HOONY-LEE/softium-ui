@@ -21,6 +21,10 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "a11y": {
+        "useSemanticElements": "off",
+        "useFocusableInteractive": "off"
+      },
       "suspicious": {
         "noExplicitAny": "error"
       },

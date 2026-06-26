@@ -1,0 +1,139 @@
+/**
+ * softium-ui Table — component styles.
+ *
+ * Every value resolves to a `--sft-*` token (see tokens.css), so the whole table
+ * re-skins via tokens alone. Div-based layout (role attributes for a11y) keeps the
+ * door open for sticky pinning (Phase 3) and row virtualization (Phase 5).
+ */
+
+.sft-table {
+  font-family: var(--sft-font-family);
+  font-size: var(--sft-table-font-size);
+  line-height: var(--sft-line-height);
+  color: var(--sft-color-text);
+  background: var(--sft-color-bg);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
+  overflow: hidden;
+}
+
+/* horizontal scroll container */
+.sft-table__scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* rows are flex tracks; cells size via flex-basis (see cellStyle) */
+.sft-tr {
+  display: flex;
+  align-items: stretch;
+  min-width: max-content;
+  border-bottom: 1px solid var(--sft-color-border);
+}
+
+.sft-tbody .sft-tr:last-child {
+  border-bottom: none;
+}
+
+/* ── header ─────────────────────────────────────────────── */
+.sft-thead {
+  position: sticky;
+  top: 0;
+  z-index: var(--sft-z-header);
+  background: var(--sft-color-bg-subtle);
+}
+
+.sft-tr--head {
+  border-bottom: 1px solid var(--sft-color-border-strong);
+}
+
+.sft-th {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: var(--sft-table-header-height);
+  padding: 0 var(--sft-table-cell-padding-x);
+  font-weight: var(--sft-font-weight-bold);
+  color: var(--sft-color-text-secondary);
+  background: var(--sft-color-bg-subtle);
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sft-th__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── body cells ─────────────────────────────────────────── */
+.sft-td {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: var(--sft-table-row-height);
+  padding: 0 var(--sft-table-cell-padding-x);
+  background: var(--sft-color-bg);
+  overflow: hidden;
+}
+
+.sft-td__content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* alignment (header + cell share the attribute) */
+.sft-th[data-align="right"],
+.sft-td[data-align="right"] {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.sft-th[data-align="center"],
+.sft-td[data-align="center"] {
+  justify-content: center;
+  text-align: center;
+}
+
+/* ── row interaction ────────────────────────────────────── */
+.sft-tbody .sft-tr:hover .sft-td {
+  background: var(--sft-color-bg-hover);
+}
+
+.sft-tbody .sft-tr[data-selected="true"] .sft-td {
+  background: var(--sft-color-bg-selected);
+}
+
+/* ── pinned columns (wired in Phase 3) ──────────────────── */
+.sft-th[data-pinned="left"],
+.sft-td[data-pinned="left"] {
+  position: sticky;
+  left: 0;
+  z-index: var(--sft-z-pinned);
+  box-shadow: var(--sft-table-pinned-shadow);
+}
+
+.sft-th[data-pinned="right"],
+.sft-td[data-pinned="right"] {
+  position: sticky;
+  right: 0;
+  z-index: var(--sft-z-pinned);
+  box-shadow: var(--sft-table-pinned-shadow);
+}
+
+/* ── empty state ────────────────────────────────────────── */
+.sft-tbody--empty {
+  display: flex;
+}
+
+.sft-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(var(--sft-table-row-height) * 3);
+  padding: var(--sft-space-5);
+  color: var(--sft-color-text-muted);
+}
