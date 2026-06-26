@@ -1,7 +1,7 @@
 import type { Row as RowModel } from '@softium/table-core';
 import type { ReactNode } from 'react';
-import type { ResolvedReactColumn } from '../types';
 import type { VirtualWindow } from '../hooks/useVirtualRows';
+import type { ResolvedReactColumn } from '../types';
 import { Row } from './Row';
 
 export interface BodyProps<T> {
@@ -30,7 +30,10 @@ export function Body<T>({ rows, columns, emptyText, virtual }: BodyProps<T>): Re
         role="rowgroup"
         style={{ height: virtual.totalHeight }}
       >
-        <div className="sft-tbody__window" style={{ transform: `translateY(${virtual.offsetY}px)` }}>
+        <div
+          className="sft-tbody__window"
+          style={{ transform: `translateY(${virtual.offsetY}px)` }}
+        >
           {slice.map((row) => (
             <Row key={row.rowId} row={row} columns={columns} />
           ))}

@@ -112,7 +112,9 @@ export function App() {
         </div>
         <Table table={table} locale={locale} height={460} />
         <p className="code-note">
-          <code>{rowCount.toLocaleString()} rows · {t.tableNote}</code>
+          <code>
+            {rowCount.toLocaleString()} rows · {t.tableNote}
+          </code>
         </p>
       </section>
 
