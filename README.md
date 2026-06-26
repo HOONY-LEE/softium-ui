@@ -53,13 +53,37 @@ pnpm lint:fix     # 자동 수정
 ## 빌드 로드맵 (Phase)
 
 - [x] **Phase 0** — 모노레포 스캐폴드, 빈 빌드 통과
-- [ ] **Phase 1** — headless core: 타입, 어댑터 3종, columnState 합성
-- [ ] **Phase 2** — 기본 렌더링: Table/Header/Body/Row/Cell + 토큰 CSS
-- [ ] **Phase 3** — 컬럼 조작: 숨김/DnD 순서/리사이즈/핀/이름변경
-- [ ] **Phase 4** — 정렬·필터·검색
-- [ ] **Phase 5** — 행 가상화 (1만 행)
-- [ ] **Phase 6** — 선택·페이지네이션
-- [ ] **Phase 7** — 영속화(localStorage)·테마(다크모드)
+- [x] **Phase 1** — headless core: 타입, 어댑터 3종, columnState 합성, row 인덱싱
+- [x] **Phase 2** — 기본 렌더링: Table/Header/Body/Row/Cell + 토큰 CSS + i18n
+- [x] **Phase 3** — 컬럼 조작: 숨김/DnD 순서/리사이즈/핀/이름변경
+- [x] **Phase 4** — 정렬(다중)·필터(operator별)·검색(글로벌)
+- [x] **Phase 5** — 행 가상화 (1만 행)
+- [x] **Phase 6** — 선택(단일/다중/전체)·페이지네이션
+- [x] **Phase 7** — 영속화(localStorage)·테마(다크모드)
+
+v1 범위 완료. 다음 후보(SPEC §5 "나중에"): 서버사이드 row model, 트리/그룹 행,
+셀 인라인 편집, 피벗/집계, 엑셀 export, 셀 머지.
+
+## 사용 예시
+
+```tsx
+import { useTable, Table } from '@softium/table-react';
+import '@softium/table-styles';
+
+const table = useTable({
+  data: employees,
+  columns: [
+    { key: 'name', label: '사원명' },
+    { key: 'dept', label: '부서', filterable: true },
+    { key: 'salary', label: '급여', type: 'number', align: 'right' },
+  ],
+  getRowId: (r) => r.id,
+  pageSize: 20,
+  persistKey: 'employees-table', // 컬럼 레이아웃 localStorage 영속화
+});
+
+return <Table table={table} locale="ko" selectable height={480} />;
+```
 
 ## License
 
