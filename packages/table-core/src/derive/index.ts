@@ -1,10 +1,14 @@
 /**
- * Derivation: the original `data` is never mutated. Every view change is derived.
+ * Derivation: the original `data` and `columnDefs` are never mutated.
+ * Every view change is expressed as a pure derivation over copies.
  *
- * Phase 1 ships (SPEC §2, §3):
- *   - renderColumns = merge(columnDefs, columnState) → filter visible → sort by order
- *   - rowId / displayIndex / globalIndex assignment
- * Phase 4 adds derived sort / filter / search over copies of `data`.
+ * Phase 1: column resolution + row indexing.
+ * Phase 4 adds derived sort / filter / search here.
  */
 
-export {};
+export {
+  createInitialColumnState,
+  resolveColumns,
+} from './columns';
+export { buildRows } from './rows';
+export type { BuildRowsOptions } from './rows';

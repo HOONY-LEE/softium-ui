@@ -1,10 +1,13 @@
 /**
- * Adapters: absorb any server shape into the library's `TableInput<T>`.
- *
- * Phase 1 ships three helpers (SPEC §4):
- *   - adaptArray(raw)             — plain array
- *   - adaptPaginated(raw, opts)   — { data, total, page, pageSize } wrapper
- *   - adaptDynamicSchema(raw, …)  — server sends column defs too (legacy ERP)
+ * Adapters: absorb any server shape into data (+ optionally columns) the library
+ * understands. The library itself only ever consumes the normalized output.
  */
 
-export {};
+export { adaptArray } from './adaptArray';
+export { adaptPaginated } from './adaptPaginated';
+export type { AdaptPaginatedOptions, PaginatedResult } from './adaptPaginated';
+export { adaptDynamicSchema } from './adaptDynamicSchema';
+export type {
+  AdaptDynamicSchemaOptions,
+  DynamicSchemaResult,
+} from './adaptDynamicSchema';
