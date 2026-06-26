@@ -3,10 +3,8 @@
  *
  *   import '@softium/table-styles';
  *
- * Pulls in design tokens + dark theme. Component CSS (Table/Header/Row/Cell)
- * is added here in Phase 2 as `@import './src/table.css';`.
+ * Pulls in the shared tokens/theme (@softium/styles) then the Table component CSS.
  */
 
-@import "./src/tokens.css";
-@import "./src/theme.css";
+@import "@softium/styles";
 @import "./src/table.css";

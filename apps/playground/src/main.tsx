@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import '@softium/ui/styles.css';
 import '@softium/table-styles';
 import './styles.css';
 import { App } from './App';

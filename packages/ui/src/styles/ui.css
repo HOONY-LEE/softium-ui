@@ -1,0 +1,266 @@
+/**
+ * @softium/ui — component styles. Token-driven (see @softium/styles), so the whole
+ * shell re-skins on theme change with zero component churn.
+ */
+
+:root {
+  --sft-sidebar-width: 248px;
+  --sft-header-height: 56px;
+}
+
+/* ── Button ─────────────────────────────────────────────── */
+.sft-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sft-space-2);
+  font: inherit;
+  font-weight: var(--sft-font-weight-medium);
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: var(--sft-radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--sft-duration-fast) var(--sft-ease), border-color
+    var(--sft-duration-fast) var(--sft-ease), color var(--sft-duration-fast) var(--sft-ease);
+}
+
+.sft-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sft-button--sm {
+  height: 30px;
+  padding: 0 var(--sft-space-3);
+  font-size: var(--sft-font-size-sm);
+}
+
+.sft-button--md {
+  height: 38px;
+  padding: 0 var(--sft-space-4);
+  font-size: var(--sft-font-size-md);
+}
+
+.sft-button--block {
+  width: 100%;
+}
+
+.sft-button--primary {
+  background: var(--sft-color-accent);
+  color: var(--sft-color-text-on-accent);
+}
+.sft-button--primary:not(:disabled):hover {
+  background: var(--sft-color-accent-hover);
+}
+
+.sft-button--secondary {
+  background: var(--sft-color-surface);
+  border-color: var(--sft-color-border);
+  color: var(--sft-color-text);
+}
+.sft-button--secondary:not(:disabled):hover {
+  background: var(--sft-color-bg-hover);
+}
+
+.sft-button--ghost {
+  background: transparent;
+  color: var(--sft-color-text);
+}
+.sft-button--ghost:not(:disabled):hover {
+  background: var(--sft-color-bg-hover);
+}
+
+.sft-button--danger {
+  background: var(--sft-color-danger);
+  color: #fff;
+}
+.sft-button--danger:not(:disabled):hover {
+  filter: brightness(0.94);
+}
+
+.sft-button__icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── AppShell ───────────────────────────────────────────── */
+.sft-shell {
+  display: grid;
+  grid-template-columns: var(--sft-sidebar-width) minmax(0, 1fr);
+  height: 100vh;
+  width: 100%;
+}
+
+.sft-shell__sidebar {
+  border-right: 1px solid var(--sft-color-border);
+  background: var(--sft-color-bg-subtle);
+  overflow-y: auto;
+}
+
+.sft-shell__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+}
+
+.sft-shell__header {
+  position: sticky;
+  top: 0;
+  z-index: var(--sft-z-header);
+  flex: none;
+}
+
+.sft-shell__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sft-space-6);
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.sft-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sft-space-4);
+  height: var(--sft-header-height);
+  padding: 0 var(--sft-space-5);
+  border-bottom: 1px solid var(--sft-color-border);
+  background: var(--sft-color-surface);
+}
+
+.sft-header__left {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+}
+
+.sft-header__title {
+  margin: 0;
+  font-size: var(--sft-font-size-lg);
+  font-weight: var(--sft-font-weight-bold);
+  color: var(--sft-color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sft-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+}
+
+/* ── Sidebar ────────────────────────────────────────────── */
+.sft-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sft-space-4);
+  padding: var(--sft-space-4) var(--sft-space-3);
+}
+
+.sft-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+  height: calc(var(--sft-header-height) - var(--sft-space-4));
+  padding: 0 var(--sft-space-2);
+}
+
+.sft-sidebar__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--sft-radius-md);
+  background: var(--sft-color-accent);
+  color: var(--sft-color-text-on-accent);
+  font-weight: var(--sft-font-weight-bold);
+  flex: none;
+}
+
+.sft-sidebar__brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.sft-sidebar__title {
+  font-weight: var(--sft-font-weight-bold);
+  color: var(--sft-color-text);
+}
+
+.sft-sidebar__subtitle {
+  font-size: var(--sft-font-size-xs);
+  color: var(--sft-color-text-muted);
+}
+
+.sft-sidebar__section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sft-sidebar__section-label {
+  padding: var(--sft-space-1) var(--sft-space-2);
+  font-size: var(--sft-font-size-xs);
+  font-weight: var(--sft-font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sft-color-text-muted);
+}
+
+.sft-sidebar__items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sft-sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+  width: 100%;
+  padding: var(--sft-space-2) var(--sft-space-2);
+  border: none;
+  border-radius: var(--sft-radius-sm);
+  background: transparent;
+  color: var(--sft-color-text-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--sft-duration-fast) var(--sft-ease);
+}
+
+.sft-sidebar__item:hover {
+  background: var(--sft-color-bg-hover);
+  color: var(--sft-color-text);
+}
+
+.sft-sidebar__item--active {
+  background: var(--sft-color-accent-subtle);
+  color: var(--sft-color-accent);
+  font-weight: var(--sft-font-weight-medium);
+}
+
+.sft-sidebar__item-icon {
+  display: inline-flex;
+  width: 18px;
+  justify-content: center;
+  flex: none;
+}
+
+/* ── responsive: collapse sidebar on narrow viewports ───── */
+@media (max-width: 720px) {
+  .sft-shell {
+    grid-template-columns: 1fr;
+  }
+  .sft-shell__sidebar {
+    display: none;
+  }
+}

@@ -1,0 +1,11 @@
+/**
+ * softium-ui shared styles — single import.
+ *
+ *   import '@softium/styles';
+ *
+ * Design tokens + dark theme + a minimal opt-in base layer.
+ */
+
+@import "./src/tokens.css";
+@import "./src/theme.css";
+@import "./src/base.css";

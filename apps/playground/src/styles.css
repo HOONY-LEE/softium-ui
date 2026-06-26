@@ -1,45 +1,48 @@
-/* Playground chrome — built entirely on @softium/table-styles tokens,
-   so the theme toggle re-skins everything for free. */
+/* Playground page styles — built on @softium tokens. The shell (sidebar/header)
+   comes from @softium/ui; these are just the per-page content styles. */
 
-* {
-  box-sizing: border-box;
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
 }
 
 body {
-  margin: 0;
   background: var(--sft-color-bg);
-  color: var(--sft-color-text);
-  font-family: var(--sft-font-family);
-  font-size: var(--sft-font-size-md);
-  line-height: var(--sft-line-height);
-  transition: background var(--sft-duration-base) var(--sft-ease), color var(--sft-duration-base)
-    var(--sft-ease);
 }
 
-.page {
-  max-width: 1040px;
+/* ── page scaffolding ───────────────────────────────────── */
+.page-body {
+  max-width: 1100px;
   margin: 0 auto;
-  padding: var(--sft-space-6) var(--sft-space-4) var(--sft-space-6);
   display: flex;
   flex-direction: column;
   gap: var(--sft-space-5);
 }
 
-.card-head {
+.page-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: var(--sft-space-3);
-  margin-bottom: var(--sft-space-3);
+  gap: var(--sft-space-4);
   flex-wrap: wrap;
 }
 
-.card-head h2 {
+.page-title {
   margin: 0;
+  font-size: var(--sft-font-size-xl);
+  font-weight: var(--sft-font-weight-bold);
+  color: var(--sft-color-text);
+}
+
+.page-desc {
+  margin: var(--sft-space-1) 0 0;
+  color: var(--sft-color-text-secondary);
 }
 
 .code-note {
-  margin: var(--sft-space-3) 0 0;
+  margin: 0;
   color: var(--sft-color-text-muted);
 }
 
@@ -48,188 +51,132 @@ body {
   font-size: var(--sft-font-size-sm);
 }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sft-space-3);
-  flex-wrap: wrap;
-}
-
-.badge {
-  font-size: var(--sft-font-size-sm);
-  font-weight: var(--sft-font-weight-medium);
-  color: var(--sft-color-accent);
-  background: var(--sft-color-bg-selected);
-  padding: var(--sft-space-1) var(--sft-space-2);
-  border-radius: var(--sft-radius-sm);
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  gap: var(--sft-space-2);
-}
-
-.segmented {
+/* ── header controls ────────────────────────────────────── */
+.locale-switch {
   display: inline-flex;
-  margin: 0;
-  min-inline-size: auto;
+  gap: 2px;
+  padding: 2px;
   background: var(--sft-color-bg-subtle);
   border: 1px solid var(--sft-color-border);
   border-radius: var(--sft-radius-md);
-  padding: 2px;
 }
 
-.segmented button {
-  border: none;
-  background: transparent;
-  color: var(--sft-color-text-secondary);
-  font: inherit;
-  padding: var(--sft-space-1) var(--sft-space-3);
-  border-radius: var(--sft-radius-sm);
-  cursor: pointer;
-  transition: all var(--sft-duration-fast) var(--sft-ease);
+/* ── table page ─────────────────────────────────────────── */
+.row-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+  flex-wrap: wrap;
 }
 
-.segmented button[data-active="true"] {
-  background: var(--sft-color-surface);
-  color: var(--sft-color-text);
-  box-shadow: var(--sft-shadow-sm);
-}
-
-.ghost-btn {
-  border: 1px solid var(--sft-color-border);
-  background: var(--sft-color-surface);
-  color: var(--sft-color-text);
-  font: inherit;
-  padding: var(--sft-space-1) var(--sft-space-3);
-  border-radius: var(--sft-radius-md);
-  cursor: pointer;
-  transition: all var(--sft-duration-fast) var(--sft-ease);
-}
-
-.ghost-btn:hover {
-  background: var(--sft-color-bg-hover);
-}
-
-.hero h1 {
-  margin: 0;
-  font-size: 40px;
-  font-weight: var(--sft-font-weight-bold);
-  letter-spacing: -0.02em;
-}
-
-.hero .subtitle {
-  margin: var(--sft-space-2) 0 0;
-  font-size: var(--sft-font-size-lg);
-  color: var(--sft-color-text-secondary);
-}
-
-.hero .intro {
-  margin: var(--sft-space-3) 0 0;
-  max-width: 60ch;
+.row-toggle__label {
+  font-size: var(--sft-font-size-sm);
   color: var(--sft-color-text-muted);
 }
 
-.card {
+/* ── overview page ──────────────────────────────────────── */
+.overview-hero {
+  padding: var(--sft-space-4) 0 var(--sft-space-2);
+}
+
+.overview-eyebrow {
+  font-size: var(--sft-font-size-sm);
+  font-weight: var(--sft-font-weight-medium);
+  color: var(--sft-color-accent);
+}
+
+.overview-title {
+  margin: var(--sft-space-2) 0 0;
+  font-size: 34px;
+  font-weight: var(--sft-font-weight-bold);
+  letter-spacing: -0.02em;
+  color: var(--sft-color-text);
+}
+
+.overview-lead {
+  margin: var(--sft-space-3) 0 0;
+  max-width: 60ch;
+  color: var(--sft-color-text-secondary);
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--sft-space-3);
+}
+
+.overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sft-space-1);
+  align-items: flex-start;
+  text-align: left;
+  padding: var(--sft-space-4);
+  background: var(--sft-color-surface);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-lg);
+  cursor: pointer;
+  font: inherit;
+  transition: border-color var(--sft-duration-fast) var(--sft-ease), box-shadow
+    var(--sft-duration-fast) var(--sft-ease);
+}
+
+.overview-card:hover {
+  border-color: var(--sft-color-border-strong);
+  box-shadow: var(--sft-shadow-sm);
+}
+
+.overview-card__badge {
+  font-size: var(--sft-font-size-xs);
+  font-weight: var(--sft-font-weight-medium);
+  padding: 2px var(--sft-space-2);
+  border-radius: var(--sft-radius-full);
+}
+
+.overview-card__badge--stable {
+  color: var(--sft-color-success);
+  background: color-mix(in srgb, var(--sft-color-success) 14%, transparent);
+}
+
+.overview-card__badge--seed {
+  color: var(--sft-color-warning);
+  background: color-mix(in srgb, var(--sft-color-warning) 16%, transparent);
+}
+
+.overview-card__title {
+  font-size: var(--sft-font-size-lg);
+  font-weight: var(--sft-font-weight-bold);
+  color: var(--sft-color-text);
+}
+
+.overview-card__desc {
+  color: var(--sft-color-text-secondary);
+}
+
+/* ── button demo page ───────────────────────────────────── */
+.demo-card {
   background: var(--sft-color-surface);
   border: 1px solid var(--sft-color-border);
   border-radius: var(--sft-radius-lg);
   padding: var(--sft-space-4);
-  box-shadow: var(--sft-shadow-sm);
 }
 
-.card h2 {
+.demo-card__title {
   margin: 0 0 var(--sft-space-3);
-  font-size: var(--sft-font-size-md);
+  font-size: var(--sft-font-size-sm);
   font-weight: var(--sft-font-weight-bold);
-  color: var(--sft-color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-}
-
-.roadmap {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sft-space-1);
-}
-
-.roadmap li {
-  display: flex;
-  align-items: center;
-  gap: var(--sft-space-3);
-  padding: var(--sft-space-2);
-  border-radius: var(--sft-radius-sm);
-}
-
-.roadmap li[data-done="true"] {
-  background: var(--sft-color-bg-subtle);
-}
-
-.roadmap .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--sft-color-border-strong);
-  flex: none;
-}
-
-.roadmap li[data-done="true"] .dot {
-  background: var(--sft-color-success);
-}
-
-.roadmap .phase {
-  font-weight: var(--sft-font-weight-medium);
-  color: var(--sft-color-text);
-  min-width: 64px;
-}
-
-.roadmap .label {
   color: var(--sft-color-text-secondary);
 }
 
-.swatches {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--sft-space-2);
-}
-
-.swatch {
+.demo-row {
   display: flex;
+  gap: var(--sft-space-3);
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--sft-space-2);
 }
 
-.swatch .chip {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--sft-radius-sm);
-  border: 1px solid var(--sft-color-border);
-  flex: none;
-}
-
-.swatch code {
-  font-family: var(--sft-font-family-mono);
-  font-size: var(--sft-font-size-sm);
-  color: var(--sft-color-text-muted);
-}
-
-.footer {
-  color: var(--sft-color-text-muted);
-  font-size: var(--sft-font-size-sm);
-  text-align: center;
-  padding-top: var(--sft-space-2);
-}
-
-@media (max-width: 560px) {
-  .hero h1 {
-    font-size: 32px;
-  }
-  .roadmap .phase {
-    min-width: 52px;
-  }
+.demo-row--center {
+  align-items: center;
 }

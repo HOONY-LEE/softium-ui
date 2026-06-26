@@ -13,6 +13,7 @@
     "@softium/table-core": "workspace:*",
     "@softium/table-react": "workspace:*",
     "@softium/table-styles": "workspace:*",
+    "@softium/ui": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

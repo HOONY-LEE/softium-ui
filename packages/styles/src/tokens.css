@@ -1,11 +1,12 @@
 /**
- * softium-ui — design tokens
+ * softium-ui — shared design tokens
  *
  * Theme via CSS custom properties only (no Tailwind hard-dependency, AG-Grid style).
- * Every visual value the Table renders should resolve to one of these `--sft-*` vars,
- * so a host app can re-skin the whole library by overriding tokens — nothing else.
+ * Every visual value across the libraries resolves to one of these `--sft-*` vars,
+ * so a host app re-skins everything by overriding tokens — nothing else.
  *
  * Naming follows an Apple-adjacent / Phosphor convention: semantic over literal.
+ * Package-specific tokens (e.g. `--sft-table-*`) live in their own package.
  */
 
 :root {
@@ -27,6 +28,7 @@
   /* ── color: accent / state ───────────────────────────── */
   --sft-color-accent: #2f6bff;
   --sft-color-accent-hover: #1f57e6;
+  --sft-color-accent-subtle: #eaf2ff;
   --sft-color-danger: #e5484d;
   --sft-color-success: #30a46c;
   --sft-color-warning: #f2a31b;
@@ -35,9 +37,11 @@
   --sft-font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --sft-font-family-mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sft-font-size-xs: 11px;
   --sft-font-size-sm: 12px;
   --sft-font-size-md: 13px;
   --sft-font-size-lg: 15px;
+  --sft-font-size-xl: 20px;
   --sft-font-weight-regular: 400;
   --sft-font-weight-medium: 500;
   --sft-font-weight-bold: 600;
@@ -50,11 +54,14 @@
   --sft-space-4: 16px;
   --sft-space-5: 24px;
   --sft-space-6: 32px;
+  --sft-space-7: 48px;
+  --sft-space-8: 64px;
 
   /* ── radius ──────────────────────────────────────────── */
   --sft-radius-sm: 4px;
   --sft-radius-md: 8px;
   --sft-radius-lg: 12px;
+  --sft-radius-full: 9999px;
 
   /* ── elevation ───────────────────────────────────────── */
   --sft-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
@@ -66,13 +73,9 @@
   --sft-duration-base: 200ms;
   --sft-ease: cubic-bezier(0.2, 0, 0, 1);
 
-  /* ── table-specific layout ───────────────────────────── */
-  --sft-table-row-height: 40px;
-  --sft-table-header-height: 44px;
-  --sft-table-cell-padding-x: var(--sft-space-3);
-  --sft-table-font-size: var(--sft-font-size-md);
-  --sft-table-pinned-shadow: 0 0 8px rgba(16, 24, 40, 0.12);
+  /* ── shared z-index scale ────────────────────────────── */
   --sft-z-header: 2;
   --sft-z-pinned: 3;
   --sft-z-overlay: 10;
+  --sft-z-modal: 100;
 }

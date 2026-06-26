@@ -1,0 +1,10 @@
+/**
+ * @softium/ui — single-import stylesheet.
+ *
+ *   import '@softium/ui/styles.css';
+ *
+ * Shared tokens/theme (@softium/styles) + the ui component styles.
+ */
+
+@import "@softium/styles";
+@import "./src/styles/ui.css";

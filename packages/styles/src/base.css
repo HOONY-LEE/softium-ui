@@ -1,0 +1,23 @@
+/**
+ * softium-ui — minimal base layer (opt-in).
+ *
+ * Only sets sane defaults scoped to the app shell, not a global reset, so dropping
+ * the library into an existing app doesn't fight the host's own resets.
+ */
+
+.sft-app {
+  color: var(--sft-color-text);
+  background: var(--sft-color-bg);
+  font-family: var(--sft-font-family);
+  font-size: var(--sft-font-size-md);
+  line-height: var(--sft-line-height);
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--sft-duration-base) var(--sft-ease), color var(--sft-duration-base)
+    var(--sft-ease);
+}
+
+.sft-app *,
+.sft-app *::before,
+.sft-app *::after {
+  box-sizing: border-box;
+}

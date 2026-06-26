@@ -1,10 +1,23 @@
 /**
  * softium-ui Table — component styles.
  *
- * Every value resolves to a `--sft-*` token (see tokens.css), so the whole table
- * re-skins via tokens alone. Div-based layout (role attributes for a11y) keeps the
- * door open for sticky pinning (Phase 3) and row virtualization (Phase 5).
+ * Builds on the shared tokens in @softium/styles; table-specific tokens are defined
+ * below. Re-skins via tokens alone. Div-based layout (role attributes for a11y) keeps
+ * the door open for sticky pinning and row virtualization.
  */
+
+/* table-specific tokens (shared tokens live in @softium/styles) */
+:root {
+  --sft-table-row-height: 40px;
+  --sft-table-header-height: 44px;
+  --sft-table-cell-padding-x: var(--sft-space-3);
+  --sft-table-font-size: var(--sft-font-size-md);
+  --sft-table-pinned-shadow: 0 0 8px rgba(16, 24, 40, 0.12);
+}
+
+[data-theme="dark"] {
+  --sft-table-pinned-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
 
 .sft-table {
   font-family: var(--sft-font-family);

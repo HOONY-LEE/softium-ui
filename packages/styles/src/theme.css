@@ -1,9 +1,9 @@
 /**
- * softium-ui — dark theme overrides
+ * softium-ui — dark theme overrides (shared)
  *
  * Two activation paths:
  *   1. Explicit: <html data-theme="dark"> (host controls the toggle)
- *   2. Automatic: prefers-color-scheme, only when host hasn't forced a theme
+ *   2. Automatic: prefers-color-scheme, only when the host hasn't forced a theme
  *
  * Dark mode re-points the SAME `--sft-*` tokens — components never branch on theme.
  */
@@ -24,6 +24,7 @@
 
   --sft-color-accent: #5b8bff;
   --sft-color-accent-hover: #6f9bff;
+  --sft-color-accent-subtle: #1e2c4a;
   --sft-color-danger: #ff6166;
   --sft-color-success: #46c98a;
   --sft-color-warning: #f5b542;
@@ -31,7 +32,6 @@
   --sft-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --sft-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
   --sft-shadow-overlay: 0 8px 28px rgba(0, 0, 0, 0.55);
-  --sft-table-pinned-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -50,6 +50,7 @@
 
     --sft-color-accent: #5b8bff;
     --sft-color-accent-hover: #6f9bff;
+    --sft-color-accent-subtle: #1e2c4a;
     --sft-color-danger: #ff6166;
     --sft-color-success: #46c98a;
     --sft-color-warning: #f5b542;
