@@ -1,0 +1,14 @@
+{
+  "name": "@softium/table-styles",
+  "version": "0.0.0",
+  "description": "Design tokens (CSS custom properties) and base theme for softium-ui Table. Dark mode + responsive.",
+  "license": "MIT",
+  "sideEffects": ["*.css"],
+  "files": ["src", "index.css"],
+  "main": "index.css",
+  "exports": {
+    ".": "./index.css",
+    "./tokens.css": "./src/tokens.css",
+    "./theme.css": "./src/theme.css"
+  }
+}

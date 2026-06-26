@@ -1,0 +1,78 @@
+/**
+ * softium-ui — design tokens
+ *
+ * Theme via CSS custom properties only (no Tailwind hard-dependency, AG-Grid style).
+ * Every visual value the Table renders should resolve to one of these `--sft-*` vars,
+ * so a host app can re-skin the whole library by overriding tokens — nothing else.
+ *
+ * Naming follows an Apple-adjacent / Phosphor convention: semantic over literal.
+ */
+
+:root {
+  /* ── color: neutral ramp ─────────────────────────────── */
+  --sft-color-bg: #ffffff;
+  --sft-color-bg-subtle: #f7f8fa;
+  --sft-color-bg-hover: #f0f2f5;
+  --sft-color-bg-selected: #eaf2ff;
+  --sft-color-surface: #ffffff;
+  --sft-color-border: #e3e6ea;
+  --sft-color-border-strong: #c9ced6;
+
+  /* ── color: text ─────────────────────────────────────── */
+  --sft-color-text: #1d2127;
+  --sft-color-text-secondary: #5b6470;
+  --sft-color-text-muted: #8a93a0;
+  --sft-color-text-on-accent: #ffffff;
+
+  /* ── color: accent / state ───────────────────────────── */
+  --sft-color-accent: #2f6bff;
+  --sft-color-accent-hover: #1f57e6;
+  --sft-color-danger: #e5484d;
+  --sft-color-success: #30a46c;
+  --sft-color-warning: #f2a31b;
+
+  /* ── typography ──────────────────────────────────────── */
+  --sft-font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --sft-font-family-mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sft-font-size-sm: 12px;
+  --sft-font-size-md: 13px;
+  --sft-font-size-lg: 15px;
+  --sft-font-weight-regular: 400;
+  --sft-font-weight-medium: 500;
+  --sft-font-weight-bold: 600;
+  --sft-line-height: 1.45;
+
+  /* ── spacing (4px base) ──────────────────────────────── */
+  --sft-space-1: 4px;
+  --sft-space-2: 8px;
+  --sft-space-3: 12px;
+  --sft-space-4: 16px;
+  --sft-space-5: 24px;
+  --sft-space-6: 32px;
+
+  /* ── radius ──────────────────────────────────────────── */
+  --sft-radius-sm: 4px;
+  --sft-radius-md: 8px;
+  --sft-radius-lg: 12px;
+
+  /* ── elevation ───────────────────────────────────────── */
+  --sft-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --sft-shadow-md: 0 4px 12px rgba(16, 24, 40, 0.1);
+  --sft-shadow-overlay: 0 8px 28px rgba(16, 24, 40, 0.16);
+
+  /* ── motion ──────────────────────────────────────────── */
+  --sft-duration-fast: 120ms;
+  --sft-duration-base: 200ms;
+  --sft-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ── table-specific layout ───────────────────────────── */
+  --sft-table-row-height: 40px;
+  --sft-table-header-height: 44px;
+  --sft-table-cell-padding-x: var(--sft-space-3);
+  --sft-table-font-size: var(--sft-font-size-md);
+  --sft-table-pinned-shadow: 0 0 8px rgba(16, 24, 40, 0.12);
+  --sft-z-header: 2;
+  --sft-z-pinned: 3;
+  --sft-z-overlay: 10;
+}

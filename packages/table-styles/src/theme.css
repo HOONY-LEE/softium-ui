@@ -1,0 +1,57 @@
+/**
+ * softium-ui — dark theme overrides
+ *
+ * Two activation paths:
+ *   1. Explicit: <html data-theme="dark"> (host controls the toggle)
+ *   2. Automatic: prefers-color-scheme, only when host hasn't forced a theme
+ *
+ * Dark mode re-points the SAME `--sft-*` tokens — components never branch on theme.
+ */
+
+[data-theme="dark"] {
+  --sft-color-bg: #16181d;
+  --sft-color-bg-subtle: #1c1f26;
+  --sft-color-bg-hover: #232730;
+  --sft-color-bg-selected: #1e2c4a;
+  --sft-color-surface: #1a1d23;
+  --sft-color-border: #2a2f38;
+  --sft-color-border-strong: #3a414d;
+
+  --sft-color-text: #eceef2;
+  --sft-color-text-secondary: #aab2bf;
+  --sft-color-text-muted: #6f7884;
+  --sft-color-text-on-accent: #ffffff;
+
+  --sft-color-accent: #5b8bff;
+  --sft-color-accent-hover: #6f9bff;
+  --sft-color-danger: #ff6166;
+  --sft-color-success: #46c98a;
+  --sft-color-warning: #f5b542;
+
+  --sft-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sft-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --sft-shadow-overlay: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --sft-table-pinned-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --sft-color-bg: #16181d;
+    --sft-color-bg-subtle: #1c1f26;
+    --sft-color-bg-hover: #232730;
+    --sft-color-bg-selected: #1e2c4a;
+    --sft-color-surface: #1a1d23;
+    --sft-color-border: #2a2f38;
+    --sft-color-border-strong: #3a414d;
+
+    --sft-color-text: #eceef2;
+    --sft-color-text-secondary: #aab2bf;
+    --sft-color-text-muted: #6f7884;
+
+    --sft-color-accent: #5b8bff;
+    --sft-color-accent-hover: #6f9bff;
+    --sft-color-danger: #ff6166;
+    --sft-color-success: #46c98a;
+    --sft-color-warning: #f5b542;
+  }
+}
