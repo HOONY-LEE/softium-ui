@@ -19,19 +19,9 @@ export function Footer<T>(): ReactNode {
   return (
     <div className="sft-tfoot">
       <div className="sft-tfoot__left">
-        {paged && (
-          <select
-            className="sft-tfoot__pagesize"
-            value={pageSize}
-            aria-label={messages.rowsPerPage}
-            onChange={(e) => table.setPageSize(Number(e.target.value))}
-          >
-            {PAGE_SIZE_OPTIONS.map((n) => (
-              <option key={n} value={n}>
-                {messages.perPage(n)}
-              </option>
-            ))}
-          </select>
+        <span className="sft-tfoot__total">{messages.totalCount(total)}</span>
+        {selectedCount > 0 && (
+          <span className="sft-tfoot__selected">{messages.selectedCount(selectedCount)}</span>
         )}
       </div>
 
@@ -78,10 +68,20 @@ export function Footer<T>(): ReactNode {
       </div>
 
       <div className="sft-tfoot__right">
-        {selectedCount > 0 && (
-          <span className="sft-tfoot__selected">{messages.selectedCount(selectedCount)}</span>
+        {paged && (
+          <select
+            className="sft-tfoot__pagesize"
+            value={pageSize}
+            aria-label={messages.rowsPerPage}
+            onChange={(e) => table.setPageSize(Number(e.target.value))}
+          >
+            {PAGE_SIZE_OPTIONS.map((n) => (
+              <option key={n} value={n}>
+                {messages.perPage(n)}
+              </option>
+            ))}
+          </select>
         )}
-        <span className="sft-tfoot__total">{messages.totalCount(total)}</span>
       </div>
     </div>
   );

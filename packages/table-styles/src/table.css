@@ -416,6 +416,14 @@
 
 .sft-tfoot__left {
   justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-3);
+  color: var(--sft-color-text-secondary);
+}
+
+.sft-tfoot__total {
+  color: var(--sft-color-text-secondary);
 }
 
 .sft-tfoot__center {
