@@ -1,6 +1,6 @@
 import type { Locale } from './i18n';
 
-export type PageKey = 'overview' | 'table' | 'button';
+export type PageKey = 'overview' | 'table' | 'cell-types' | 'button';
 
 export interface NavItem {
   key: PageKey;
@@ -23,6 +23,7 @@ export const nav: NavGroup[] = [
     section: 'components',
     items: [
       { key: 'table', icon: '▦', ko: '데이터 테이블', en: 'Data Table' },
+      { key: 'cell-types', icon: '▤', ko: '셀 타입', en: 'Cell Types' },
       { key: 'button', icon: '⬡', ko: 'Button', en: 'Button' },
     ],
   },

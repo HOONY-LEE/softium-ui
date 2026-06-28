@@ -29,6 +29,9 @@ export type { ReactColumnDef, ResolvedReactColumn } from './types';
 // components
 export * from './components';
 
+// built-in cell renderers
+export * from './cells';
+
 // i18n
 export {
   defaultMessages,
