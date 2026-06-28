@@ -206,10 +206,19 @@
   min-width: max-content;
 }
 
-/* body row separators via inset shadow (no layout height — keeps each row exactly
-   --sft-table-row-height so virtualization math stays exact) */
-.sft-tbody .sft-tr {
+/* grid lines (configurable via the `gridLines` prop → data-grid). Drawn with inset
+   box-shadow so there's no layout shift and virtualization row math stays exact.
+   horizontal = row separators, vertical = column separators. */
+.sft-table[data-grid="both"] .sft-tbody .sft-tr,
+.sft-table[data-grid="horizontal"] .sft-tbody .sft-tr {
   box-shadow: inset 0 -1px 0 var(--sft-color-border);
+}
+
+.sft-table[data-grid="both"] .sft-th,
+.sft-table[data-grid="both"] .sft-td,
+.sft-table[data-grid="vertical"] .sft-th,
+.sft-table[data-grid="vertical"] .sft-td {
+  box-shadow: inset -1px 0 0 var(--sft-color-border);
 }
 
 /* virtualized window: the translated slice of rows inside the sized scroll area */

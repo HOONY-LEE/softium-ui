@@ -31,6 +31,8 @@ export interface TableProps<T> {
   selectable?: boolean;
   /** allow horizontal scrolling. Default false — columns shrink to fit (no x-scroll). */
   scrollX?: boolean;
+  /** which cell borders to draw. Default 'both' (rows + columns). */
+  gridLines?: 'both' | 'horizontal' | 'vertical' | 'none';
   /** max body height (px). When set, the header stays fixed and the body scrolls
    *  vertically; also enables row virtualization. */
   maxHeight?: number;
@@ -60,6 +62,7 @@ export function Table<T>({
   filterRow = false,
   selectable = false,
   scrollX = false,
+  gridLines = 'both',
   maxHeight,
   rowHeight = DEFAULT_ROW_HEIGHT,
   disableVirtualization = false,
@@ -94,7 +97,7 @@ export function Table<T>({
         {toolbar && <Toolbar actions={toolbarActions} />}
 
         {/* ── 카드: 헤더 + 바디 (the bordered scrolling grid) ── */}
-        <div className="sft-table" data-scroll-x={scrollX || undefined}>
+        <div className="sft-table" data-scroll-x={scrollX || undefined} data-grid={gridLines}>
           <div className="sft-table__scroll" role="table" ref={scrollRef} style={scrollStyle}>
             <Header columns={columns} />
             {filterRow && <FilterRow columns={columns} />}

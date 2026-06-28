@@ -14,11 +14,22 @@ export function TablePage({ locale }: { locale: Locale }) {
     persistKey: 'softium.playground.employees',
   });
 
-  // two scroll options the user can flip live
+  // options the user can flip live
   const [scrollX, setScrollX] = useState(false);
-  const [stickyHeader, setStickyHeader] = useState(true);
+  const [stickyHeader, setStickyHeader] = useState(false);
+  const [gridLines, setGridLines] = useState<'both' | 'horizontal' | 'vertical' | 'none'>('both');
 
   const t = (ko: string, en: string) => (locale === 'ko' ? ko : en);
+
+  const gridOrder = ['both', 'horizontal', 'vertical', 'none'] as const;
+  const gridLabel: Record<typeof gridLines, string> = {
+    both: t('경계선: 전체', 'Grid: both'),
+    horizontal: t('경계선: 가로', 'Grid: rows'),
+    vertical: t('경계선: 세로', 'Grid: cols'),
+    none: t('경계선: 없음', 'Grid: none'),
+  };
+  const cycleGrid = () =>
+    setGridLines((g) => gridOrder[(gridOrder.indexOf(g) + 1) % gridOrder.length] ?? 'both');
 
   return (
     <div className="page-body">
@@ -48,6 +59,9 @@ export function TablePage({ locale }: { locale: Locale }) {
           >
             {t('헤더 고정', 'Sticky header')}
           </Button>
+          <Button size="sm" variant="secondary" onClick={cycleGrid}>
+            {gridLabel[gridLines]}
+          </Button>
         </div>
       </div>
 
@@ -56,6 +70,7 @@ export function TablePage({ locale }: { locale: Locale }) {
         locale={locale}
         selectable
         scrollX={scrollX}
+        gridLines={gridLines}
         maxHeight={stickyHeader ? 360 : undefined}
         toolbarActions={
           <Button variant="primary" size="sm" iconLeft="＋">
