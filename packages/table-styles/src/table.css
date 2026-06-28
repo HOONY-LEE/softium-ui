@@ -206,19 +206,21 @@
   min-width: max-content;
 }
 
-/* grid lines (configurable via the `gridLines` prop → data-grid). Drawn with inset
-   box-shadow so there's no layout shift and virtualization row math stays exact.
-   horizontal = row separators, vertical = column separators. */
-.sft-table[data-grid="both"] .sft-tbody .sft-tr,
-.sft-table[data-grid="horizontal"] .sft-tbody .sft-tr {
+/* grid lines — independent row / column toggles. Drawn with inset box-shadow so
+   there's no layout shift and virtualization row math stays exact. */
+.sft-table[data-row-borders] .sft-tbody .sft-tr {
   box-shadow: inset 0 -1px 0 var(--sft-color-border);
 }
 
-.sft-table[data-grid="both"] .sft-th,
-.sft-table[data-grid="both"] .sft-td,
-.sft-table[data-grid="vertical"] .sft-th,
-.sft-table[data-grid="vertical"] .sft-td {
+.sft-table[data-col-borders] .sft-th,
+.sft-table[data-col-borders] .sft-td {
   box-shadow: inset -1px 0 0 var(--sft-color-border);
+}
+
+/* zebra striping (very light). `:where()` keeps its specificity below the
+   hover / selected cell rules so those still win. */
+:where(.sft-table[data-striped]) .sft-tbody .sft-tr:where(:nth-child(even)) .sft-td {
+  background: var(--sft-color-bg-subtle);
 }
 
 /* virtualized window: the translated slice of rows inside the sized scroll area */

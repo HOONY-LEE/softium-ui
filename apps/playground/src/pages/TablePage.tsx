@@ -1,5 +1,5 @@
 import { Table, useTable } from '@softium/table-react';
-import { Button } from '@softium/ui';
+import { Button, Switch } from '@softium/ui';
 import { useMemo, useState } from 'react';
 import { type Employee, employeeColumns, makeEmployees } from '../data';
 import type { Locale } from '../i18n';
@@ -14,22 +14,14 @@ export function TablePage({ locale }: { locale: Locale }) {
     persistKey: 'softium.playground.employees',
   });
 
-  // options the user can flip live
+  // every table option is an independent switch
   const [scrollX, setScrollX] = useState(false);
   const [stickyHeader, setStickyHeader] = useState(false);
-  const [gridLines, setGridLines] = useState<'both' | 'horizontal' | 'vertical' | 'none'>('both');
+  const [rowBorders, setRowBorders] = useState(true);
+  const [columnBorders, setColumnBorders] = useState(true);
+  const [striped, setStriped] = useState(false);
 
   const t = (ko: string, en: string) => (locale === 'ko' ? ko : en);
-
-  const gridOrder = ['both', 'horizontal', 'vertical', 'none'] as const;
-  const gridLabel: Record<typeof gridLines, string> = {
-    both: t('경계선: 전체', 'Grid: both'),
-    horizontal: t('경계선: 가로', 'Grid: rows'),
-    vertical: t('경계선: 세로', 'Grid: cols'),
-    none: t('경계선: 없음', 'Grid: none'),
-  };
-  const cycleGrid = () =>
-    setGridLines((g) => gridOrder[(gridOrder.indexOf(g) + 1) % gridOrder.length] ?? 'both');
 
   return (
     <div className="page-body">
@@ -43,26 +35,27 @@ export function TablePage({ locale }: { locale: Locale }) {
             )}
           </p>
         </div>
-        <div className="table-settings">
-          <span className="table-settings__label">{t('테이블 설정', 'Settings')}</span>
-          <Button
-            size="sm"
-            variant={scrollX ? 'primary' : 'secondary'}
-            onClick={() => setScrollX((v) => !v)}
-          >
-            {t('좌우 스크롤', 'H-scroll')}
-          </Button>
-          <Button
-            size="sm"
-            variant={stickyHeader ? 'primary' : 'secondary'}
-            onClick={() => setStickyHeader((v) => !v)}
-          >
-            {t('헤더 고정', 'Sticky header')}
-          </Button>
-          <Button size="sm" variant="secondary" onClick={cycleGrid}>
-            {gridLabel[gridLines]}
-          </Button>
-        </div>
+      </div>
+
+      <div className="table-settings">
+        <span className="table-settings__label">{t('테이블 설정', 'Settings')}</span>
+        <Switch
+          checked={rowBorders}
+          onChange={setRowBorders}
+          label={t('행 경계선', 'Row borders')}
+        />
+        <Switch
+          checked={columnBorders}
+          onChange={setColumnBorders}
+          label={t('열 경계선', 'Column borders')}
+        />
+        <Switch checked={striped} onChange={setStriped} label={t('줄무늬', 'Striped')} />
+        <Switch checked={scrollX} onChange={setScrollX} label={t('좌우 스크롤', 'H-scroll')} />
+        <Switch
+          checked={stickyHeader}
+          onChange={setStickyHeader}
+          label={t('헤더 고정', 'Sticky header')}
+        />
       </div>
 
       <Table
@@ -70,7 +63,9 @@ export function TablePage({ locale }: { locale: Locale }) {
         locale={locale}
         selectable
         scrollX={scrollX}
-        gridLines={gridLines}
+        rowBorders={rowBorders}
+        columnBorders={columnBorders}
+        striped={striped}
         maxHeight={stickyHeader ? 360 : undefined}
         toolbarActions={
           <Button variant="primary" size="sm" iconLeft="＋">

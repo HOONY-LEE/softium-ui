@@ -33,5 +33,8 @@ export type { HeaderProps } from './components/Header';
 export { ThemeToggle } from './components/ThemeToggle';
 export type { ThemeToggleProps } from './components/ThemeToggle';
 
+export { Switch } from './components/Switch';
+export type { SwitchProps } from './components/Switch';
+
 export { useTheme } from './hooks/useTheme';
 export type { Theme, UseThemeOptions } from './hooks/useTheme';

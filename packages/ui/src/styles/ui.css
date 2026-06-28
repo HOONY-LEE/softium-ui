@@ -84,6 +84,68 @@
   align-items: center;
 }
 
+/* ── Switch ─────────────────────────────────────────────── */
+.sft-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sft-switch--disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sft-switch__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sft-switch__track {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 20px;
+  border-radius: var(--sft-radius-full);
+  background: var(--sft-color-border-strong);
+  transition: background var(--sft-duration-fast) var(--sft-ease);
+}
+
+.sft-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--sft-shadow-sm);
+  transition: transform var(--sft-duration-fast) var(--sft-ease);
+}
+
+.sft-switch__input:checked + .sft-switch__track {
+  background: var(--sft-color-accent);
+}
+
+.sft-switch__input:checked + .sft-switch__track .sft-switch__thumb {
+  transform: translateX(14px);
+}
+
+.sft-switch__input:focus-visible + .sft-switch__track {
+  outline: 2px solid var(--sft-color-accent);
+  outline-offset: 2px;
+}
+
+.sft-switch__label {
+  font-size: var(--sft-font-size-sm);
+  color: var(--sft-color-text);
+}
+
 /* ── AppShell ───────────────────────────────────────────── */
 .sft-shell {
   display: grid;

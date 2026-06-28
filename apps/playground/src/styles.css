@@ -42,13 +42,19 @@ body {
 .table-settings {
   display: flex;
   align-items: center;
-  gap: var(--sft-space-2);
+  gap: var(--sft-space-4);
   flex-wrap: wrap;
+  padding: var(--sft-space-3) var(--sft-space-4);
+  background: var(--sft-color-surface);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
 }
 
 .table-settings__label {
   font-size: var(--sft-font-size-sm);
+  font-weight: var(--sft-font-weight-medium);
   color: var(--sft-color-text-muted);
+  margin-right: var(--sft-space-1);
 }
 
 .code-note {
