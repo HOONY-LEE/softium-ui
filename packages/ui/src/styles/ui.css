@@ -152,12 +152,23 @@
   grid-template-columns: var(--sft-sidebar-width) minmax(0, 1fr);
   height: 100vh;
   width: 100%;
+  transition: grid-template-columns var(--sft-duration-base) var(--sft-ease);
+}
+
+/* collapsed: sidebar column shrinks to 0 (content clipped) */
+.sft-shell[data-collapsed] {
+  grid-template-columns: 0 minmax(0, 1fr);
 }
 
 .sft-shell__sidebar {
   border-right: 1px solid var(--sft-color-border);
   background: var(--sft-color-bg-subtle);
+  overflow-x: hidden;
   overflow-y: auto;
+}
+
+.sft-shell[data-collapsed] .sft-shell__sidebar {
+  border-right: none;
 }
 
 .sft-shell__main {

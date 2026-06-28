@@ -20,6 +20,7 @@ const REPO_URL = 'https://github.com/HOONY-LEE/softium-ui';
 export function App() {
   const [page, setPage] = useState<PageKey>('overview');
   const [locale, setLocale] = useState<Locale>('ko');
+  const [collapsed, setCollapsed] = useState(false);
   const s = shellStrings[locale];
 
   // keep <html lang> in sync (theme is owned by <ThemeToggle>)
@@ -62,7 +63,6 @@ export function App() {
 
   const header = (
     <Header
-      title={currentTitle}
       actions={
         <>
           <div className="locale-switch" role="group" aria-label="language">
@@ -87,11 +87,21 @@ export function App() {
           </Button>
         </>
       }
-    />
+    >
+      <Button
+        size="sm"
+        variant="ghost"
+        aria-label="toggle sidebar"
+        onClick={() => setCollapsed((v) => !v)}
+      >
+        ☰
+      </Button>
+      <h1 className="sft-header__title">{currentTitle}</h1>
+    </Header>
   );
 
   return (
-    <AppShell sidebar={sidebar} header={header}>
+    <AppShell sidebar={sidebar} header={header} collapsed={collapsed}>
       {page === 'overview' && <OverviewPage locale={locale} onNavigate={setPage} />}
       {page === 'table' && <TablePage locale={locale} />}
       {page === 'button' && <ButtonsPage locale={locale} />}
