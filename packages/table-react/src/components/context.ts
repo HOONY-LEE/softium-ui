@@ -9,6 +9,9 @@ export interface TableContextValue<T> {
   selectable: boolean;
   /** horizontal scroll mode: fixed columns stay rigid (vs. shrink-to-fit) */
   scrollX: boolean;
+  /** column-resize mode: handles are only active while this is on */
+  resizeMode: boolean;
+  toggleResizeMode: () => void;
 }
 
 /** fixed width (px) of the leading selection column */

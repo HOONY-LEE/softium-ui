@@ -113,6 +113,12 @@
   color: var(--sft-color-text-secondary);
 }
 
+.sft-btn[data-active] {
+  background: var(--sft-color-accent);
+  border-color: var(--sft-color-accent);
+  color: var(--sft-color-text-on-accent);
+}
+
 .sft-panel {
   position: absolute;
   top: calc(100% + var(--sft-space-1));
@@ -322,17 +328,23 @@
 .sft-th__resizer::after {
   content: "";
   position: absolute;
-  top: 25%;
+  top: 20%;
   right: 3px;
   width: 2px;
-  height: 50%;
-  background: var(--sft-color-border-strong);
-  opacity: 0;
+  height: 60%;
+  background: var(--sft-color-accent);
+  opacity: 0.5;
   transition: opacity var(--sft-duration-fast) var(--sft-ease);
 }
 
+/* the resizer only renders in resize mode, so emphasize it there */
 .sft-th:hover .sft-th__resizer::after {
   opacity: 1;
+}
+
+/* resize-mode affordance on the whole header */
+.sft-table[data-resizing] .sft-thead {
+  background: var(--sft-color-accent-subtle);
 }
 
 /* ── filter row ─────────────────────────────────────────── */

@@ -13,7 +13,7 @@ export interface ToolbarProps {
  * route through the table instance and only ever mutate columnState.
  */
 export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
-  const { table, messages } = useTableContext<T>();
+  const { table, messages, resizeMode, toggleResizeMode } = useTableContext<T>();
   const [open, setOpen] = useState(false);
 
   // original labels by key (immutable — never overwritten by rename)
@@ -51,6 +51,15 @@ export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
       <div className="sft-toolbar__right">
         {actions}
         <div className="sft-toolbar__group">
+          <button
+            type="button"
+            className="sft-btn"
+            data-active={resizeMode || undefined}
+            aria-pressed={resizeMode}
+            onClick={toggleResizeMode}
+          >
+            ↔ {messages.resizeColumns}
+          </button>
           <button
             type="button"
             className="sft-btn"

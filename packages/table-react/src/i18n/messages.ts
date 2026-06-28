@@ -17,6 +17,8 @@ export interface TableMessages {
   columns: string;
   /** reset columnState to defaults */
   reset: string;
+  /** toggle column-width resize mode */
+  resizeColumns: string;
   /** pin submenu */
   pinLeft: string;
   pinRight: string;
@@ -47,6 +49,7 @@ export const ko: TableMessages = {
   searchPlaceholder: '검색',
   columns: '컬럼',
   reset: '초기화',
+  resizeColumns: '너비 조절',
   pinLeft: '왼쪽 고정',
   pinRight: '오른쪽 고정',
   unpin: '고정 해제',
@@ -68,6 +71,7 @@ export const en: TableMessages = {
   searchPlaceholder: 'Search',
   columns: 'Columns',
   reset: 'Reset',
+  resizeColumns: 'Resize',
   pinLeft: 'Pin left',
   pinRight: 'Pin right',
   unpin: 'Unpin',

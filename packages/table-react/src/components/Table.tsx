@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { TableInstance } from '../hooks/useTable';
 import { useVirtualRows } from '../hooks/useVirtualRows';
 import { resolveMessages } from '../i18n';
@@ -79,6 +79,9 @@ export function Table<T>({
   const rows = table.getRows();
   const paginated = table.getPageSize() > 0;
 
+  const [resizeMode, setResizeMode] = useState(false);
+  const toggleResizeMode = useCallback(() => setResizeMode((v) => !v), []);
+
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtual = useVirtualRows(scrollRef, {
     count: rows.length,
@@ -87,8 +90,15 @@ export function Table<T>({
   });
 
   const contextValue = useMemo(
-    () => ({ table, messages: resolvedMessages, selectable, scrollX }),
-    [table, resolvedMessages, selectable, scrollX],
+    () => ({
+      table,
+      messages: resolvedMessages,
+      selectable,
+      scrollX,
+      resizeMode,
+      toggleResizeMode,
+    }),
+    [table, resolvedMessages, selectable, scrollX, resizeMode, toggleResizeMode],
   );
 
   const scrollStyle = maxHeight != null ? { maxHeight } : undefined;
@@ -109,6 +119,7 @@ export function Table<T>({
           data-row-borders={rowBorders || undefined}
           data-col-borders={columnBorders || undefined}
           data-striped={striped || undefined}
+          data-resizing={resizeMode || undefined}
         >
           <div className="sft-table__scroll" role="table" ref={scrollRef} style={scrollStyle}>
             <Header columns={columns} />

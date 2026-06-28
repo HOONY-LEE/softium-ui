@@ -105,10 +105,10 @@ function HeaderCell<T>({
   onResize,
   onSort,
 }: HeaderCellProps<T>): ReactNode {
-  const { scrollX } = useTableContext<T>();
+  const { scrollX, resizeMode } = useTableContext<T>();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: column.key,
-    disabled: column.pinned !== null, // pinned columns stay put
+    disabled: column.pinned !== null || resizeMode, // no reorder while resizing
   });
   const cellRef = useRef<HTMLDivElement | null>(null);
 
@@ -156,8 +156,8 @@ function HeaderCell<T>({
         className="sft-th__label"
         {...attributes}
         {...listeners}
-        onClick={column.sortable ? (e) => onSort(e.shiftKey) : undefined}
-        data-sortable={column.sortable || undefined}
+        onClick={!resizeMode && column.sortable ? (e) => onSort(e.shiftKey) : undefined}
+        data-sortable={(!resizeMode && column.sortable) || undefined}
       >
         <span className="sft-th__text">
           {column.renderHeader
@@ -171,7 +171,7 @@ function HeaderCell<T>({
           </span>
         )}
       </span>
-      {column.resizable !== false && (
+      {resizeMode && column.resizable !== false && (
         <span
           className="sft-th__resizer"
           onPointerDown={startResize}
