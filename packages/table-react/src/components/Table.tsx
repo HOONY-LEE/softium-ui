@@ -31,11 +31,11 @@ export interface TableProps<T> {
   selectable?: boolean;
   /** allow horizontal scrolling. Default false — columns shrink to fit (no x-scroll). */
   scrollX?: boolean;
-  /** horizontal separators between rows. Default true. */
+  /** horizontal separators between rows. Default false. */
   rowBorders?: boolean;
-  /** vertical separators between columns. Default true. */
+  /** vertical separators between columns. Default false. */
   columnBorders?: boolean;
-  /** very-light alternating row background (zebra). Default false. */
+  /** very-light alternating row background (zebra). Default true. */
   striped?: boolean;
   /** max body height (px). When set, the header stays fixed and the body scrolls
    *  vertically; also enables row virtualization. */
@@ -66,9 +66,9 @@ export function Table<T>({
   filterRow = false,
   selectable = false,
   scrollX = false,
-  rowBorders = true,
-  columnBorders = true,
-  striped = false,
+  rowBorders = false,
+  columnBorders = false,
+  striped = true,
   maxHeight,
   rowHeight = DEFAULT_ROW_HEIGHT,
   disableVirtualization = false,

@@ -17,9 +17,9 @@ export function TablePage({ locale }: { locale: Locale }) {
   // every table option is an independent switch
   const [scrollX, setScrollX] = useState(false);
   const [stickyHeader, setStickyHeader] = useState(false);
-  const [rowBorders, setRowBorders] = useState(true);
-  const [columnBorders, setColumnBorders] = useState(true);
-  const [striped, setStriped] = useState(false);
+  const [rowBorders, setRowBorders] = useState(false);
+  const [columnBorders, setColumnBorders] = useState(false);
+  const [striped, setStriped] = useState(true);
 
   const t = (ko: string, en: string) => (locale === 'ko' ? ko : en);
 

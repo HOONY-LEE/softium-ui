@@ -206,15 +206,24 @@
   min-width: max-content;
 }
 
-/* grid lines — independent row / column toggles. Drawn with inset box-shadow so
-   there's no layout shift and virtualization row math stays exact. */
-.sft-table[data-row-borders] .sft-tbody .sft-tr {
+/* grid lines — independent row / column toggles. Drawn with inset box-shadow on the
+   CELLS (not the row) so opaque cell backgrounds don't occlude them. No layout shift,
+   so virtualization row math stays exact. A cell that needs both borders gets a
+   combined shadow (box-shadow rules don't stack across selectors). */
+.sft-table[data-col-borders] .sft-th {
+  box-shadow: inset -1px 0 0 var(--sft-color-border);
+}
+
+.sft-table[data-row-borders]:not([data-col-borders]) .sft-td {
   box-shadow: inset 0 -1px 0 var(--sft-color-border);
 }
 
-.sft-table[data-col-borders] .sft-th,
-.sft-table[data-col-borders] .sft-td {
+.sft-table[data-col-borders]:not([data-row-borders]) .sft-td {
   box-shadow: inset -1px 0 0 var(--sft-color-border);
+}
+
+.sft-table[data-row-borders][data-col-borders] .sft-td {
+  box-shadow: inset 0 -1px 0 var(--sft-color-border), inset -1px 0 0 var(--sft-color-border);
 }
 
 /* zebra striping (very light). `:where()` keeps its specificity below the
