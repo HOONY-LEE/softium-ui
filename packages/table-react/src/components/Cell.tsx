@@ -1,4 +1,5 @@
 import type { Row } from '@softium/table-core';
+import { Check } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ResolvedReactColumn } from '../types';
 import { useTableContext } from './context';
@@ -15,7 +16,7 @@ function formatValue(value: unknown, type: ResolvedReactColumn<unknown>['type'])
     case 'number':
       return typeof value === 'number' ? value.toLocaleString() : String(value);
     case 'boolean':
-      return value ? '✓' : '';
+      return value ? <Check size={15} /> : '';
     case 'date': {
       const d = value instanceof Date ? value : new Date(String(value));
       return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();

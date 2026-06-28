@@ -11,6 +11,7 @@ import {
   Table,
   useTable,
 } from '@softium/table-react';
+import { Archive, Copy, Pencil, Trash2 } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import type { Locale } from '../i18n';
 
@@ -115,25 +116,40 @@ export function CellTypesPage({ locale }: { locale: Locale }) {
         width: 120,
         align: 'center',
         sortable: false,
-        renderCell: ({ row }) => (
+        renderCell: () => (
           <Actions
             inline={[
-              { key: 'edit', label: t('수정', 'Edit'), icon: '✎', onClick: () => {} },
+              {
+                key: 'edit',
+                label: t('수정', 'Edit'),
+                icon: <Pencil size={15} />,
+                onClick: () => {},
+              },
               {
                 key: 'del',
                 label: t('삭제', 'Delete'),
-                icon: '🗑',
+                icon: <Trash2 size={15} />,
                 danger: true,
                 onClick: () => {},
               },
             ]}
             menu={[
-              { key: 'dup', label: t('복제', 'Duplicate'), icon: '⧉', onClick: () => {} },
-              { key: 'arch', label: t('보관', 'Archive'), icon: '🗄', onClick: () => {} },
+              {
+                key: 'dup',
+                label: t('복제', 'Duplicate'),
+                icon: <Copy size={15} />,
+                onClick: () => {},
+              },
+              {
+                key: 'arch',
+                label: t('보관', 'Archive'),
+                icon: <Archive size={15} />,
+                onClick: () => {},
+              },
               {
                 key: 'del2',
                 label: t('삭제', 'Delete'),
-                icon: '🗑',
+                icon: <Trash2 size={15} />,
                 danger: true,
                 onClick: () => {},
               },

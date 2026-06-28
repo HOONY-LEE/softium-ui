@@ -1,4 +1,5 @@
 import { Button, type ButtonVariant } from '@softium/ui';
+import { ArrowRight, Plus } from 'lucide-react';
 import type { Locale } from '../i18n';
 
 const VARIANTS: ButtonVariant[] = ['primary', 'secondary', 'ghost', 'danger'];
@@ -43,10 +44,10 @@ export function ButtonsPage({ locale }: { locale: Locale }) {
       <section className="demo-card">
         <h3 className="demo-card__title">{locale === 'ko' ? '아이콘 · 상태' : 'Icon · State'}</h3>
         <div className="demo-row">
-          <Button variant="primary" iconLeft="＋">
+          <Button variant="primary" iconLeft={<Plus size={15} />}>
             {locale === 'ko' ? '추가' : 'Add'}
           </Button>
-          <Button variant="secondary" iconRight="→">
+          <Button variant="secondary" iconRight={<ArrowRight size={15} />}>
             {locale === 'ko' ? '다음' : 'Next'}
           </Button>
           <Button variant="primary" disabled>

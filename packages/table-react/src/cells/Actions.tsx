@@ -1,3 +1,4 @@
+import { MoreHorizontal } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
 export interface ActionItem {
@@ -14,12 +15,16 @@ export interface ActionsProps {
   inline?: ActionItem[];
   /** collapsed under a ⋯ (kebab) menu */
   menu?: ActionItem[];
-  /** kebab trigger label. Default '⋯'. */
+  /** kebab trigger content. Defaults to a horizontal “more” icon. */
   kebabLabel?: ReactNode;
 }
 
 /** Actions — row action buttons: inline icon buttons and/or a ⋯ overflow menu. */
-export function Actions({ inline = [], menu = [], kebabLabel = '⋯' }: ActionsProps) {
+export function Actions({
+  inline = [],
+  menu = [],
+  kebabLabel = <MoreHorizontal size={16} />,
+}: ActionsProps) {
   const [open, setOpen] = useState(false);
 
   return (

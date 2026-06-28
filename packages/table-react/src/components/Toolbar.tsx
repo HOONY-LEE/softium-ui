@@ -1,4 +1,5 @@
 import type { PinSide } from '@softium/table-core';
+import { ArrowLeftToLine, ArrowRightToLine, Columns3, MoveHorizontal, Search } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTableContext } from './context';
 
@@ -36,7 +37,7 @@ export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
       <div className="sft-toolbar__left">
         <div className="sft-toolbar__search-wrap">
           <span className="sft-toolbar__search-icon" aria-hidden="true">
-            ⌕
+            <Search size={15} />
           </span>
           <input
             className="sft-toolbar__search"
@@ -53,20 +54,22 @@ export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
         <div className="sft-toolbar__group">
           <button
             type="button"
-            className="sft-btn"
+            className="sft-btn sft-btn--icon"
             data-active={resizeMode || undefined}
             aria-pressed={resizeMode}
             onClick={toggleResizeMode}
           >
-            ↔ {messages.resizeColumns}
+            <MoveHorizontal size={15} />
+            {messages.resizeColumns}
           </button>
           <button
             type="button"
-            className="sft-btn"
+            className="sft-btn sft-btn--icon"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
-            ⚙ {messages.columns}
+            <Columns3 size={15} />
+            {messages.columns}
           </button>
           <button type="button" className="sft-btn sft-btn--ghost" onClick={table.resetColumnState}>
             {messages.reset}
@@ -101,7 +104,7 @@ export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
                           table.setColumnPinned(s.key, pinned === 'left' ? null : 'left')
                         }
                       >
-                        ⇤
+                        <ArrowLeftToLine size={15} />
                       </PinButton>
                       <PinButton
                         active={pinned === 'right'}
@@ -110,7 +113,7 @@ export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
                           table.setColumnPinned(s.key, pinned === 'right' ? null : 'right')
                         }
                       >
-                        ⇥
+                        <ArrowRightToLine size={15} />
                       </PinButton>
                     </div>
                   </div>

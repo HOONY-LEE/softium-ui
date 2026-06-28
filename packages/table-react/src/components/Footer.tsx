@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTableContext } from './context';
 
@@ -44,7 +45,8 @@ export function Footer<T>(): ReactNode {
                 disabled={page <= 1}
                 onClick={() => table.setPage(1)}
               >
-                «<span className="sft-pager__navlabel">{messages.first}</span>
+                <ChevronsLeft size={16} />
+                <span className="sft-pager__navlabel">{messages.first}</span>
               </button>
             )}
             <button
@@ -53,7 +55,8 @@ export function Footer<T>(): ReactNode {
               disabled={page <= 1}
               onClick={() => table.setPage(page - 1)}
             >
-              ‹<span className="sft-pager__navlabel">{messages.back}</span>
+              <ChevronLeft size={16} />
+              <span className="sft-pager__navlabel">{messages.back}</span>
             </button>
 
             {leadingEllipsis && <span className="sft-pager__ellipsis">…</span>}
@@ -77,7 +80,8 @@ export function Footer<T>(): ReactNode {
               disabled={page >= pageCount}
               onClick={() => table.setPage(page + 1)}
             >
-              <span className="sft-pager__navlabel">{messages.next}</span>›
+              <span className="sft-pager__navlabel">{messages.next}</span>
+              <ChevronRight size={16} />
             </button>
             {compact && (
               <button
@@ -86,7 +90,8 @@ export function Footer<T>(): ReactNode {
                 disabled={page >= pageCount}
                 onClick={() => table.setPage(pageCount)}
               >
-                <span className="sft-pager__navlabel">{messages.last}</span>»
+                <span className="sft-pager__navlabel">{messages.last}</span>
+                <ChevronsRight size={16} />
               </button>
             )}
           </nav>

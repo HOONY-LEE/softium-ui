@@ -1,3 +1,4 @@
+import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
 export interface CodeCopyProps {
@@ -31,7 +32,7 @@ export function CodeCopy({ value, children }: CodeCopyProps) {
         aria-label="copy"
         onClick={copy}
       >
-        {copied ? '✓' : '⧉'}
+        {copied ? <Check size={14} /> : <Copy size={14} />}
       </button>
     </span>
   );

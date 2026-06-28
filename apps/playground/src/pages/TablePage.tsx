@@ -1,5 +1,6 @@
 import { Table, useTable } from '@softium/table-react';
 import { Button, Switch } from '@softium/ui';
+import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { type Employee, employeeColumns, makeEmployees } from '../data';
 import type { Locale } from '../i18n';
@@ -68,7 +69,7 @@ export function TablePage({ locale }: { locale: Locale }) {
         striped={striped}
         maxHeight={stickyHeader ? 360 : undefined}
         toolbarActions={
-          <Button variant="primary" size="sm" iconLeft="＋">
+          <Button variant="primary" size="sm" iconLeft={<Plus size={15} />}>
             {t('직원 추가', 'Add')}
           </Button>
         }

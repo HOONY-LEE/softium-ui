@@ -48,11 +48,5 @@ export const employeeColumns: ReactColumnDef<Employee>[] = [
   { key: 'position', label: '직급' },
   { key: 'salary', label: '급여 (만원)', type: 'number', align: 'right' },
   { key: 'hiredAt', label: '입사일', type: 'date' },
-  {
-    key: 'active',
-    label: '재직',
-    align: 'center',
-    width: 80,
-    renderCell: ({ value }) => (value ? '🟢' : '⚪️'),
-  },
+  { key: 'active', label: '재직', type: 'boolean', align: 'center', width: 80 },
 ];

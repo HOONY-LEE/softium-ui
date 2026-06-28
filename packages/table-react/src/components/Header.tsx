@@ -8,6 +8,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ChevronUp } from 'lucide-react';
 import { type ReactNode, type PointerEvent as ReactPointerEvent, useEffect, useRef } from 'react';
 import type { ResolvedReactColumn } from '../types';
 import { cellStyle } from './Cell';
@@ -186,7 +187,11 @@ function HeaderCell<T>({
         </span>
         {sortDirection && (
           <span className="sft-th__sort" aria-hidden="true">
-            {sortDirection === 'asc' ? '▲' : '▼'}
+            <ChevronUp
+              size={14}
+              strokeWidth={2.5}
+              style={sortDirection === 'desc' ? { transform: 'rotate(180deg)' } : undefined}
+            />
             {sortPriority ? <sup>{sortPriority}</sup> : null}
           </span>
         )}

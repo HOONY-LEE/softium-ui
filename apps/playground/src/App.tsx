@@ -8,6 +8,7 @@ import {
   SidebarSection,
   ThemeToggle,
 } from '@softium/ui';
+import { Github, PanelLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { type Locale, shellStrings } from './i18n';
 import { type PageKey, nav, navLabel } from './nav';
@@ -50,7 +51,7 @@ export function App() {
           {group.items.map((item) => (
             <SidebarItem
               key={item.key}
-              icon={item.icon}
+              icon={<item.icon size={16} />}
               active={page === item.key}
               onClick={() => setPage(item.key)}
             >
@@ -83,8 +84,13 @@ export function App() {
             </Button>
           </div>
           <ThemeToggle />
-          <Button size="sm" variant="secondary" onClick={() => window.open(REPO_URL, '_blank')}>
-            {s.github} ↗
+          <Button
+            size="sm"
+            variant="secondary"
+            iconLeft={<Github size={15} />}
+            onClick={() => window.open(REPO_URL, '_blank')}
+          >
+            {s.github}
           </Button>
         </>
       }
@@ -95,7 +101,7 @@ export function App() {
         aria-label="toggle sidebar"
         onClick={() => setCollapsed((v) => !v)}
       >
-        ☰
+        <PanelLeft size={16} />
       </Button>
       <h1 className="sft-header__title">{currentTitle}</h1>
     </Header>

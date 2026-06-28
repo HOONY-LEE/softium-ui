@@ -30,7 +30,8 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@softium/table-core": "workspace:*"
+    "@softium/table-core": "workspace:*",
+    "lucide-react": "^0.460.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.18",

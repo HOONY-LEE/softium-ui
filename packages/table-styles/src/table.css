@@ -68,6 +68,10 @@
 .sft-toolbar__search-icon {
   position: absolute;
   left: var(--sft-space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
   color: var(--sft-color-text-muted);
   pointer-events: none;
 }
@@ -111,6 +115,12 @@
 .sft-btn--ghost {
   border-color: transparent;
   color: var(--sft-color-text-secondary);
+}
+
+.sft-btn--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sft-space-1);
 }
 
 .sft-btn[data-active] {
@@ -169,6 +179,9 @@
 }
 
 .sft-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--sft-color-border);
   background: var(--sft-color-surface);
   color: var(--sft-color-text-secondary);
@@ -299,7 +312,8 @@
 
 .sft-th__sort {
   flex: none;
-  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
   color: var(--sft-color-accent);
 }
 

@@ -1,3 +1,4 @@
+import { Moon, Sun } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { type Theme, useTheme } from '../hooks/useTheme';
 import { Button } from './Button';
@@ -6,7 +7,9 @@ export interface ThemeToggleProps {
   /** optional controlled value; when omitted the component manages its own theme */
   theme?: Theme;
   onToggle?: () => void;
+  /** shown in light mode (click → dark). Defaults to a moon icon. */
   labelLight?: ReactNode;
+  /** shown in dark mode (click → light). Defaults to a sun icon. */
   labelDark?: ReactNode;
 }
 
@@ -17,8 +20,8 @@ export interface ThemeToggleProps {
 export function ThemeToggle({
   theme: controlled,
   onToggle,
-  labelLight = '🌙',
-  labelDark = '☀︎',
+  labelLight = <Moon size={16} />,
+  labelDark = <Sun size={16} />,
 }: ThemeToggleProps) {
   const internal = useTheme();
   const theme = controlled ?? internal.theme;
