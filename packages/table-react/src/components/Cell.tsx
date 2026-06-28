@@ -1,6 +1,7 @@
 import type { Row } from '@softium/table-core';
 import type { ReactNode } from 'react';
 import type { ResolvedReactColumn } from '../types';
+import { useTableContext } from './context';
 
 export interface CellProps<T> {
   row: Row<T>;
@@ -25,6 +26,7 @@ function formatValue(value: unknown, type: ResolvedReactColumn<unknown>['type'])
 }
 
 export function Cell<T>({ row, column }: CellProps<T>): ReactNode {
+  const { scrollX } = useTableContext<T>();
   const value = row.data[column.key];
 
   const content = column.renderCell
@@ -37,23 +39,25 @@ export function Cell<T>({ row, column }: CellProps<T>): ReactNode {
       role="cell"
       data-align={column.align}
       data-pinned={column.pinned ?? undefined}
-      style={cellStyle(column)}
+      style={cellStyle(column, scrollX)}
     >
       <span className="sft-td__content">{content}</span>
     </div>
   );
 }
 
-export function cellStyle<T>(column: ResolvedReactColumn<T>): React.CSSProperties {
+export function cellStyle<T>(column: ResolvedReactColumn<T>, scrollX = false): React.CSSProperties {
   const { width, minWidth, maxWidth, flex } = column;
 
   // flexible column: grows to absorb leftover space (fills the container)
   if (flex && flex > 0) {
     return { flex: `${flex} 1 ${width ?? 0}px`, minWidth: minWidth ?? 0, maxWidth };
   }
-  // fixed column
+  // fixed column — rigid in scroll mode, shrink-to-fit in the default (no-scroll) mode
   if (width) {
-    return { flex: `0 0 ${width}px`, width, minWidth: minWidth ?? width, maxWidth };
+    return scrollX
+      ? { flex: `0 0 ${width}px`, width, minWidth: minWidth ?? width, maxWidth }
+      : { flex: `0 1 ${width}px`, minWidth: minWidth ?? 64, maxWidth };
   }
   // width-less column behaves as flex:1 (legacy default)
   return { flex: '1 1 0', minWidth: minWidth ?? 80, maxWidth };

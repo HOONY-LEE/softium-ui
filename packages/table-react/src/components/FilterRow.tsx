@@ -14,7 +14,7 @@ export interface FilterRowProps<T> {
  * from the global search box. Clearing the input removes the filter.
  */
 export function FilterRow<T>({ columns }: FilterRowProps<T>): ReactNode {
-  const { table, messages, selectable } = useTableContext<T>();
+  const { table, messages, selectable, scrollX } = useTableContext<T>();
   const filters = table.getFilters();
   const valueByKey = new Map(filters.map((f) => [f.columnKey, f.value]));
 
@@ -33,7 +33,7 @@ export function FilterRow<T>({ columns }: FilterRowProps<T>): ReactNode {
             key={column.key}
             className="sft-filter-cell"
             data-pinned={column.pinned ?? undefined}
-            style={cellStyle(column)}
+            style={cellStyle(column, scrollX)}
           >
             {column.filterable && (
               <input

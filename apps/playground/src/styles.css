@@ -39,6 +39,18 @@ body {
   color: var(--sft-color-text-secondary);
 }
 
+.table-settings {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+  flex-wrap: wrap;
+}
+
+.table-settings__label {
+  font-size: var(--sft-font-size-sm);
+  color: var(--sft-color-text-muted);
+}
+
 .code-note {
   margin: 0;
   color: var(--sft-color-text-muted);

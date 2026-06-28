@@ -1,11 +1,10 @@
 import { Table, useTable } from '@softium/table-react';
 import { Button } from '@softium/ui';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { type Employee, employeeColumns, makeEmployees } from '../data';
 import type { Locale } from '../i18n';
 
 export function TablePage({ locale }: { locale: Locale }) {
-  // fixed dataset; paging (page-size selector lives in the footer) keeps the DOM light
   const data = useMemo<Employee[]>(() => makeEmployees(10000), []);
   const table = useTable({
     data,
@@ -15,16 +14,40 @@ export function TablePage({ locale }: { locale: Locale }) {
     persistKey: 'softium.playground.employees',
   });
 
+  // two scroll options the user can flip live
+  const [scrollX, setScrollX] = useState(false);
+  const [stickyHeader, setStickyHeader] = useState(true);
+
+  const t = (ko: string, en: string) => (locale === 'ko' ? ko : en);
+
   return (
     <div className="page-body">
       <div className="page-head">
         <div>
-          <h2 className="page-title">{locale === 'ko' ? '데이터 테이블' : 'Data Table'}</h2>
+          <h2 className="page-title">{t('데이터 테이블', 'Data Table')}</h2>
           <p className="page-desc">
-            {locale === 'ko'
-              ? '정렬·필터·검색·컬럼 조작·선택·페이지네이션을 한 컴포넌트로. (전체 10,000행)'
-              : 'Sort, filter, search, column ops, selection, pagination — one component. (10,000 rows)'}
+            {t(
+              '정렬·필터·검색·컬럼 조작·선택·페이지네이션을 한 컴포넌트로. (전체 10,000행)',
+              'Sort, filter, search, column ops, selection, pagination — one component. (10,000 rows)',
+            )}
           </p>
+        </div>
+        <div className="table-settings">
+          <span className="table-settings__label">{t('테이블 설정', 'Settings')}</span>
+          <Button
+            size="sm"
+            variant={scrollX ? 'primary' : 'secondary'}
+            onClick={() => setScrollX((v) => !v)}
+          >
+            {t('좌우 스크롤', 'H-scroll')}
+          </Button>
+          <Button
+            size="sm"
+            variant={stickyHeader ? 'primary' : 'secondary'}
+            onClick={() => setStickyHeader((v) => !v)}
+          >
+            {t('헤더 고정', 'Sticky header')}
+          </Button>
         </div>
       </div>
 
@@ -32,9 +55,11 @@ export function TablePage({ locale }: { locale: Locale }) {
         table={table}
         locale={locale}
         selectable
+        scrollX={scrollX}
+        maxHeight={stickyHeader ? 360 : undefined}
         toolbarActions={
           <Button variant="primary" size="sm" iconLeft="＋">
-            {locale === 'ko' ? '직원 추가' : 'Add'}
+            {t('직원 추가', 'Add')}
           </Button>
         }
       />

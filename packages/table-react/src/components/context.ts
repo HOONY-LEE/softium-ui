@@ -7,6 +7,8 @@ export interface TableContextValue<T> {
   messages: TableMessages;
   /** whether a leading selection checkbox column is rendered */
   selectable: boolean;
+  /** horizontal scroll mode: fixed columns stay rigid (vs. shrink-to-fit) */
+  scrollX: boolean;
 }
 
 /** fixed width (px) of the leading selection column */

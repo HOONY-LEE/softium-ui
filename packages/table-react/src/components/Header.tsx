@@ -20,7 +20,7 @@ export interface HeaderProps<T> {
 const MIN_RESIZE_WIDTH = 48;
 
 export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
-  const { table, selectable } = useTableContext<T>();
+  const { table, selectable, scrollX } = useTableContext<T>();
   const sortRules = table.getSortRules();
 
   const pageRows = table.getRows();
@@ -105,13 +105,14 @@ function HeaderCell<T>({
   onResize,
   onSort,
 }: HeaderCellProps<T>): ReactNode {
+  const { scrollX } = useTableContext<T>();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: column.key,
     disabled: column.pinned !== null, // pinned columns stay put
   });
   const cellRef = useRef<HTMLDivElement | null>(null);
 
-  const base = cellStyle(column);
+  const base = cellStyle(column, scrollX);
   const style: React.CSSProperties = {
     ...base,
     transform: CSS.Transform.toString(transform),

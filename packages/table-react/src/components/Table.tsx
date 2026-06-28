@@ -29,11 +29,14 @@ export interface TableProps<T> {
   filterRow?: boolean;
   /** render a leading selection checkbox column. Default false. */
   selectable?: boolean;
-  /** fixed viewport height (px). Enables vertical scroll + row virtualization. */
-  height?: number;
+  /** allow horizontal scrolling. Default false — columns shrink to fit (no x-scroll). */
+  scrollX?: boolean;
+  /** max body height (px). When set, the header stays fixed and the body scrolls
+   *  vertically; also enables row virtualization. */
+  maxHeight?: number;
   /** row height in px, must match the CSS row height. Default 40. */
   rowHeight?: number;
-  /** opt out of virtualization even when `height` is set. Default false. */
+  /** opt out of virtualization even when `maxHeight` is set. Default false. */
   disableVirtualization?: boolean;
   /** extra class on the root element */
   className?: string;
@@ -56,7 +59,8 @@ export function Table<T>({
   toolbarActions,
   filterRow = false,
   selectable = false,
-  height,
+  scrollX = false,
+  maxHeight,
   rowHeight = DEFAULT_ROW_HEIGHT,
   disableVirtualization = false,
   className,
@@ -65,22 +69,20 @@ export function Table<T>({
   const columns = table.getRenderColumns();
   const rows = table.getRows();
   const paginated = table.getPageSize() > 0;
-  // a flexible column makes the table fill its container instead of leaving a right gap
-  const fill = columns.some((c) => c.flex && c.flex > 0);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtual = useVirtualRows(scrollRef, {
     count: rows.length,
     rowHeight,
-    enabled: height != null && !disableVirtualization,
+    enabled: maxHeight != null && !disableVirtualization,
   });
 
   const contextValue = useMemo(
-    () => ({ table, messages: resolvedMessages, selectable }),
-    [table, resolvedMessages, selectable],
+    () => ({ table, messages: resolvedMessages, selectable, scrollX }),
+    [table, resolvedMessages, selectable, scrollX],
   );
 
-  const scrollStyle = height != null ? { maxHeight: height } : undefined;
+  const scrollStyle = maxHeight != null ? { maxHeight } : undefined;
 
   const showFooter = paginated || selectable;
 
@@ -92,7 +94,7 @@ export function Table<T>({
         {toolbar && <Toolbar actions={toolbarActions} />}
 
         {/* ── 카드: 헤더 + 바디 (the bordered scrolling grid) ── */}
-        <div className="sft-table" data-fill={fill || undefined}>
+        <div className="sft-table" data-scroll-x={scrollX || undefined}>
           <div className="sft-table__scroll" role="table" ref={scrollRef} style={scrollStyle}>
             <Header columns={columns} />
             {filterRow && <FilterRow columns={columns} />}

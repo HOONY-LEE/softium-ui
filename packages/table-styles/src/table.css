@@ -179,25 +179,31 @@
   color: var(--sft-color-text-on-accent);
 }
 
-/* scroll container — both axes; a maxHeight (set by the height prop) enables
-   vertical scroll + virtualization, with the sticky header/filter row pinned. */
+/* scroll container.
+   default: NO horizontal scroll (columns shrink to fit). Vertical scroll only when
+   maxHeight is set — then the sticky header/filter row stay pinned and the body scrolls. */
 .sft-table__scroll {
   width: 100%;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* opt-in horizontal scroll */
+.sft-table[data-scroll-x] .sft-table__scroll {
+  overflow-x: auto;
 }
 
 /* rows are flex tracks; cells size via flex-basis (see cellStyle).
-   default: size to content (horizontal scroll when columns exceed the container). */
+   default (fit): the row is exactly the container width — columns shrink/grow to fit. */
 .sft-tr {
   display: flex;
   align-items: stretch;
-  min-width: max-content;
+  min-width: 100%;
 }
 
-/* fill mode (a column has flex): the row fills 100% so the flex column absorbs
-   the leftover space — no empty gap on the right. */
-.sft-table[data-fill] .sft-tr {
-  min-width: 100%;
+/* scroll mode: the row sizes to content so it can overflow and scroll. */
+.sft-table[data-scroll-x] .sft-tr {
+  min-width: max-content;
 }
 
 /* body row separators via inset shadow (no layout height — keeps each row exactly
