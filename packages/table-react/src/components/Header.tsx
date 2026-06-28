@@ -105,7 +105,8 @@ function HeaderCell<T>({
   onResize,
   onSort,
 }: HeaderCellProps<T>): ReactNode {
-  const { scrollX, resizeMode } = useTableContext<T>();
+  const { scrollX, resizeMode, messages } = useTableContext<T>();
+  const autoFitHint = messages.autoFitHint;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: column.key,
     disabled: column.pinned !== null || resizeMode, // no reorder while resizing
@@ -139,6 +140,24 @@ function HeaderCell<T>({
     window.addEventListener('pointerup', onUp);
   }
 
+  /** double-click the handle → fit this column to the widest visible cell + header */
+  function autoFit() {
+    const root = cellRef.current?.closest('.sft-table');
+    if (!root) return;
+    const key = window.CSS?.escape ? window.CSS.escape(column.key) : column.key;
+    let widest = 0;
+    const head = root.querySelector(`.sft-th[data-col-key="${key}"] .sft-th__text`);
+    if (head instanceof HTMLElement) widest = head.scrollWidth;
+    for (const el of root.querySelectorAll(`.sft-td[data-col-key="${key}"] .sft-td__content`)) {
+      if (el instanceof HTMLElement) widest = Math.max(widest, el.scrollWidth);
+    }
+    if (widest === 0) return;
+    const min = column.minWidth ?? MIN_RESIZE_WIDTH;
+    const max = column.maxWidth ?? 480;
+    // + horizontal cell padding (2×12) + a little breathing room for sort glyphs
+    onResize(Math.min(max, Math.max(min, Math.ceil(widest + 32))));
+  }
+
   return (
     <div
       ref={(node) => {
@@ -147,6 +166,7 @@ function HeaderCell<T>({
       }}
       className="sft-th"
       role="columnheader"
+      data-col-key={column.key}
       data-align={column.align}
       data-pinned={column.pinned ?? undefined}
       data-dragging={isDragging || undefined}
@@ -175,6 +195,8 @@ function HeaderCell<T>({
         <span
           className="sft-th__resizer"
           onPointerDown={startResize}
+          onDoubleClick={autoFit}
+          title={autoFitHint}
           aria-hidden="true"
           data-testid={`resize-${column.key}`}
         />

@@ -10,7 +10,7 @@
  * `columnDefs` and the input `columnState` are never mutated.
  */
 
-import type { ColumnDef, ColumnState, PinSide, ResolvedColumn } from '../types';
+import type { ColumnDef, ColumnState, ColumnType, PinSide, ResolvedColumn } from '../types';
 
 /** Build the default view state for a set of column defs (order = declaration order). */
 export function createInitialColumnState<T, TNode>(defs: ColumnDef<T, TNode>[]): ColumnState[] {
@@ -85,17 +85,21 @@ export function resolveColumns<T, TNode>(
     const order = s?.order ?? index;
     const pinned = s?.pinned ?? null;
     const labelOverride = s?.labelOverride;
+    const type = def.type ?? 'text';
+    // width precedence: user override → def.width → type-based smart default.
+    // flex columns stay width-less (the flex basis drives them).
+    const width = s?.width ?? def.width ?? (def.flex ? undefined : defaultWidthForType(type));
 
     resolved.push({
       key: def.key,
       label: def.label,
       displayLabel: labelOverride && labelOverride.length > 0 ? labelOverride : def.label,
-      type: def.type ?? 'text',
+      type,
       align: def.align ?? defaultAlign(def.type),
       order,
       visible: true,
       pinned,
-      width: s?.width ?? def.width,
+      width,
       minWidth: def.minWidth,
       maxWidth: def.maxWidth,
       flex: def.flex,
@@ -121,4 +125,24 @@ export function resolveColumns<T, TNode>(
 /** Numbers default to right alignment; everything else to left. */
 function defaultAlign(type: ColumnDef<unknown>['type']): 'left' | 'right' {
   return type === 'number' ? 'right' : 'left';
+}
+
+/**
+ * Type-based smart default width (px) for columns that declare neither a width nor
+ * flex. Content width is mostly a function of type — this is the predictable, no-scan
+ * starting point. Users can resize (double-click a handle to auto-fit) and persist.
+ */
+function defaultWidthForType(type: ColumnType): number {
+  switch (type) {
+    case 'boolean':
+      return 72;
+    case 'number':
+      return 120;
+    case 'date':
+      return 128;
+    case 'select':
+      return 150;
+    default:
+      return 140; // text / custom
+  }
 }

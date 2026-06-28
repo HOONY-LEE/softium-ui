@@ -37,6 +37,7 @@ export function Cell<T>({ row, column }: CellProps<T>): ReactNode {
     <div
       className="sft-td"
       role="cell"
+      data-col-key={column.key}
       data-align={column.align}
       data-pinned={column.pinned ?? undefined}
       style={cellStyle(column, scrollX)}

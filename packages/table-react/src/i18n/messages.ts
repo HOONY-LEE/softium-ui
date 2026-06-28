@@ -19,6 +19,8 @@ export interface TableMessages {
   reset: string;
   /** toggle column-width resize mode */
   resizeColumns: string;
+  /** tooltip on the resize handle hinting double-click auto-fit */
+  autoFitHint: string;
   /** pin submenu */
   pinLeft: string;
   pinRight: string;
@@ -50,6 +52,7 @@ export const ko: TableMessages = {
   columns: '컬럼',
   reset: '초기화',
   resizeColumns: '너비 조절',
+  autoFitHint: '더블클릭: 너비 자동 맞춤',
   pinLeft: '왼쪽 고정',
   pinRight: '오른쪽 고정',
   unpin: '고정 해제',
@@ -72,6 +75,7 @@ export const en: TableMessages = {
   columns: 'Columns',
   reset: 'Reset',
   resizeColumns: 'Resize',
+  autoFitHint: 'Double-click: auto-fit',
   pinLeft: 'Pin left',
   pinRight: 'Pin right',
   unpin: 'Unpin',
