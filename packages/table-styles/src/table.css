@@ -426,6 +426,16 @@
   text-align: center;
 }
 
+/* the header label is flex:1 (fills the cell), so align it via its own
+   justify-content — otherwise the header text stays left regardless of align. */
+.sft-th[data-align="right"] .sft-th__label {
+  justify-content: flex-end;
+}
+
+.sft-th[data-align="center"] .sft-th__label {
+  justify-content: center;
+}
+
 /* ── row interaction ────────────────────────────────────── */
 .sft-tbody .sft-tr:hover .sft-td {
   background: var(--sft-color-bg-hover);
