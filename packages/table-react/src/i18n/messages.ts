@@ -15,6 +15,16 @@ export interface TableMessages {
   searchPlaceholder: string;
   /** column-visibility / settings panel trigger */
   columns: string;
+  /** footer settings menu */
+  settings: string;
+  editColumns: string;
+  editTable: string;
+  /** table display setting labels */
+  settingRowBorders: string;
+  settingColumnBorders: string;
+  settingStriped: string;
+  settingScrollX: string;
+  settingStickyHeader: string;
   /** reset columnState to defaults */
   reset: string;
   /** toggle column-width resize mode */
@@ -54,6 +64,14 @@ export const ko: TableMessages = {
   emptyText: '표시할 데이터가 없습니다',
   searchPlaceholder: '검색',
   columns: '컬럼',
+  settings: '설정',
+  editColumns: '컬럼 편집',
+  editTable: '테이블 편집',
+  settingRowBorders: '행 경계선',
+  settingColumnBorders: '열 경계선',
+  settingStriped: '줄무늬',
+  settingScrollX: '좌우 스크롤',
+  settingStickyHeader: '헤더 고정',
   reset: '초기화',
   resizeColumns: '너비 조절',
   autoFitHint: '더블클릭: 너비 자동 맞춤',
@@ -80,6 +98,14 @@ export const en: TableMessages = {
   emptyText: 'No data to display',
   searchPlaceholder: 'Search',
   columns: 'Columns',
+  settings: 'Settings',
+  editColumns: 'Edit columns',
+  editTable: 'Edit table',
+  settingRowBorders: 'Row borders',
+  settingColumnBorders: 'Column borders',
+  settingStriped: 'Striped',
+  settingScrollX: 'Horizontal scroll',
+  settingStickyHeader: 'Sticky header',
   reset: 'Reset',
   resizeColumns: 'Resize',
   autoFitHint: 'Double-click: auto-fit',

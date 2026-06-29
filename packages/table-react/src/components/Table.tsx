@@ -9,7 +9,7 @@ import { FilterRow } from './FilterRow';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { Toolbar } from './Toolbar';
-import { TableContext } from './context';
+import { TableContext, type TableSettings } from './context';
 
 const DEFAULT_ROW_HEIGHT = 40;
 
@@ -77,16 +77,30 @@ export function Table<T>({
   const resolvedMessages = useMemo(() => resolveMessages(locale, messages), [locale, messages]);
   const columns = table.getRenderColumns();
   const rows = table.getRows();
-  const paginated = table.getPageSize() > 0;
 
   const [resizeMode, setResizeMode] = useState(false);
   const toggleResizeMode = useCallback(() => setResizeMode((v) => !v), []);
+
+  // display settings — seeded by props, then editable via the footer settings menu
+  const [settings, setSettings] = useState<TableSettings>(() => ({
+    rowBorders,
+    columnBorders,
+    striped,
+    scrollX,
+    stickyHeader: maxHeight != null,
+  }));
+  const setSetting = useCallback(
+    (key: keyof TableSettings, value: boolean) => setSettings((s) => ({ ...s, [key]: value })),
+    [],
+  );
+
+  const effectiveMaxHeight = settings.stickyHeader ? (maxHeight ?? 480) : undefined;
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtual = useVirtualRows(scrollRef, {
     count: rows.length,
     rowHeight,
-    enabled: maxHeight != null && !disableVirtualization,
+    enabled: effectiveMaxHeight != null && !disableVirtualization,
   });
 
   const contextValue = useMemo(
@@ -94,16 +108,16 @@ export function Table<T>({
       table,
       messages: resolvedMessages,
       selectable,
-      scrollX,
+      scrollX: settings.scrollX,
       resizeMode,
       toggleResizeMode,
+      settings,
+      setSetting,
     }),
-    [table, resolvedMessages, selectable, scrollX, resizeMode, toggleResizeMode],
+    [table, resolvedMessages, selectable, resizeMode, toggleResizeMode, settings, setSetting],
   );
 
-  const scrollStyle = maxHeight != null ? { maxHeight } : undefined;
-
-  const showFooter = paginated || selectable;
+  const scrollStyle = effectiveMaxHeight != null ? { maxHeight: effectiveMaxHeight } : undefined;
 
   // four separated regions: Toolbar / [Header + Body card] / Footer
   return (
@@ -115,10 +129,10 @@ export function Table<T>({
         {/* ── 카드: 헤더 + 바디 (the bordered scrolling grid) ── */}
         <div
           className="sft-table"
-          data-scroll-x={scrollX || undefined}
-          data-row-borders={rowBorders || undefined}
-          data-col-borders={columnBorders || undefined}
-          data-striped={striped || undefined}
+          data-scroll-x={settings.scrollX || undefined}
+          data-row-borders={settings.rowBorders || undefined}
+          data-col-borders={settings.columnBorders || undefined}
+          data-striped={settings.striped || undefined}
           data-resizing={resizeMode || undefined}
         >
           <div className="sft-table__scroll" role="table" ref={scrollRef} style={scrollStyle}>
@@ -133,8 +147,8 @@ export function Table<T>({
           </div>
         </div>
 
-        {/* ── 푸터 (footer): page size (left) · pagination (center) · totals (right) ── */}
-        {showFooter && <Footer />}
+        {/* ── 푸터 (footer): totals · pagination · page-size + settings menu ── */}
+        <Footer />
       </div>
     </TableContext.Provider>
   );

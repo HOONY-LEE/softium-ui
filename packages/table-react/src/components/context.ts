@@ -2,6 +2,15 @@ import { createContext, useContext } from 'react';
 import type { TableInstance } from '../hooks/useTable';
 import type { TableMessages } from '../i18n';
 
+/** runtime display settings, editable from the footer settings menu */
+export interface TableSettings {
+  rowBorders: boolean;
+  columnBorders: boolean;
+  striped: boolean;
+  scrollX: boolean;
+  stickyHeader: boolean;
+}
+
 export interface TableContextValue<T> {
   table: TableInstance<T>;
   messages: TableMessages;
@@ -12,6 +21,9 @@ export interface TableContextValue<T> {
   /** column-resize mode: handles are only active while this is on */
   resizeMode: boolean;
   toggleResizeMode: () => void;
+  /** live display settings + setter (footer settings popups) */
+  settings: TableSettings;
+  setSetting: (key: keyof TableSettings, value: boolean) => void;
 }
 
 /** fixed width (px) of the leading selection column */

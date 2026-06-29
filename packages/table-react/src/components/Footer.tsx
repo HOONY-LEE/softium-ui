@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Settings } from './Settings';
 import { useTableContext } from './context';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
@@ -99,6 +100,7 @@ export function Footer<T>(): ReactNode {
       </div>
 
       <div className="sft-tfoot__right">
+        <Settings />
         {paged && (
           <select
             className="sft-tfoot__pagesize"
