@@ -95,7 +95,7 @@ export function resolveColumns<T, TNode>(
       label: def.label,
       displayLabel: labelOverride && labelOverride.length > 0 ? labelOverride : def.label,
       type,
-      align: def.align ?? defaultAlign(def.type),
+      align: s?.align ?? def.align ?? defaultAlign(def.type),
       order,
       visible: true,
       pinned,

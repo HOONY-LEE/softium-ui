@@ -50,6 +50,8 @@ export interface ColumnState {
   order: number;
   width?: number;
   pinned?: PinSide;
+  /** user-chosen text alignment override (falls back to ColumnDef.align) */
+  align?: ColumnAlign;
   /** user-renamed column header. Kept SEPARATE from `label` so data mapping never breaks. */
   labelOverride?: string;
 }

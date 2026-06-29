@@ -25,6 +25,10 @@ export interface TableMessages {
   pinLeft: string;
   pinRight: string;
   unpin: string;
+  /** text-alignment controls */
+  alignLeft: string;
+  alignCenter: string;
+  alignRight: string;
   /** hide a single column */
   hideColumn: string;
   /** rename a column (labelOverride) */
@@ -56,6 +60,9 @@ export const ko: TableMessages = {
   pinLeft: '왼쪽 고정',
   pinRight: '오른쪽 고정',
   unpin: '고정 해제',
+  alignLeft: '왼쪽 정렬',
+  alignCenter: '가운데 정렬',
+  alignRight: '오른쪽 정렬',
   hideColumn: '컬럼 숨기기',
   renameColumn: '이름 변경',
   selectedCount: (count) => `${count}개 선택됨`,
@@ -79,6 +86,9 @@ export const en: TableMessages = {
   pinLeft: 'Pin left',
   pinRight: 'Pin right',
   unpin: 'Unpin',
+  alignLeft: 'Align left',
+  alignCenter: 'Align center',
+  alignRight: 'Align right',
   hideColumn: 'Hide column',
   renameColumn: 'Rename',
   selectedCount: (count) => `${count} selected`,

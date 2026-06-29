@@ -14,6 +14,7 @@ export {
 export {
   moveColumn,
   patchColumnState,
+  setColumnAlign,
   setColumnLabelOverride,
   setColumnPinned,
   setColumnVisible,

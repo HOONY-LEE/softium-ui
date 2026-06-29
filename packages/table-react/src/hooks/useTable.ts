@@ -13,6 +13,7 @@
  */
 
 import {
+  type ColumnAlign,
   type ColumnSort,
   type ColumnState,
   type ColumnType,
@@ -29,6 +30,7 @@ import {
   paginate,
   reconcileColumnState,
   resolveColumns,
+  setColumnAlign,
   setColumnLabelOverride,
   setColumnPinned,
   setColumnVisible,
@@ -77,6 +79,8 @@ export interface TableInstance<T> {
   setColumnPinned: (key: string, pinned: PinSide) => void;
   /** set an explicit pixel width (from a resize handle) */
   setColumnWidth: (key: string, width: number) => void;
+  /** override a column's text alignment (left / center / right) */
+  setColumnAlign: (key: string, align: ColumnAlign) => void;
   /** rename for display only — writes labelOverride, never the original label */
   renameColumn: (key: string, labelOverride: string | undefined) => void;
 
@@ -233,6 +237,11 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
     (key: string, width: number) => setColumnStateRaw((prev) => setColumnWidth(prev, key, width)),
     [],
   );
+  const setAlign = useCallback(
+    (key: string, align: ColumnAlign) =>
+      setColumnStateRaw((prev) => setColumnAlign(prev, key, align)),
+    [],
+  );
   const rename = useCallback(
     (key: string, labelOverride: string | undefined) =>
       setColumnStateRaw((prev) => setColumnLabelOverride(prev, key, labelOverride)),
@@ -300,6 +309,7 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
       moveColumn: move,
       setColumnPinned: setPinned,
       setColumnWidth: setWidth,
+      setColumnAlign: setAlign,
       renameColumn: rename,
       getSortRules: () => sortRules,
       toggleSort: cycleSort,
@@ -336,6 +346,7 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
       move,
       setPinned,
       setWidth,
+      setAlign,
       rename,
       sortRules,
       cycleSort,

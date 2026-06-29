@@ -8,7 +8,7 @@
  *   - renaming writes `labelOverride`, NEVER the immutable `label`
  */
 
-import type { ColumnState, PinSide } from '../types';
+import type { ColumnAlign, ColumnState, PinSide } from '../types';
 
 /** Apply a partial patch to one column's state, returning a new array. */
 export function patchColumnState(
@@ -33,6 +33,14 @@ export function setColumnPinned(state: ColumnState[], key: string, pinned: PinSi
 
 export function setColumnWidth(state: ColumnState[], key: string, width: number): ColumnState[] {
   return patchColumnState(state, key, { width: Math.max(0, Math.round(width)) });
+}
+
+export function setColumnAlign(
+  state: ColumnState[],
+  key: string,
+  align: ColumnAlign,
+): ColumnState[] {
+  return patchColumnState(state, key, { align });
 }
 
 /**

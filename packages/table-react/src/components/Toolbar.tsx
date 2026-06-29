@@ -1,5 +1,14 @@
-import type { PinSide } from '@softium/table-core';
-import { ArrowLeftToLine, ArrowRightToLine, Columns3, MoveHorizontal, Search } from 'lucide-react';
+import type { ColumnAlign, PinSide } from '@softium/table-core';
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  ArrowLeftToLine,
+  ArrowRightToLine,
+  Columns3,
+  MoveHorizontal,
+  Search,
+} from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTableContext } from './context';
 
@@ -17,10 +26,18 @@ export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
   const { table, messages, resizeMode, toggleResizeMode } = useTableContext<T>();
   const [open, setOpen] = useState(false);
 
-  // original labels by key (immutable — never overwritten by rename)
+  // original labels + default alignment by key (immutable)
   const labelByKey = useMemo(() => {
     const map = new Map<string, string>();
     for (const def of table.columns) map.set(def.key, def.label);
+    return map;
+  }, [table.columns]);
+
+  const defAlignByKey = useMemo(() => {
+    const map = new Map<string, ColumnAlign>();
+    for (const def of table.columns) {
+      map.set(def.key, def.align ?? (def.type === 'number' ? 'right' : 'left'));
+    }
     return map;
   }, [table.columns]);
 
@@ -80,6 +97,7 @@ export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
               {ordered.map((s) => {
                 const original = labelByKey.get(s.key) ?? s.key;
                 const pinned: PinSide = s.pinned ?? null;
+                const align: ColumnAlign = s.align ?? defAlignByKey.get(s.key) ?? 'left';
                 return (
                   <div className="sft-panel__row" key={s.key}>
                     <label className="sft-panel__visible">
@@ -96,6 +114,29 @@ export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
                       placeholder={original}
                       onChange={(e) => table.renameColumn(s.key, e.target.value)}
                     />
+                    <div className="sft-panel__aligns">
+                      <PinButton
+                        active={align === 'left'}
+                        title={messages.alignLeft}
+                        onClick={() => table.setColumnAlign(s.key, 'left')}
+                      >
+                        <AlignLeft size={15} />
+                      </PinButton>
+                      <PinButton
+                        active={align === 'center'}
+                        title={messages.alignCenter}
+                        onClick={() => table.setColumnAlign(s.key, 'center')}
+                      >
+                        <AlignCenter size={15} />
+                      </PinButton>
+                      <PinButton
+                        active={align === 'right'}
+                        title={messages.alignRight}
+                        onClick={() => table.setColumnAlign(s.key, 'right')}
+                      >
+                        <AlignRight size={15} />
+                      </PinButton>
+                    </div>
                     <div className="sft-panel__pins">
                       <PinButton
                         active={pinned === 'left'}
