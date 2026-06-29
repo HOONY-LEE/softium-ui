@@ -169,6 +169,66 @@ body {
   color: var(--sft-color-text-secondary);
 }
 
+/* ── cell types catalog ─────────────────────────────────── */
+.celltypes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sft-space-3);
+}
+
+.celltype {
+  background: var(--sft-color-surface);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-lg);
+  padding: var(--sft-space-4);
+}
+
+.celltype__head {
+  margin-bottom: var(--sft-space-4);
+}
+
+.celltype__title {
+  margin: 0;
+  font-size: var(--sft-font-size-lg);
+  font-weight: var(--sft-font-weight-bold);
+  color: var(--sft-color-text);
+}
+
+.celltype__desc {
+  margin: var(--sft-space-1) 0 0;
+  color: var(--sft-color-text-secondary);
+  max-width: 70ch;
+}
+
+.celltype__variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sft-space-3);
+}
+
+.celltype__variant {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sft-space-2);
+  min-width: 140px;
+}
+
+.celltype__demo {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--sft-space-2) var(--sft-space-3);
+  background: var(--sft-color-bg);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
+}
+
+.celltype__vlabel {
+  font-family: var(--sft-font-family-mono);
+  font-size: var(--sft-font-size-xs);
+  color: var(--sft-color-text-muted);
+}
+
 /* ── button demo page ───────────────────────────────────── */
 .demo-card {
   background: var(--sft-color-surface);
