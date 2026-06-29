@@ -47,6 +47,84 @@
   background: var(--sft-color-bg-hover);
 }
 
+/* ── IconText (icon + label, no pill) ───────────────────── */
+.sft-icontext {
+  --tone: var(--sft-color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sft-space-1);
+}
+.sft-icontext[data-tone="accent"] {
+  --tone: var(--sft-color-accent);
+}
+.sft-icontext[data-tone="success"] {
+  --tone: var(--sft-color-success);
+}
+.sft-icontext[data-tone="warning"] {
+  --tone: var(--sft-color-warning);
+}
+.sft-icontext[data-tone="danger"] {
+  --tone: var(--sft-color-danger);
+}
+.sft-icontext[data-tone="info"] {
+  --tone: var(--sft-color-text);
+}
+
+.sft-icontext__icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--tone);
+}
+
+.sft-icontext__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sft-icontext[data-tint] .sft-icontext__label {
+  color: var(--tone);
+  font-weight: var(--sft-font-weight-medium);
+}
+
+/* ── links (phone / email) ──────────────────────────────── */
+.sft-link {
+  color: var(--sft-color-accent);
+  text-decoration: none;
+}
+.sft-link:hover {
+  text-decoration: underline;
+}
+
+.sft-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sft-phone {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── AccountNumber ──────────────────────────────────────── */
+.sft-account {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sft-space-2);
+}
+.sft-account__bank {
+  color: var(--sft-color-text-muted);
+  font-size: var(--sft-font-size-sm);
+}
+.sft-account__num {
+  font-family: var(--sft-font-family-mono);
+  font-size: var(--sft-font-size-sm);
+  letter-spacing: 0.02em;
+}
+
+/* ── DateText ───────────────────────────────────────────── */
+.sft-date {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── NumberText ─────────────────────────────────────────── */
 .sft-num {
   display: inline-flex;

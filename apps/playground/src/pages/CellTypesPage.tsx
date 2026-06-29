@@ -1,13 +1,32 @@
 import {
+  AccountNumber,
   Actions,
   Avatar,
   BooleanDot,
   Chip,
   CodeCopy,
+  DateText,
+  Email,
   Gauge,
+  IconText,
   NumberText,
+  Phone,
 } from '@softium/table-react';
-import { Archive, Copy, Pencil, Trash2 } from 'lucide-react';
+import {
+  Archive,
+  ArrowDown,
+  ArrowUp,
+  Bug,
+  ChevronsUp,
+  CircleCheck,
+  CircleDashed,
+  Copy,
+  Lightbulb,
+  Minus,
+  Pencil,
+  Trash2,
+  TrendingUp,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Locale } from '../i18n';
 
@@ -170,6 +189,115 @@ export function CellTypesPage({ locale }: { locale: Locale }) {
             />
           ),
         },
+      ],
+    },
+    {
+      title: 'IconText',
+      ko: '칩 배경 없이 색 아이콘 + 라벨. 유형·우선순위·상태 표기에 적합.',
+      en: 'Icon + label (no pill). Good for type / priority / status columns.',
+      variants: [
+        {
+          label: 'bug · danger',
+          demo: (
+            <IconText icon={<Bug size={15} />} tone="danger" tintText>
+              버그
+            </IconText>
+          ),
+        },
+        {
+          label: 'improve',
+          demo: (
+            <IconText icon={<TrendingUp size={15} />} tone="success">
+              개선
+            </IconText>
+          ),
+        },
+        {
+          label: 'feature',
+          demo: (
+            <IconText icon={<Lightbulb size={15} />} tone="warning">
+              기능
+            </IconText>
+          ),
+        },
+        {
+          label: 'urgent',
+          demo: (
+            <IconText icon={<ChevronsUp size={15} />} tone="danger" tintText>
+              긴급
+            </IconText>
+          ),
+        },
+        {
+          label: 'high',
+          demo: (
+            <IconText icon={<ArrowUp size={15} />} tone="warning">
+              높음
+            </IconText>
+          ),
+        },
+        { label: 'normal', demo: <IconText icon={<Minus size={15} />}>보통</IconText> },
+        {
+          label: 'low',
+          demo: (
+            <IconText icon={<ArrowDown size={15} />} tone="success">
+              낮음
+            </IconText>
+          ),
+        },
+        {
+          label: 'done',
+          demo: (
+            <IconText icon={<CircleCheck size={15} />} tone="success">
+              완료
+            </IconText>
+          ),
+        },
+        { label: 'backlog', demo: <IconText icon={<CircleDashed size={15} />}>백로그</IconText> },
+      ],
+    },
+    {
+      title: 'Phone',
+      ko: '서버의 원시 번호(01052596024)를 표시용으로 변환(010-5259-6024). tel: 링크.',
+      en: 'Formats a raw number (01052596024 → 010-5259-6024); links via tel:.',
+      variants: [
+        { label: 'mobile', demo: <Phone value="01052596024" /> },
+        { label: 'seoul', demo: <Phone value="0212345678" /> },
+        { label: 'no link', demo: <Phone value="01098765432" link={false} /> },
+      ],
+    },
+    {
+      title: 'Email',
+      ko: 'mailto 링크. 좁으면 말줄임.',
+      en: 'mailto link; truncates when narrow.',
+      variants: [{ label: 'mailto', demo: <Email value="minjun.kim@softium.io" /> }],
+    },
+    {
+      title: 'AccountNumber',
+      ko: '계좌번호 — 모노스페이스, 구분(groups)·마스킹 옵션.',
+      en: 'Bank account — monospace, with grouping / masking options.',
+      variants: [
+        {
+          label: 'groups [3,4,6]',
+          demo: <AccountNumber value="1101234567890" groups={[3, 4, 6]} />,
+        },
+        { label: 'masked', demo: <AccountNumber value="1101234567890" mask /> },
+        {
+          label: 'bank',
+          demo: <AccountNumber value="1101234567890" groups={[3, 4, 6]} bank="신한" />,
+        },
+      ],
+    },
+    {
+      title: 'DateText',
+      ko: '날짜를 형식별로: date / datetime / relative / iso 등.',
+      en: 'Dates by format: date / datetime / relative / iso, etc.',
+      variants: [
+        { label: 'date', demo: <DateText value="2026-01-09" /> },
+        { label: 'datetime', demo: <DateText value="2026-01-09T14:30:00" format="datetime" /> },
+        { label: 'month', demo: <DateText value="2026-01-09" format="month" /> },
+        { label: 'iso', demo: <DateText value="2026-01-09" format="iso" /> },
+        { label: 'relative', demo: <DateText value="2026-01-09" format="relative" /> },
       ],
     },
   ];
