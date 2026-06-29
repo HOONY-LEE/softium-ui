@@ -13,6 +13,7 @@
  */
 
 import {
+  type ColumnSort,
   type ColumnState,
   type ColumnType,
   type Filter,
@@ -162,11 +163,24 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
 
   const renderColumns = useMemo(() => resolveColumns(columns, columnState), [columns, columnState]);
 
-  // type lookup by column key (for typed sort/filter comparisons)
+  // type lookup by column key (for typed filter comparisons)
   const getType = useMemo(() => {
     const map = new Map<string, ColumnType>();
     for (const def of columns) map.set(def.key, def.type ?? 'text');
     return (key: string): ColumnType | undefined => map.get(key);
+  }, [columns]);
+
+  // per-column sort config: type + optional accessor / custom comparator
+  const getSort = useMemo(() => {
+    const map = new Map<string, ColumnSort<T>>();
+    for (const def of columns) {
+      map.set(def.key, {
+        type: def.type ?? 'text',
+        accessor: def.sortAccessor,
+        comparator: def.sortComparator,
+      });
+    }
+    return (key: string): ColumnSort<T> | undefined => map.get(key);
   }, [columns]);
 
   const allKeys = useMemo(() => columns.map((c) => c.key), [columns]);
@@ -175,8 +189,8 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
   const processed = useMemo(() => {
     const filtered = applyFilters(data, filters, getType);
     const searched = applySearch(filtered, search, allKeys);
-    return sortRows(searched, sortRules, getType);
-  }, [data, filters, search, sortRules, getType, allKeys]);
+    return sortRows(searched, sortRules, getSort);
+  }, [data, filters, search, sortRules, getType, getSort, allKeys]);
 
   const totalCount = processed.length;
   const pageCount = pageSize > 0 ? getPageCount(totalCount, pageSize) : 1;

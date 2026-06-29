@@ -28,6 +28,10 @@ export interface ColumnDef<T, TNode = unknown> {
   flex?: number;
   align?: ColumnAlign;
   sortable?: boolean;
+  /** sort by a derived value instead of `row[key]` (e.g. an enum's rank). */
+  sortAccessor?: (row: T) => string | number | boolean | Date | null | undefined;
+  /** full custom comparator (ascending); overrides type/accessor. Receives raw rows. */
+  sortComparator?: (a: T, b: T) => number;
   filterable?: boolean;
   resizable?: boolean;
   pinnable?: boolean;

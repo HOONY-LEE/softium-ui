@@ -45,7 +45,8 @@ export const employeeColumns: ReactColumnDef<Employee>[] = [
   { key: 'name', label: '사원명', flex: 1, minWidth: 140 },
   // dept/position/salary/hiredAt omit width → type-based smart defaults apply
   { key: 'dept', label: '부서', filterable: true },
-  { key: 'position', label: '직급' },
+  // custom sort: by job rank order, not alphabetical
+  { key: 'position', label: '직급', sortAccessor: (r) => POSITIONS.indexOf(r.position) },
   { key: 'salary', label: '급여 (만원)', type: 'number', align: 'right' },
   { key: 'hiredAt', label: '입사일', type: 'date' },
   { key: 'active', label: '재직', type: 'boolean', align: 'center', width: 80 },

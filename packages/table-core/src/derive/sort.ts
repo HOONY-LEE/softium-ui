@@ -8,6 +8,17 @@ import type { ColumnType, SortRule } from '../types';
 
 export type TypeLookup = (columnKey: string) => ColumnType | undefined;
 
+/** Per-column sort configuration. */
+export interface ColumnSort<T> {
+  type?: ColumnType;
+  /** sort by a derived value instead of row[key] */
+  accessor?: (row: T) => unknown;
+  /** full custom comparator (ascending); overrides type/accessor */
+  comparator?: (a: T, b: T) => number;
+}
+
+export type SortLookup<T> = (columnKey: string) => ColumnSort<T> | undefined;
+
 function toComparable(value: unknown, type: ColumnType | undefined): number | string {
   if (value === null || value === undefined)
     return type === 'number' ? Number.NEGATIVE_INFINITY : '';
@@ -30,13 +41,27 @@ function compare(a: unknown, b: unknown, type: ColumnType | undefined): number {
   return String(ca).localeCompare(String(cb));
 }
 
-export function sortRows<T>(data: T[], rules: SortRule[], getType: TypeLookup): T[] {
+/**
+ * Sort by the active rules. `getSort` supplies each column's sort behavior:
+ *   - comparator: full custom (ascending) comparator over rows
+ *   - accessor:   sort by a derived value instead of row[key]
+ *   - type:       typed comparison (number/date/boolean/text)
+ */
+export function sortRows<T>(data: T[], rules: SortRule[], getSort: SortLookup<T>): T[] {
   if (rules.length === 0) return data;
 
   return [...data].sort((ra, rb) => {
     for (const rule of rules) {
-      const key = rule.columnKey as keyof T & string;
-      const diff = compare(ra[key], rb[key], getType(rule.columnKey));
+      const cfg = getSort(rule.columnKey);
+      let diff: number;
+      if (cfg?.comparator) {
+        diff = cfg.comparator(ra, rb);
+      } else {
+        const key = rule.columnKey as keyof T & string;
+        const av = cfg?.accessor ? cfg.accessor(ra) : ra[key];
+        const bv = cfg?.accessor ? cfg.accessor(rb) : rb[key];
+        diff = compare(av, bv, cfg?.type);
+      }
       if (diff !== 0) return rule.direction === 'asc' ? diff : -diff;
     }
     return 0;

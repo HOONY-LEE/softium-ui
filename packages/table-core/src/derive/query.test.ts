@@ -25,11 +25,12 @@ const types: Record<string, ColumnType> = {
   hiredAt: 'date',
 };
 const getType = (k: string) => types[k];
+const getSort = (k: string) => ({ type: types[k] });
 
 describe('sortRows', () => {
   it('sorts numbers ascending/descending without mutating input', () => {
     const rules: SortRule[] = [{ columnKey: 'salary', direction: 'asc' }];
-    const sorted = sortRows(data, rules, getType);
+    const sorted = sortRows(data, rules, getSort);
     expect(sorted.map((r) => r.salary)).toEqual([4200, 4200, 5000, 6100]);
     expect(sorted).not.toBe(data);
     expect(data[0]?.salary).toBe(5000); // untouched
@@ -40,19 +41,37 @@ describe('sortRows', () => {
       { columnKey: 'salary', direction: 'asc' },
       { columnKey: 'name', direction: 'asc' },
     ];
-    const sorted = sortRows(data, rules, getType);
+    const sorted = sortRows(data, rules, getSort);
     // the two 4200s ordered by name: 박도윤 < 이서연
     expect(sorted.map((r) => r.name)).toEqual(['박도윤', '이서연', '김민준', '최하은']);
   });
 
   it('sorts dates chronologically', () => {
-    const sorted = sortRows(data, [{ columnKey: 'hiredAt', direction: 'asc' }], getType);
+    const sorted = sortRows(data, [{ columnKey: 'hiredAt', direction: 'asc' }], getSort);
     expect(sorted.map((r) => r.hiredAt)).toEqual([
       '2012-01-20',
       '2015-03-01',
       '2019-07-15',
       '2020-11-30',
     ]);
+  });
+
+  it('uses a per-column sortAccessor (e.g. enum rank, not alphabetical)', () => {
+    const rank: Record<string, number> = { 사원: 0, 대리: 1, 부장: 2 };
+    const rows = [{ pos: '부장' }, { pos: '사원' }, { pos: '대리' }];
+    const sorted = sortRows(rows, [{ columnKey: 'pos', direction: 'asc' }], () => ({
+      accessor: (r) => rank[r.pos] ?? 99,
+    }));
+    expect(sorted.map((r) => r.pos)).toEqual(['사원', '대리', '부장']);
+  });
+
+  it('uses a per-column custom comparator (overrides type/accessor)', () => {
+    const rows = [{ v: 'bb' }, { v: 'a' }, { v: 'ccc' }];
+    // sort by string length
+    const sorted = sortRows(rows, [{ columnKey: 'v', direction: 'asc' }], () => ({
+      comparator: (a, b) => a.v.length - b.v.length,
+    }));
+    expect(sorted.map((r) => r.v)).toEqual(['a', 'bb', 'ccc']);
   });
 });
 
