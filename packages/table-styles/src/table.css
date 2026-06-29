@@ -413,6 +413,28 @@
   white-space: nowrap;
 }
 
+/* inline editing (DataGrid) */
+.sft-td[data-editable] {
+  cursor: cell;
+}
+
+.sft-td__editor {
+  width: 100%;
+  height: calc(var(--sft-table-row-height) - 8px);
+  border: none;
+  outline: 2px solid var(--sft-color-accent);
+  outline-offset: -2px;
+  border-radius: var(--sft-radius-sm);
+  background: var(--sft-color-surface);
+  color: var(--sft-color-text);
+  font: inherit;
+  padding: 0 var(--sft-space-1);
+}
+
+.sft-td__editor:focus {
+  outline: 2px solid var(--sft-color-accent);
+}
+
 /* alignment (header + cell share the attribute) */
 .sft-th[data-align="right"],
 .sft-td[data-align="right"] {

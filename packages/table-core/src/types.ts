@@ -36,6 +36,8 @@ export interface ColumnDef<T, TNode = unknown> {
   resizable?: boolean;
   pinnable?: boolean;
   hideable?: boolean;
+  /** allow inline editing of this column's cells (DataGrid). Default false. */
+  editable?: boolean;
   /** custom cell renderer. Returns `TNode` so core has no React dependency. */
   renderCell?: (ctx: CellContext<T>) => TNode;
   renderHeader?: (ctx: HeaderContext<T, TNode>) => TNode;
@@ -144,6 +146,7 @@ export interface ResolvedColumn<T, TNode = unknown> {
   resizable: boolean;
   pinnable: boolean;
   hideable: boolean;
+  editable: boolean;
   renderCell?: (ctx: CellContext<T>) => TNode;
   renderHeader?: (ctx: HeaderContext<T, TNode>) => TNode;
   /** the originating definition (escape hatch for advanced renderers) */

@@ -5,6 +5,8 @@
 
 export { Table } from './Table';
 export type { TableProps } from './Table';
+export { DataGrid } from './DataGrid';
+export type { DataGridProps } from './DataGrid';
 export { Header } from './Header';
 export type { HeaderProps } from './Header';
 export { Toolbar } from './Toolbar';

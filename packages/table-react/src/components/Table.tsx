@@ -51,6 +51,10 @@ export interface TableProps<T> {
   rowHeight?: number;
   /** opt out of virtualization even when `maxHeight` is set. Default false. */
   disableVirtualization?: boolean;
+  /** enable inline cell editing (editable columns become editable). Default false. */
+  editable?: boolean;
+  /** called when an edited cell is committed */
+  onCellChange?: (rowId: string, columnKey: string, value: unknown) => void;
   /** extra class on the root element */
   className?: string;
 }
@@ -80,6 +84,8 @@ export function Table<T>({
   density = 'normal',
   rowHeight,
   disableVirtualization = false,
+  editable = false,
+  onCellChange,
   className,
 }: TableProps<T>): ReactNode {
   const resolvedMessages = useMemo(() => resolveMessages(locale, messages), [locale, messages]);
@@ -88,6 +94,21 @@ export function Table<T>({
 
   const [resizeMode, setResizeMode] = useState(false);
   const toggleResizeMode = useCallback(() => setResizeMode((v) => !v), []);
+
+  // inline editing (DataGrid)
+  const [editingCell, setEditingCell] = useState<{ rowId: string; columnKey: string } | null>(null);
+  const beginEdit = useCallback(
+    (rowId: string, columnKey: string) => setEditingCell({ rowId, columnKey }),
+    [],
+  );
+  const cancelEdit = useCallback(() => setEditingCell(null), []);
+  const commitEdit = useCallback(
+    (rowId: string, columnKey: string, value: unknown) => {
+      onCellChange?.(rowId, columnKey, value);
+      setEditingCell(null);
+    },
+    [onCellChange],
+  );
 
   // display settings — seeded by props, then editable via the footer settings menu
   const [settings, setSettings] = useState<TableSettings>(() => ({
@@ -129,6 +150,11 @@ export function Table<T>({
       scrollX: settings.scrollX,
       resizeMode,
       toggleResizeMode,
+      editable,
+      editingCell,
+      beginEdit,
+      cancelEdit,
+      commitEdit,
       settings,
       setSetting,
       setDensity,
@@ -139,6 +165,11 @@ export function Table<T>({
       selectable,
       resizeMode,
       toggleResizeMode,
+      editable,
+      editingCell,
+      beginEdit,
+      cancelEdit,
+      commitEdit,
       settings,
       setSetting,
       setDensity,

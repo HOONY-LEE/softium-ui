@@ -24,6 +24,12 @@ export interface TableContextValue<T> {
   /** column-resize mode: handles are only active while this is on */
   resizeMode: boolean;
   toggleResizeMode: () => void;
+  /** inline cell editing (DataGrid) */
+  editable: boolean;
+  editingCell: { rowId: string; columnKey: string } | null;
+  beginEdit: (rowId: string, columnKey: string) => void;
+  cancelEdit: () => void;
+  commitEdit: (rowId: string, columnKey: string, value: unknown) => void;
   /** live display settings + setters (footer settings popups) */
   settings: TableSettings;
   setSetting: (

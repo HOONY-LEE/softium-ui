@@ -14,6 +14,7 @@ import { type Locale, shellStrings } from './i18n';
 import { type PageKey, nav, navLabel } from './nav';
 import { ButtonsPage } from './pages/ButtonsPage';
 import { CellTypesPage } from './pages/CellTypesPage';
+import { DataGridPage } from './pages/DataGridPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { TablePage } from './pages/TablePage';
 
@@ -111,6 +112,7 @@ export function App() {
     <AppShell sidebar={sidebar} header={header} collapsed={collapsed}>
       {page === 'overview' && <OverviewPage locale={locale} onNavigate={setPage} />}
       {page === 'table' && <TablePage locale={locale} />}
+      {page === 'data-grid' && <DataGridPage locale={locale} />}
       {page === 'cell-types' && <CellTypesPage locale={locale} />}
       {page === 'button' && <ButtonsPage locale={locale} />}
     </AppShell>
