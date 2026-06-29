@@ -2,6 +2,8 @@ import { createContext, useContext } from 'react';
 import type { TableInstance } from '../hooks/useTable';
 import type { TableMessages } from '../i18n';
 
+export type TableDensity = 'compact' | 'normal' | 'comfortable';
+
 /** runtime display settings, editable from the footer settings menu */
 export interface TableSettings {
   rowBorders: boolean;
@@ -9,6 +11,7 @@ export interface TableSettings {
   striped: boolean;
   scrollX: boolean;
   stickyHeader: boolean;
+  density: TableDensity;
 }
 
 export interface TableContextValue<T> {
@@ -21,9 +24,13 @@ export interface TableContextValue<T> {
   /** column-resize mode: handles are only active while this is on */
   resizeMode: boolean;
   toggleResizeMode: () => void;
-  /** live display settings + setter (footer settings popups) */
+  /** live display settings + setters (footer settings popups) */
   settings: TableSettings;
-  setSetting: (key: keyof TableSettings, value: boolean) => void;
+  setSetting: (
+    key: 'rowBorders' | 'columnBorders' | 'striped' | 'scrollX' | 'stickyHeader',
+    value: boolean,
+  ) => void;
+  setDensity: (density: TableDensity) => void;
 }
 
 /** fixed width (px) of the leading selection column */

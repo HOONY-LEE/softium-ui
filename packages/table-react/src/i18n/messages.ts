@@ -25,6 +25,11 @@ export interface TableMessages {
   settingStriped: string;
   settingScrollX: string;
   settingStickyHeader: string;
+  /** row density */
+  density: string;
+  densityCompact: string;
+  densityNormal: string;
+  densityComfortable: string;
   /** reset columnState to defaults */
   reset: string;
   /** toggle column-width resize mode */
@@ -72,6 +77,10 @@ export const ko: TableMessages = {
   settingStriped: '줄무늬',
   settingScrollX: '좌우 스크롤',
   settingStickyHeader: '헤더 고정',
+  density: '행 높이',
+  densityCompact: '좁게',
+  densityNormal: '보통',
+  densityComfortable: '넓게',
   reset: '초기화',
   resizeColumns: '너비 조절',
   autoFitHint: '더블클릭: 너비 자동 맞춤',
@@ -106,6 +115,10 @@ export const en: TableMessages = {
   settingStriped: 'Striped',
   settingScrollX: 'Horizontal scroll',
   settingStickyHeader: 'Sticky header',
+  density: 'Row height',
+  densityCompact: 'Compact',
+  densityNormal: 'Normal',
+  densityComfortable: 'Comfortable',
   reset: 'Reset',
   resizeColumns: 'Resize',
   autoFitHint: 'Double-click: auto-fit',

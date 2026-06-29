@@ -1,7 +1,7 @@
 import { Columns3, Settings2, SlidersHorizontal } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { ColumnEditor } from './ColumnEditor';
-import { type TableSettings, useTableContext } from './context';
+import { type TableDensity, useTableContext } from './context';
 
 type Popup = 'columns' | 'table' | null;
 
@@ -10,16 +10,25 @@ type Popup = 'columns' | 'table' | null;
  * each item opens a popover for editing columns or the table's display settings.
  */
 export function Settings<T>(): ReactNode {
-  const { messages, settings, setSetting } = useTableContext<T>();
+  const { messages, settings, setSetting, setDensity } = useTableContext<T>();
   const [menuOpen, setMenuOpen] = useState(false);
   const [popup, setPopup] = useState<Popup>(null);
+
+  const densities: { key: TableDensity; label: string }[] = [
+    { key: 'compact', label: messages.densityCompact },
+    { key: 'normal', label: messages.densityNormal },
+    { key: 'comfortable', label: messages.densityComfortable },
+  ];
 
   const close = () => {
     setMenuOpen(false);
     setPopup(null);
   };
 
-  const toggles: { key: keyof TableSettings; label: string }[] = [
+  const toggles: {
+    key: 'rowBorders' | 'columnBorders' | 'striped' | 'scrollX' | 'stickyHeader';
+    label: string;
+  }[] = [
     { key: 'rowBorders', label: messages.settingRowBorders },
     { key: 'columnBorders', label: messages.settingColumnBorders },
     { key: 'striped', label: messages.settingStriped },
@@ -91,6 +100,22 @@ export function Settings<T>(): ReactNode {
       {popup === 'table' && (
         <div className="sft-settings__popover" role="dialog" aria-label={messages.editTable}>
           <div className="sft-settings__popover-title">{messages.editTable}</div>
+          <div className="sft-setrow">
+            <span className="sft-setrow__label">{messages.density}</span>
+            <div className="sft-seg">
+              {densities.map((d) => (
+                <button
+                  type="button"
+                  key={d.key}
+                  className="sft-seg__btn"
+                  data-active={settings.density === d.key || undefined}
+                  onClick={() => setDensity(d.key)}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="sft-settings__toggles">
             {toggles.map((tg) => (
               <label className="sft-setrow" key={tg.key}>

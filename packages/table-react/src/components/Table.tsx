@@ -9,9 +9,14 @@ import { FilterRow } from './FilterRow';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { Toolbar } from './Toolbar';
-import { TableContext, type TableSettings } from './context';
+import { TableContext, type TableDensity, type TableSettings } from './context';
 
-const DEFAULT_ROW_HEIGHT = 40;
+/** row height (px) per density preset */
+const DENSITY_ROW_HEIGHT: Record<TableDensity, number> = {
+  compact: 34,
+  normal: 40,
+  comfortable: 52,
+};
 
 export interface TableProps<T> {
   table: TableInstance<T>;
@@ -40,7 +45,9 @@ export interface TableProps<T> {
   /** max body height (px). When set, the header stays fixed and the body scrolls
    *  vertically; also enables row virtualization. */
   maxHeight?: number;
-  /** row height in px, must match the CSS row height. Default 40. */
+  /** initial row density. Default 'normal'. */
+  density?: TableDensity;
+  /** explicit row height (px) — overrides density when set. */
   rowHeight?: number;
   /** opt out of virtualization even when `maxHeight` is set. Default false. */
   disableVirtualization?: boolean;
@@ -70,7 +77,8 @@ export function Table<T>({
   columnBorders = false,
   striped = true,
   maxHeight,
-  rowHeight = DEFAULT_ROW_HEIGHT,
+  density = 'normal',
+  rowHeight,
   disableVirtualization = false,
   className,
 }: TableProps<T>): ReactNode {
@@ -88,18 +96,28 @@ export function Table<T>({
     striped,
     scrollX,
     stickyHeader: maxHeight != null,
+    density,
   }));
   const setSetting = useCallback(
-    (key: keyof TableSettings, value: boolean) => setSettings((s) => ({ ...s, [key]: value })),
+    (
+      key: 'rowBorders' | 'columnBorders' | 'striped' | 'scrollX' | 'stickyHeader',
+      value: boolean,
+    ) => setSettings((s) => ({ ...s, [key]: value })),
+    [],
+  );
+  const setDensity = useCallback(
+    (d: TableDensity) => setSettings((s) => ({ ...s, density: d })),
     [],
   );
 
+  // row height: explicit prop overrides the density preset
+  const rowH = rowHeight ?? DENSITY_ROW_HEIGHT[settings.density];
   const effectiveMaxHeight = settings.stickyHeader ? (maxHeight ?? 480) : undefined;
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtual = useVirtualRows(scrollRef, {
     count: rows.length,
-    rowHeight,
+    rowHeight: rowH,
     enabled: effectiveMaxHeight != null && !disableVirtualization,
   });
 
@@ -113,10 +131,22 @@ export function Table<T>({
       toggleResizeMode,
       settings,
       setSetting,
+      setDensity,
     }),
-    [table, resolvedMessages, selectable, resizeMode, toggleResizeMode, settings, setSetting],
+    [
+      table,
+      resolvedMessages,
+      selectable,
+      resizeMode,
+      toggleResizeMode,
+      settings,
+      setSetting,
+      setDensity,
+    ],
   );
 
+  // density drives the row-height CSS var; cells read it (and virtualization matches)
+  const cardStyle = { '--sft-table-row-height': `${rowH}px` } as React.CSSProperties;
   const scrollStyle = effectiveMaxHeight != null ? { maxHeight: effectiveMaxHeight } : undefined;
 
   // four separated regions: Toolbar / [Header + Body card] / Footer
@@ -129,6 +159,7 @@ export function Table<T>({
         {/* ── 카드: 헤더 + 바디 (the bordered scrolling grid) ── */}
         <div
           className="sft-table"
+          style={cardStyle}
           data-scroll-x={settings.scrollX || undefined}
           data-row-borders={settings.rowBorders || undefined}
           data-col-borders={settings.columnBorders || undefined}

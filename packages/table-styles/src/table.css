@@ -707,6 +707,33 @@
   color: var(--sft-color-text);
 }
 
+/* segmented control (e.g. density) */
+.sft-seg {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--sft-color-bg-subtle);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
+}
+
+.sft-seg__btn {
+  border: none;
+  background: transparent;
+  color: var(--sft-color-text-secondary);
+  font: inherit;
+  font-size: var(--sft-font-size-sm);
+  padding: var(--sft-space-1) var(--sft-space-2);
+  border-radius: var(--sft-radius-sm);
+  cursor: pointer;
+}
+
+.sft-seg__btn[data-active] {
+  background: var(--sft-color-surface);
+  color: var(--sft-color-text);
+  box-shadow: var(--sft-shadow-sm);
+}
+
 /* ── column editor (inside the settings popover) ────────── */
 .sft-coleditor__rows {
   display: flex;

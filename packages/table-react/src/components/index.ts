@@ -21,4 +21,4 @@ export type { RowProps } from './Row';
 export { Cell } from './Cell';
 export type { CellProps } from './Cell';
 export { SELECT_COL_WIDTH, TableContext, useTableContext } from './context';
-export type { TableContextValue, TableSettings } from './context';
+export type { TableContextValue, TableDensity, TableSettings } from './context';
