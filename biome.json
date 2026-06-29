@@ -24,7 +24,8 @@
       "a11y": {
         "useSemanticElements": "off",
         "useFocusableInteractive": "off",
-        "useKeyWithClickEvents": "off"
+        "useKeyWithClickEvents": "off",
+        "noNoninteractiveTabindex": "off"
       },
       "suspicious": {
         "noExplicitAny": "error"

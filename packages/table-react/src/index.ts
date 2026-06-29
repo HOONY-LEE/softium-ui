@@ -32,6 +32,9 @@ export * from './components';
 // built-in cell renderers
 export * from './cells';
 
+// sheet (minimal spreadsheet)
+export * from './sheet';
+
 // i18n
 export {
   defaultMessages,
