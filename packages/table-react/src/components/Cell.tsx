@@ -30,16 +30,23 @@ export function Cell<T>({ row, column }: CellProps<T>): ReactNode {
   const {
     scrollX,
     editable,
+    editEnabled,
     activeCell,
     setActiveCell,
     editingCell,
     beginEdit,
     commitEdit,
     cancelEdit,
+    getStaged,
   } = useTableContext<T>();
-  const value = row.data[column.key];
+  const rawValue = row.data[column.key];
 
-  const canEdit = editable && column.editable;
+  // batch mode: an unsaved edit shadows the server value until Save / Cancel
+  const staged = getStaged(row.rowId, column.key);
+  const value = (staged.dirty ? staged.value : rawValue) as typeof rawValue;
+
+  // editing is allowed only while edit mode is active (toggle mode gates this)
+  const canEdit = editable && column.editable && editEnabled;
   const isEditing =
     canEdit && editingCell?.rowId === row.rowId && editingCell?.columnKey === column.key;
   const isActive =
@@ -83,6 +90,7 @@ export function Cell<T>({ row, column }: CellProps<T>): ReactNode {
       data-editable={canEdit || undefined}
       data-active={(isActive && !isEditing) || undefined}
       data-editing={isEditing || undefined}
+      data-dirty={staged.dirty || undefined}
       tabIndex={canEdit ? (isActive ? 0 : -1) : undefined}
       style={cellStyle(column, scrollX)}
       onMouseDown={canEdit && !isEditing ? select : undefined}

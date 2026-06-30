@@ -21,8 +21,17 @@ export function DataGridPage({ locale }: { locale: Locale }) {
 
   const table = useTable({ data, columns, getRowId: (r) => r.id, pageSize: 10 });
 
-  const onCellChange = useCallback((rowId: string, key: string, value: unknown) => {
-    setData((prev) => prev.map((r) => (r.id === rowId ? { ...r, [key]: value } : r)));
+  // batch commit: apply every staged change at once when Save is pressed
+  const onSave = useCallback((changes: { rowId: string; columnKey: string; value: unknown }[]) => {
+    setData((prev) =>
+      prev.map((r) => {
+        const mine = changes.filter((c) => c.rowId === r.id);
+        if (mine.length === 0) return r;
+        const next = { ...r };
+        for (const c of mine) (next as Record<string, unknown>)[c.columnKey] = c.value;
+        return next;
+      }),
+    );
   }, []);
 
   return (
@@ -32,14 +41,20 @@ export function DataGridPage({ locale }: { locale: Locale }) {
           <h2 className="page-title">{t('데이터 그리드', 'Data Grid')}</h2>
           <p className="page-desc">
             {t(
-              '데이터 테이블 + 셀 인라인 편집. 편집 가능한 셀(사원명·부서·직급·급여)을 더블클릭하거나 클릭 후 입력 → Enter 저장, Esc 취소.',
-              'Data Table + inline cell editing. Double-click an editable cell (name/dept/position/salary), type, then Enter to commit / Esc to cancel.',
+              '편집 모드형 데이터 그리드. 평소엔 읽기 전용이고, 우측 상단 「편집」을 눌러야 셀을 고칠 수 있습니다. 변경한 셀은 노란색으로 표시(미저장)되고, 「저장」을 누르면 모든 변경이 한 번에 반영됩니다. 「취소」는 모든 변경을 되돌립니다.',
+              'Toggle-edit data grid. Read-only by default — press “Edit” (top right) to edit cells. Changed cells are highlighted amber (unsaved); “Save” commits all changes at once, “Cancel” discards them.',
             )}
           </p>
         </div>
       </div>
 
-      <DataGrid table={table} locale={locale} onCellChange={onCellChange} />
+      <DataGrid
+        table={table}
+        locale={locale}
+        editMode="toggle"
+        commitMode="batch"
+        onSave={onSave}
+      />
     </div>
   );
 }

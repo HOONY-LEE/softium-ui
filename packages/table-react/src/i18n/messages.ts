@@ -63,6 +63,12 @@ export interface TableMessages {
   back: string;
   next: string;
   last: string;
+  /** DataGrid edit-mode controls */
+  editButton: string;
+  doneEdit: string;
+  discardChanges: string;
+  /** save button with pending-change count, e.g. "Save (3)" */
+  saveChanges: (count: number) => string;
 }
 
 export const ko: TableMessages = {
@@ -101,6 +107,10 @@ export const ko: TableMessages = {
   back: '이전',
   next: '다음',
   last: '마지막',
+  editButton: '편집',
+  doneEdit: '완료',
+  discardChanges: '취소',
+  saveChanges: (count) => (count > 0 ? `저장 (${count})` : '저장'),
 };
 
 export const en: TableMessages = {
@@ -139,6 +149,10 @@ export const en: TableMessages = {
   back: 'Back',
   next: 'Next',
   last: 'Last',
+  editButton: 'Edit',
+  doneEdit: 'Done',
+  discardChanges: 'Cancel',
+  saveChanges: (count) => (count > 0 ? `Save (${count})` : 'Save'),
 };
 
 export const locales = { ko, en } as const;

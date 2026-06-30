@@ -1,5 +1,6 @@
 import { Search } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { EditControls } from './EditControls';
 import { useTableContext } from './context';
 
 export interface ToolbarProps {
@@ -32,7 +33,10 @@ export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
         </div>
       </div>
 
-      {actions && <div className="sft-toolbar__right">{actions}</div>}
+      <div className="sft-toolbar__right">
+        <EditControls />
+        {actions}
+      </div>
     </div>
   );
 }

@@ -57,6 +57,52 @@
   gap: var(--sft-space-2);
 }
 
+/* DataGrid edit-mode controls (편집 / 저장 / 취소) */
+.sft-editctl {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+}
+
+.sft-editctl__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sft-space-1);
+  height: 34px;
+  padding: 0 var(--sft-space-3);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
+  background: var(--sft-color-bg);
+  color: var(--sft-color-text);
+  font: inherit;
+  font-size: var(--sft-font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, opacity 0.12s;
+}
+
+.sft-editctl__btn:hover {
+  background: var(--sft-color-surface-hover, var(--sft-color-bg-subtle));
+  border-color: var(--sft-color-border-strong, var(--sft-color-border));
+}
+
+.sft-editctl__btn--primary {
+  background: var(--sft-color-accent);
+  border-color: var(--sft-color-accent);
+  color: #fff;
+}
+
+.sft-editctl__btn--primary:hover:not(:disabled) {
+  background: var(--sft-color-accent-hover);
+  border-color: var(--sft-color-accent-hover);
+}
+
+.sft-editctl__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .sft-toolbar__search-wrap {
   position: relative;
   display: inline-flex;
@@ -443,6 +489,22 @@
   height: 6px;
   background: var(--sft-color-accent);
   box-shadow: 0 0 0 1px var(--sft-color-bg);
+}
+
+/* batch commit mode: a cell with an unsaved edit gets an amber tint + corner mark
+   until Save / Cancel. (Lower z-index than the active ring so selection wins.) */
+.sft-table[data-editable] .sft-td[data-dirty] {
+  background: color-mix(in srgb, var(--sft-color-warning) 16%, var(--sft-color-bg));
+}
+
+.sft-table[data-editable] .sft-td[data-dirty]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-width: 5px 5px 0 0;
+  border-style: solid;
+  border-color: var(--sft-color-warning) transparent transparent transparent;
 }
 
 /* the editor fills the cell box exactly; its 2px border sits ON the cell edges

@@ -9,7 +9,14 @@ import { FilterRow } from './FilterRow';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { Toolbar } from './Toolbar';
-import { TableContext, type TableDensity, type TableSettings } from './context';
+import {
+  type CellChange,
+  type CommitMode,
+  type EditMode,
+  TableContext,
+  type TableDensity,
+  type TableSettings,
+} from './context';
 
 /** row height (px) per density preset */
 const DENSITY_ROW_HEIGHT: Record<TableDensity, number> = {
@@ -17,6 +24,9 @@ const DENSITY_ROW_HEIGHT: Record<TableDensity, number> = {
   normal: 40,
   comfortable: 52,
 };
+
+/** stable key for a cell in the dirty buffer */
+const dirtyKey = (rowId: string, columnKey: string) => `${rowId} ${columnKey}`;
 
 export interface TableProps<T> {
   table: TableInstance<T>;
@@ -53,8 +63,14 @@ export interface TableProps<T> {
   disableVirtualization?: boolean;
   /** enable inline cell editing (editable columns become editable). Default false. */
   editable?: boolean;
-  /** called when an edited cell is committed */
+  /** when cells are editable: 'always' (default) or 'toggle' (gated behind an Edit button). */
+  editMode?: EditMode;
+  /** how edits are committed: 'cell' (immediate, default) or 'batch' (staged until Save). */
+  commitMode?: CommitMode;
+  /** called when an edited cell is committed (cell mode), or per change on Save (batch mode). */
   onCellChange?: (rowId: string, columnKey: string, value: unknown) => void;
+  /** called once with all staged changes when Save is pressed (batch mode). */
+  onSave?: (changes: CellChange[]) => void;
   /** extra class on the root element */
   className?: string;
 }
@@ -85,7 +101,10 @@ export function Table<T>({
   rowHeight,
   disableVirtualization = false,
   editable = false,
+  editMode = 'always',
+  commitMode = 'cell',
   onCellChange,
+  onSave,
   className,
 }: TableProps<T>): ReactNode {
   const resolvedMessages = useMemo(() => resolveMessages(locale, messages), [locale, messages]);
@@ -104,13 +123,63 @@ export function Table<T>({
     setEditingCell({ rowId, columnKey });
   }, []);
   const cancelEdit = useCallback(() => setEditingCell(null), []);
+
+  // edit-mode gate: 'always' is always on; 'toggle' starts off until the Edit button.
+  const [editEnabled, setEditEnabled] = useState(editMode === 'always');
+  const enableEdit = useCallback(() => setEditEnabled(true), []);
+  const exitEdit = useCallback(() => {
+    setEditEnabled(false);
+    setActiveCell(null);
+    setEditingCell(null);
+  }, []);
+
+  // batch commit: staged edits live here until Save. Keyed by rowId + columnKey.
+  const [dirty, setDirty] = useState<Map<string, CellChange>>(() => new Map());
+
+  // original (server) cell values, so a batch edit back to the original drops the stage
+  const originalRef = useRef(new Map<string, unknown>());
+  originalRef.current = useMemo(() => {
+    const m = new Map<string, unknown>();
+    for (const r of rows) {
+      for (const c of columns) m.set(dirtyKey(r.rowId, c.key), r.data[c.key as keyof T]);
+    }
+    return m;
+  }, [rows, columns]);
+
   const commitEdit = useCallback(
     (rowId: string, columnKey: string, value: unknown) => {
-      onCellChange?.(rowId, columnKey, value);
+      if (commitMode === 'batch') {
+        setDirty((prev) => {
+          const next = new Map(prev);
+          const k = dirtyKey(rowId, columnKey);
+          if (Object.is(originalRef.current.get(k), value)) next.delete(k);
+          else next.set(k, { rowId, columnKey, value });
+          return next;
+        });
+      } else {
+        onCellChange?.(rowId, columnKey, value);
+      }
       setEditingCell(null);
     },
-    [onCellChange],
+    [commitMode, onCellChange],
   );
+
+  const getStaged = useCallback(
+    (rowId: string, columnKey: string) => {
+      const e = dirty.get(dirtyKey(rowId, columnKey));
+      return e ? { dirty: true, value: e.value } : { dirty: false, value: undefined };
+    },
+    [dirty],
+  );
+  const saveAll = useCallback(() => {
+    const changes = [...dirty.values()];
+    if (changes.length > 0) {
+      if (onSave) onSave(changes);
+      else for (const c of changes) onCellChange?.(c.rowId, c.columnKey, c.value);
+    }
+    setDirty(new Map());
+  }, [dirty, onSave, onCellChange]);
+  const discardAll = useCallback(() => setDirty(new Map()), []);
 
   // display settings — seeded by props, then editable via the footer settings menu
   const [settings, setSettings] = useState<TableSettings>(() => ({
@@ -153,12 +222,21 @@ export function Table<T>({
       resizeMode,
       toggleResizeMode,
       editable,
+      editMode,
+      commitMode,
+      editEnabled,
+      enableEdit,
+      exitEdit,
       activeCell,
       setActiveCell,
       editingCell,
       beginEdit,
       cancelEdit,
       commitEdit,
+      dirtyCount: dirty.size,
+      getStaged,
+      saveAll,
+      discardAll,
       settings,
       setSetting,
       setDensity,
@@ -170,11 +248,20 @@ export function Table<T>({
       resizeMode,
       toggleResizeMode,
       editable,
+      editMode,
+      commitMode,
+      editEnabled,
+      enableEdit,
+      exitEdit,
       activeCell,
       editingCell,
       beginEdit,
       cancelEdit,
       commitEdit,
+      dirty,
+      getStaged,
+      saveAll,
+      discardAll,
       settings,
       setSetting,
       setDensity,

@@ -4,6 +4,18 @@ import type { TableMessages } from '../i18n';
 
 export type TableDensity = 'compact' | 'normal' | 'comfortable';
 
+/** when inline editing is allowed (DataGrid) */
+export type EditMode = 'always' | 'toggle';
+/** when edits reach the host: per-cell (immediate) or batched behind a Save button */
+export type CommitMode = 'cell' | 'batch';
+
+/** a single staged cell edit (batch commit mode) */
+export interface CellChange {
+  rowId: string;
+  columnKey: string;
+  value: unknown;
+}
+
 /** runtime display settings, editable from the footer settings menu */
 export interface TableSettings {
   rowBorders: boolean;
@@ -24,8 +36,18 @@ export interface TableContextValue<T> {
   /** column-resize mode: handles are only active while this is on */
   resizeMode: boolean;
   toggleResizeMode: () => void;
-  /** inline cell editing (DataGrid) */
+  /** inline cell editing (DataGrid) — true when the grid supports editing at all */
   editable: boolean;
+  /** edit-mode policy: 'always' (cells always editable) or 'toggle' (behind a button) */
+  editMode: EditMode;
+  /** commit policy: 'cell' (immediate) or 'batch' (staged until Save) */
+  commitMode: CommitMode;
+  /** whether editing is currently active (always-mode: always true; toggle-mode: user-driven) */
+  editEnabled: boolean;
+  /** turn edit mode on (toggle mode) */
+  enableEdit: () => void;
+  /** turn edit mode off, clearing the active/editing cell (toggle mode) */
+  exitEdit: () => void;
   /** the currently selected cell (one click); editing is a second click / Enter */
   activeCell: { rowId: string; columnKey: string } | null;
   setActiveCell: (cell: { rowId: string; columnKey: string } | null) => void;
@@ -33,6 +55,14 @@ export interface TableContextValue<T> {
   beginEdit: (rowId: string, columnKey: string) => void;
   cancelEdit: () => void;
   commitEdit: (rowId: string, columnKey: string, value: unknown) => void;
+  /** number of staged (unsaved) cell edits (batch mode) */
+  dirtyCount: number;
+  /** staged value for a cell, if it has an unsaved edit */
+  getStaged: (rowId: string, columnKey: string) => { dirty: boolean; value: unknown };
+  /** flush all staged edits to the host (batch mode) */
+  saveAll: () => void;
+  /** drop all staged edits (batch mode) */
+  discardAll: () => void;
   /** live display settings + setters (footer settings popups) */
   settings: TableSettings;
   setSetting: (
