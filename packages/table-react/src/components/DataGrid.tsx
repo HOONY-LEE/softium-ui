@@ -10,5 +10,12 @@ export type DataGridProps<T> = TableProps<T>;
  * `onCellChange` to persist edits.
  */
 export function DataGrid<T>(props: DataGridProps<T>): ReactNode {
-  return <Table {...props} editable={props.editable ?? true} />;
+  return (
+    <Table
+      {...props}
+      rowBorders={props.rowBorders ?? true}
+      columnBorders={props.columnBorders ?? true}
+      editable={props.editable ?? true}
+    />
+  );
 }

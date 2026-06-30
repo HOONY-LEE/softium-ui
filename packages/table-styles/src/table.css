@@ -459,7 +459,13 @@
 }
 
 /* ── row interaction ────────────────────────────────────── */
-.sft-tbody .sft-tr:hover .sft-td {
+/* default (DataTable): hover highlights the whole row */
+.sft-table:not([data-editable]) .sft-tbody .sft-tr:hover .sft-td {
+  background: var(--sft-color-bg-hover);
+}
+
+/* DataGrid (editable): hover highlights the single cell, not the row */
+.sft-table[data-editable] .sft-tbody .sft-td:hover {
   background: var(--sft-color-bg-hover);
 }
 

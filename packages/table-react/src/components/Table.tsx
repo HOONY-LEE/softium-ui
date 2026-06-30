@@ -196,6 +196,7 @@ export function Table<T>({
           data-col-borders={settings.columnBorders || undefined}
           data-striped={settings.striped || undefined}
           data-resizing={resizeMode || undefined}
+          data-editable={editable || undefined}
         >
           <div className="sft-table__scroll" role="table" ref={scrollRef} style={scrollStyle}>
             <Header columns={columns} />
