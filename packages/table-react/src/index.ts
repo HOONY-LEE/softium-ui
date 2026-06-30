@@ -55,6 +55,9 @@ export type {
   FilterOperator,
   HeaderContext,
   PinSide,
+  PivotAggregate,
+  PivotConfig,
+  PivotResult,
   ResolvedColumn,
   Row,
   SearchState,
@@ -65,4 +68,5 @@ export {
   adaptArray,
   adaptDynamicSchema,
   adaptPaginated,
+  pivot,
 } from '@softium/table-core';

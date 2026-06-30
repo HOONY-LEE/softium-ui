@@ -169,6 +169,35 @@ body {
   color: var(--sft-color-text-secondary);
 }
 
+/* ── pivot config ───────────────────────────────────────── */
+.pivot-config {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sft-space-4);
+  padding: var(--sft-space-3) var(--sft-space-4);
+  background: var(--sft-color-surface);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
+}
+
+.pivot-config__field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+  font-size: var(--sft-font-size-sm);
+  color: var(--sft-color-text-secondary);
+}
+
+.pivot-config__field select {
+  font: inherit;
+  color: var(--sft-color-text);
+  background: var(--sft-color-bg);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-sm);
+  padding: var(--sft-space-1) var(--sft-space-2);
+  cursor: pointer;
+}
+
 /* ── cell types catalog ─────────────────────────────────── */
 .celltypes {
   display: flex;

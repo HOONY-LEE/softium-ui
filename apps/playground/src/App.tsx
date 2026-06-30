@@ -16,6 +16,7 @@ import { ButtonsPage } from './pages/ButtonsPage';
 import { CellTypesPage } from './pages/CellTypesPage';
 import { DataGridPage } from './pages/DataGridPage';
 import { OverviewPage } from './pages/OverviewPage';
+import { PivotPage } from './pages/PivotPage';
 import { SheetPage } from './pages/SheetPage';
 import { TablePage } from './pages/TablePage';
 
@@ -115,6 +116,7 @@ export function App() {
       {page === 'table' && <TablePage locale={locale} />}
       {page === 'data-grid' && <DataGridPage locale={locale} />}
       {page === 'sheet' && <SheetPage locale={locale} />}
+      {page === 'pivot' && <PivotPage locale={locale} />}
       {page === 'cell-types' && <CellTypesPage locale={locale} />}
       {page === 'button' && <ButtonsPage locale={locale} />}
     </AppShell>

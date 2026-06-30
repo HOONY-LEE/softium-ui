@@ -857,3 +857,79 @@
   font: inherit;
   padding: 0 var(--sft-space-2);
 }
+
+/* ── PivotTable (cross-tab) ──────────────────────────────── */
+.sft-pivot {
+  display: inline-block;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
+  background: var(--sft-color-bg);
+}
+
+.sft-pivot__table {
+  border-collapse: collapse;
+  font-size: var(--sft-font-size-md);
+  color: var(--sft-color-text);
+}
+
+.sft-pivot__table th,
+.sft-pivot__table td {
+  padding: var(--sft-space-2) var(--sft-space-3);
+  box-shadow: inset -1px -1px 0 var(--sft-color-border);
+  white-space: nowrap;
+}
+
+.sft-pivot__corner {
+  text-align: left;
+  background: var(--sft-color-bg-subtle);
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.sft-pivot__rowfield {
+  display: block;
+  font-weight: var(--sft-font-weight-bold);
+  color: var(--sft-color-text);
+}
+
+.sft-pivot__colfield {
+  display: block;
+  font-size: var(--sft-font-size-xs);
+  font-weight: var(--sft-font-weight-regular);
+  color: var(--sft-color-text-muted);
+}
+
+.sft-pivot__colhead {
+  text-align: right;
+  font-weight: var(--sft-font-weight-bold);
+  color: var(--sft-color-text-secondary);
+  background: var(--sft-color-bg-subtle);
+}
+
+.sft-pivot__rowhead {
+  text-align: left;
+  font-weight: var(--sft-font-weight-medium);
+  color: var(--sft-color-text);
+  background: var(--sft-color-bg-subtle);
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+.sft-pivot__cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sft-pivot__total {
+  background: var(--sft-color-bg-subtle);
+  font-weight: var(--sft-font-weight-medium);
+}
+
+.sft-pivot__grand {
+  color: var(--sft-color-accent);
+  font-weight: var(--sft-font-weight-bold);
+}
