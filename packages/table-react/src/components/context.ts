@@ -26,6 +26,9 @@ export interface TableContextValue<T> {
   toggleResizeMode: () => void;
   /** inline cell editing (DataGrid) */
   editable: boolean;
+  /** the currently selected cell (one click); editing is a second click / Enter */
+  activeCell: { rowId: string; columnKey: string } | null;
+  setActiveCell: (cell: { rowId: string; columnKey: string } | null) => void;
   editingCell: { rowId: string; columnKey: string } | null;
   beginEdit: (rowId: string, columnKey: string) => void;
   cancelEdit: () => void;

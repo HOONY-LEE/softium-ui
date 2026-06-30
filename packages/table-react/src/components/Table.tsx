@@ -95,12 +95,14 @@ export function Table<T>({
   const [resizeMode, setResizeMode] = useState(false);
   const toggleResizeMode = useCallback(() => setResizeMode((v) => !v), []);
 
-  // inline editing (DataGrid)
+  // inline editing (DataGrid): one click selects (activeCell), a second click /
+  // Enter / double-click edits (editingCell).
+  const [activeCell, setActiveCell] = useState<{ rowId: string; columnKey: string } | null>(null);
   const [editingCell, setEditingCell] = useState<{ rowId: string; columnKey: string } | null>(null);
-  const beginEdit = useCallback(
-    (rowId: string, columnKey: string) => setEditingCell({ rowId, columnKey }),
-    [],
-  );
+  const beginEdit = useCallback((rowId: string, columnKey: string) => {
+    setActiveCell({ rowId, columnKey });
+    setEditingCell({ rowId, columnKey });
+  }, []);
   const cancelEdit = useCallback(() => setEditingCell(null), []);
   const commitEdit = useCallback(
     (rowId: string, columnKey: string, value: unknown) => {
@@ -151,6 +153,8 @@ export function Table<T>({
       resizeMode,
       toggleResizeMode,
       editable,
+      activeCell,
+      setActiveCell,
       editingCell,
       beginEdit,
       cancelEdit,
@@ -166,6 +170,7 @@ export function Table<T>({
       resizeMode,
       toggleResizeMode,
       editable,
+      activeCell,
       editingCell,
       beginEdit,
       cancelEdit,

@@ -398,6 +398,7 @@
 
 /* ── body cells ─────────────────────────────────────────── */
 .sft-td {
+  position: relative;
   display: flex;
   align-items: center;
   box-sizing: border-box;
@@ -418,21 +419,48 @@
   cursor: cell;
 }
 
+/* a single click selects the cell — an accent ring flush with the cell edges
+   (inset box-shadow overlaps the grid lines, no layout shift). The cell holds
+   keyboard focus so Enter/F2 edits and Escape deselects; hide the UA outline. */
+.sft-td[data-editable]:focus,
+.sft-td[data-editable]:focus-visible {
+  outline: none;
+}
+
+.sft-table[data-editable] .sft-td[data-active] {
+  box-shadow: inset 0 0 0 2px var(--sft-color-accent);
+  background: var(--sft-color-bg-selected);
+  z-index: 1;
+}
+
+/* AG-Grid-style fill handle in the selected cell's bottom-right corner */
+.sft-table[data-editable] .sft-td[data-active]::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  height: 6px;
+  background: var(--sft-color-accent);
+  box-shadow: 0 0 0 1px var(--sft-color-bg);
+}
+
+/* the editor fills the cell box exactly; its 2px border sits ON the cell edges
+   so the edit outline overlaps the selection outline (no inset gap). */
 .sft-td__editor {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: calc(var(--sft-table-row-height) - 8px);
-  border: none;
-  outline: 2px solid var(--sft-color-accent);
-  outline-offset: -2px;
-  border-radius: var(--sft-radius-sm);
+  height: 100%;
+  box-sizing: border-box;
+  border: 2px solid var(--sft-color-accent);
+  outline: none;
+  border-radius: 0;
   background: var(--sft-color-surface);
   color: var(--sft-color-text);
   font: inherit;
-  padding: 0 var(--sft-space-1);
-}
-
-.sft-td__editor:focus {
-  outline: 2px solid var(--sft-color-accent);
+  padding: 0 var(--sft-table-cell-padding-x);
+  z-index: 2;
 }
 
 /* alignment (header + cell share the attribute) */

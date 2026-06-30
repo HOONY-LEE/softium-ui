@@ -27,28 +27,68 @@ function formatValue(value: unknown, type: ResolvedReactColumn<unknown>['type'])
 }
 
 export function Cell<T>({ row, column }: CellProps<T>): ReactNode {
-  const { scrollX, editable, editingCell, beginEdit, commitEdit, cancelEdit } =
-    useTableContext<T>();
+  const {
+    scrollX,
+    editable,
+    activeCell,
+    setActiveCell,
+    editingCell,
+    beginEdit,
+    commitEdit,
+    cancelEdit,
+  } = useTableContext<T>();
   const value = row.data[column.key];
 
   const canEdit = editable && column.editable;
   const isEditing =
     canEdit && editingCell?.rowId === row.rowId && editingCell?.columnKey === column.key;
+  const isActive =
+    canEdit && activeCell?.rowId === row.rowId && activeCell?.columnKey === column.key;
+
+  // keep the focus ring on the selected cell so keyboard (Enter/F2/Escape) works
+  const cellRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (isActive && !isEditing) cellRef.current?.focus({ preventScroll: true });
+  }, [isActive, isEditing]);
 
   const content = column.renderCell
     ? column.renderCell({ row, column: column.def, value })
     : formatValue(value, column.type);
 
+  const select = () => {
+    if (!isActive) setActiveCell({ rowId: row.rowId, columnKey: column.key });
+  };
+  const onClick = () => {
+    // a second click on the already-selected cell enters edit mode (AG-Grid style)
+    if (isActive && !isEditing) beginEdit(row.rowId, column.key);
+  };
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (isEditing) return;
+    if (e.key === 'Enter' || e.key === 'F2') {
+      e.preventDefault();
+      beginEdit(row.rowId, column.key);
+    } else if (e.key === 'Escape') {
+      setActiveCell(null);
+    }
+  };
+
   return (
     <div
+      ref={cellRef}
       className="sft-td"
       role="cell"
       data-col-key={column.key}
       data-align={column.align}
       data-pinned={column.pinned ?? undefined}
       data-editable={canEdit || undefined}
+      data-active={(isActive && !isEditing) || undefined}
+      data-editing={isEditing || undefined}
+      tabIndex={canEdit ? (isActive ? 0 : -1) : undefined}
       style={cellStyle(column, scrollX)}
+      onMouseDown={canEdit && !isEditing ? select : undefined}
+      onClick={canEdit ? onClick : undefined}
       onDoubleClick={canEdit && !isEditing ? () => beginEdit(row.rowId, column.key) : undefined}
+      onKeyDown={canEdit ? onKeyDown : undefined}
     >
       {isEditing ? (
         <CellEditor
