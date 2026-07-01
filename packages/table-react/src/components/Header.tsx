@@ -12,7 +12,7 @@ import { ChevronUp } from 'lucide-react';
 import { type ReactNode, type PointerEvent as ReactPointerEvent, useEffect, useRef } from 'react';
 import type { ResolvedReactColumn } from '../types';
 import { cellStyle } from './Cell';
-import { SELECT_COL_WIDTH, useTableContext } from './context';
+import { INDEX_COL_WIDTH, SELECT_COL_WIDTH, useTableContext } from './context';
 
 export interface HeaderProps<T> {
   columns: ResolvedReactColumn<T>[];
@@ -21,7 +21,7 @@ export interface HeaderProps<T> {
 const MIN_RESIZE_WIDTH = 48;
 
 export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
-  const { table, selectable, scrollX } = useTableContext<T>();
+  const { table, selectable, indexColumn, scrollX, messages } = useTableContext<T>();
   const sortRules = table.getSortRules();
 
   const pageRows = table.getRows();
@@ -45,6 +45,15 @@ export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
   return (
     <div className="sft-thead" role="rowgroup">
       <div className="sft-tr sft-tr--head" role="row">
+        {indexColumn && (
+          <div
+            className="sft-th sft-th--index"
+            role="columnheader"
+            style={{ flex: `0 0 ${INDEX_COL_WIDTH}px`, width: INDEX_COL_WIDTH }}
+          >
+            {messages.indexHeader}
+          </div>
+        )}
         {selectable && (
           <div
             className="sft-th sft-th--select"

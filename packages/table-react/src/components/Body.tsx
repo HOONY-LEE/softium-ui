@@ -34,8 +34,8 @@ export function Body<T>({ rows, columns, emptyText, virtual }: BodyProps<T>): Re
           className="sft-tbody__window"
           style={{ transform: `translateY(${virtual.offsetY}px)` }}
         >
-          {slice.map((row) => (
-            <Row key={row.rowId} row={row} columns={columns} />
+          {slice.map((row, i) => (
+            <Row key={row.rowId} row={row} columns={columns} index={virtual.startIndex + i} />
           ))}
         </div>
       </div>
@@ -44,8 +44,8 @@ export function Body<T>({ rows, columns, emptyText, virtual }: BodyProps<T>): Re
 
   return (
     <div className="sft-tbody" role="rowgroup">
-      {rows.map((row) => (
-        <Row key={row.rowId} row={row} columns={columns} />
+      {rows.map((row, i) => (
+        <Row key={row.rowId} row={row} columns={columns} index={i} />
       ))}
     </div>
   );

@@ -31,6 +31,10 @@ export interface TableContextValue<T> {
   messages: TableMessages;
   /** whether a leading selection checkbox column is rendered */
   selectable: boolean;
+  /** whether a leading row-number (index) column is rendered */
+  indexColumn: boolean;
+  /** absolute index of the first row on the current page (for the index column) */
+  indexOffset: number;
   /** horizontal scroll mode: fixed columns stay rigid (vs. shrink-to-fit) */
   scrollX: boolean;
   /** column-resize mode: handles are only active while this is on */
@@ -74,6 +78,9 @@ export interface TableContextValue<T> {
 
 /** fixed width (px) of the leading selection column */
 export const SELECT_COL_WIDTH = 44;
+
+/** fixed width (px) of the leading row-number (index) column */
+export const INDEX_COL_WIDTH = 56;
 
 // biome-ignore lint/suspicious/noExplicitAny: context is read through the typed useTableContext<T> accessor below.
 export const TableContext = createContext<TableContextValue<any> | null>(null);

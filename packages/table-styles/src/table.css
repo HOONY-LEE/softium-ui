@@ -593,6 +593,19 @@
   cursor: pointer;
 }
 
+/* ── index (row number) column ──────────────────────────── */
+.sft-th--index,
+.sft-td--index {
+  justify-content: center;
+  flex: none;
+  color: var(--sft-color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sft-th--index {
+  font-weight: var(--sft-font-weight-medium);
+}
+
 /* ── footer (separated block): page size · pagination · totals ── */
 .sft-tfoot {
   display: grid;

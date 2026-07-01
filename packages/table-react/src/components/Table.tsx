@@ -18,11 +18,12 @@ import {
   type TableSettings,
 } from './context';
 
-/** row height (px) per density preset */
+/** row height (px) per density preset. `normal` is the mid-point of the range and
+ *  is the default, so rows land on a comfortable middle height out of the box. */
 const DENSITY_ROW_HEIGHT: Record<TableDensity, number> = {
   compact: 34,
-  normal: 40,
-  comfortable: 52,
+  normal: 44,
+  comfortable: 54,
 };
 
 /** stable key for a cell in the dirty buffer */
@@ -44,6 +45,8 @@ export interface TableProps<T> {
   filterRow?: boolean;
   /** render a leading selection checkbox column. Default false. */
   selectable?: boolean;
+  /** render a leading row-number (index) column. Default false. */
+  indexColumn?: boolean;
   /** allow horizontal scrolling. Default false — columns shrink to fit (no x-scroll). */
   scrollX?: boolean;
   /** horizontal separators between rows. Default false. */
@@ -92,6 +95,7 @@ export function Table<T>({
   toolbarActions,
   filterRow = false,
   selectable = false,
+  indexColumn = false,
   scrollX = false,
   rowBorders = false,
   columnBorders = false,
@@ -110,6 +114,10 @@ export function Table<T>({
   const resolvedMessages = useMemo(() => resolveMessages(locale, messages), [locale, messages]);
   const columns = table.getRenderColumns();
   const rows = table.getRows();
+
+  // row number of the first row on the current page (1-based numbering added in Row)
+  const pageSizeNow = table.getPageSize();
+  const indexOffset = pageSizeNow > 0 ? (table.getPage() - 1) * pageSizeNow : 0;
 
   const [resizeMode, setResizeMode] = useState(false);
   const toggleResizeMode = useCallback(() => setResizeMode((v) => !v), []);
@@ -218,6 +226,8 @@ export function Table<T>({
       table,
       messages: resolvedMessages,
       selectable,
+      indexColumn,
+      indexOffset,
       scrollX: settings.scrollX,
       resizeMode,
       toggleResizeMode,
@@ -245,6 +255,8 @@ export function Table<T>({
       table,
       resolvedMessages,
       selectable,
+      indexColumn,
+      indexOffset,
       resizeMode,
       toggleResizeMode,
       editable,

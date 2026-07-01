@@ -63,6 +63,8 @@ export interface TableMessages {
   back: string;
   next: string;
   last: string;
+  /** header label for the leading row-number (index) column */
+  indexHeader: string;
   /** DataGrid edit-mode controls */
   editButton: string;
   doneEdit: string;
@@ -107,6 +109,7 @@ export const ko: TableMessages = {
   back: '이전',
   next: '다음',
   last: '마지막',
+  indexHeader: 'No.',
   editButton: '편집',
   doneEdit: '완료',
   discardChanges: '취소',
@@ -149,6 +152,7 @@ export const en: TableMessages = {
   back: 'Back',
   next: 'Next',
   last: 'Last',
+  indexHeader: 'No.',
   editButton: 'Edit',
   doneEdit: 'Done',
   discardChanges: 'Cancel',

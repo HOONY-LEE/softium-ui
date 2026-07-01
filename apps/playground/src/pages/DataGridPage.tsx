@@ -51,6 +51,7 @@ export function DataGridPage({ locale }: { locale: Locale }) {
       <DataGrid
         table={table}
         locale={locale}
+        indexColumn
         editMode="toggle"
         commitMode="batch"
         onSave={onSave}
