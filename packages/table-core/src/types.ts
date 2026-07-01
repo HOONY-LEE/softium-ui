@@ -38,6 +38,8 @@ export interface ColumnDef<T, TNode = unknown> {
   hideable?: boolean;
   /** allow inline editing of this column's cells (DataGrid). Default false. */
   editable?: boolean;
+  /** allow copying a selected cell's value (Ctrl/Cmd+C) in a grid. Default true. */
+  copyable?: boolean;
   /** custom cell renderer. Returns `TNode` so core has no React dependency. */
   renderCell?: (ctx: CellContext<T>) => TNode;
   renderHeader?: (ctx: HeaderContext<T, TNode>) => TNode;
@@ -147,6 +149,7 @@ export interface ResolvedColumn<T, TNode = unknown> {
   pinnable: boolean;
   hideable: boolean;
   editable: boolean;
+  copyable: boolean;
   renderCell?: (ctx: CellContext<T>) => TNode;
   renderHeader?: (ctx: HeaderContext<T, TNode>) => TNode;
   /** the originating definition (escape hatch for advanced renderers) */

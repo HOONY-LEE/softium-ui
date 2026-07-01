@@ -34,8 +34,8 @@ export function SheetPage({ locale }: { locale: Locale }) {
           <h2 className="page-title">{t('시트', 'Sheet')}</h2>
           <p className="page-desc">
             {t(
-              'A1 주소 격자 + 수식. 셀을 클릭/더블클릭해 편집(=B2*C2, =SUM(D2:D4)). Enter 아래로, Tab 오른쪽, Esc 취소. (미니멀 버전)',
-              'A1 grid + formulas. Click/double-click to edit (=B2*C2, =SUM(D2:D4)). Enter down, Tab right, Esc cancel. (minimal)',
+              'A1 주소 격자 + 수식. 셀을 클릭/더블클릭해 편집(=B2*C2, =SUM(D2:D4)). Enter 아래로, Tab 오른쪽, Esc 취소. 열 머리글 오른쪽 경계·행 머리글 아래쪽 경계를 드래그해 너비·높이 조절, 맨 끝 열 옆 / 맨 끝 행 아래 「+」로 열·행 추가 (구글 시트·엑셀·Numbers와 동일).',
+              "A1 grid + formulas. Click/double-click to edit (=B2*C2, =SUM(D2:D4)). Enter down, Tab right, Esc cancel. Drag a column header's right edge or a row header's bottom edge to resize; use the “+” past the last column / below the last row to add more — same as Google Sheets, Excel, and Numbers.",
             )}
           </p>
         </div>

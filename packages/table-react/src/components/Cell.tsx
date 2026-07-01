@@ -45,14 +45,19 @@ export function Cell<T>({ row, column }: CellProps<T>): ReactNode {
   const staged = getStaged(row.rowId, column.key);
   const value = (staged.dirty ? staged.value : rawValue) as typeof rawValue;
 
-  // editing is allowed only while edit mode is active (toggle mode gates this)
+  // selection is available whenever a cell is copyable OR editable — copyable so
+  // Ctrl/Cmd+C works on read-only columns, editable so click-to-select-then-click-
+  // to-edit still works even if that column happens to opt out of copying.
+  // `copyable` only gates the copy shortcut itself, independent of selection.
+  const copyable = column.copyable !== false;
+  const canSelect = editable && (copyable || column.editable);
   const canEdit = editable && column.editable && editEnabled;
   const isEditing =
     canEdit && editingCell?.rowId === row.rowId && editingCell?.columnKey === column.key;
   const isActive =
-    canEdit && activeCell?.rowId === row.rowId && activeCell?.columnKey === column.key;
+    canSelect && activeCell?.rowId === row.rowId && activeCell?.columnKey === column.key;
 
-  // keep the focus ring on the selected cell so keyboard (Enter/F2/Escape) works
+  // keep the focus ring on the selected cell so keyboard (copy/Enter/F2/Escape) works
   const cellRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (isActive && !isEditing) cellRef.current?.focus({ preventScroll: true });
@@ -67,11 +72,22 @@ export function Cell<T>({ row, column }: CellProps<T>): ReactNode {
   };
   const onClick = () => {
     // a second click on the already-selected cell enters edit mode (AG-Grid style)
-    if (isActive && !isEditing) beginEdit(row.rowId, column.key);
+    if (canEdit && isActive && !isEditing) beginEdit(row.rowId, column.key);
+  };
+  const copyValue = () => {
+    const text = value == null ? '' : String(value);
+    navigator.clipboard?.writeText(text).catch(() => {});
   };
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (isEditing) return;
-    if (e.key === 'Enter' || e.key === 'F2') {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'c') {
+      if (copyable) {
+        e.preventDefault();
+        copyValue();
+      }
+      return;
+    }
+    if (canEdit && (e.key === 'Enter' || e.key === 'F2')) {
       e.preventDefault();
       beginEdit(row.rowId, column.key);
     } else if (e.key === 'Escape') {
@@ -88,15 +104,16 @@ export function Cell<T>({ row, column }: CellProps<T>): ReactNode {
       data-align={column.align}
       data-pinned={column.pinned ?? undefined}
       data-editable={canEdit || undefined}
+      data-selectable={(canSelect && !canEdit) || undefined}
       data-active={(isActive && !isEditing) || undefined}
       data-editing={isEditing || undefined}
       data-dirty={staged.dirty || undefined}
-      tabIndex={canEdit ? (isActive ? 0 : -1) : undefined}
+      tabIndex={canSelect ? (isActive ? 0 : -1) : undefined}
       style={cellStyle(column, scrollX)}
-      onMouseDown={canEdit && !isEditing ? select : undefined}
-      onClick={canEdit ? onClick : undefined}
+      onMouseDown={canSelect && !isEditing ? select : undefined}
+      onClick={canSelect ? onClick : undefined}
       onDoubleClick={canEdit && !isEditing ? () => beginEdit(row.rowId, column.key) : undefined}
-      onKeyDown={canEdit ? onKeyDown : undefined}
+      onKeyDown={canSelect ? onKeyDown : undefined}
     >
       {isEditing ? (
         <CellEditor

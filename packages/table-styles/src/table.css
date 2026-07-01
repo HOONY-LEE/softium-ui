@@ -465,11 +465,19 @@
   cursor: cell;
 }
 
+/* selectable-but-not-editable cell (copyable column in a grid): same "selectable
+   cell" affordance, minus anything implying it can be typed into */
+.sft-td[data-selectable] {
+  cursor: cell;
+}
+
 /* a single click selects the cell — an accent ring flush with the cell edges
    (inset box-shadow overlaps the grid lines, no layout shift). The cell holds
-   keyboard focus so Enter/F2 edits and Escape deselects; hide the UA outline. */
+   keyboard focus so copy/Enter/F2 work and Escape deselects; hide the UA outline. */
 .sft-td[data-editable]:focus,
-.sft-td[data-editable]:focus-visible {
+.sft-td[data-editable]:focus-visible,
+.sft-td[data-selectable]:focus,
+.sft-td[data-selectable]:focus-visible {
   outline: none;
 }
 
@@ -479,8 +487,9 @@
   z-index: 1;
 }
 
-/* AG-Grid-style fill handle in the selected cell's bottom-right corner */
-.sft-table[data-editable] .sft-td[data-active]::after {
+/* AG-Grid-style fill handle in the selected cell's bottom-right corner — only for
+   cells that are actually editable (a copy-only selection has nothing to fill) */
+.sft-table[data-editable] .sft-td[data-editable][data-active]::after {
   content: "";
   position: absolute;
   right: 0;
@@ -905,6 +914,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   background: var(--sft-color-bg-subtle);
   color: var(--sft-color-text-secondary);
   font-weight: var(--sft-font-weight-medium);
@@ -919,20 +929,37 @@
   z-index: 1;
 }
 
+.sft-sheet__corner,
 .sft-sheet__colhead {
-  width: 96px;
   height: 28px;
 }
 
-.sft-sheet__rowhead {
-  height: 28px;
+/* drag handles: column width (right edge) / row height (bottom edge) */
+.sft-sheet__col-resizer {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
+}
+
+.sft-sheet__row-resizer {
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 4px;
+  cursor: row-resize;
+  z-index: 2;
 }
 
 .sft-sheet__cell {
   position: relative;
   flex: none;
-  width: 96px;
-  height: 28px;
+  display: flex;
+  align-items: center;
   box-shadow: inset -1px -1px 0 var(--sft-color-border);
   background: var(--sft-color-bg);
   cursor: cell;
@@ -940,9 +967,8 @@
 
 .sft-sheet__value {
   display: block;
-  height: 100%;
+  width: 100%;
   padding: 0 var(--sft-space-2);
-  line-height: 28px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -965,6 +991,45 @@
   color: var(--sft-color-text);
   font: inherit;
   padding: 0 var(--sft-space-2);
+}
+
+/* "+" add-column (end of the header row) / add-row (below the last row) */
+.sft-sheet__addcol {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--sft-color-bg-subtle);
+  color: var(--sft-color-text-muted);
+  cursor: pointer;
+  box-shadow: inset -1px -1px 0 var(--sft-color-border);
+}
+.sft-sheet__addcol:hover {
+  background: var(--sft-color-bg-hover);
+  color: var(--sft-color-accent);
+}
+
+.sft-sheet__addrow {
+  flex: none;
+  width: 44px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  position: sticky;
+  left: 0;
+  background: var(--sft-color-bg-subtle);
+  color: var(--sft-color-text-muted);
+  cursor: pointer;
+  box-shadow: inset -1px -1px 0 var(--sft-color-border);
+}
+.sft-sheet__addrow:hover {
+  background: var(--sft-color-bg-hover);
+  color: var(--sft-color-accent);
 }
 
 /* ── PivotTable (cross-tab) ──────────────────────────────── */

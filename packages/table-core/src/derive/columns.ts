@@ -110,6 +110,7 @@ export function resolveColumns<T, TNode>(
       pinnable: def.pinnable ?? true,
       hideable: def.hideable ?? true,
       editable: def.editable ?? false,
+      copyable: def.copyable ?? true,
       renderCell: def.renderCell,
       renderHeader: def.renderHeader,
       def,

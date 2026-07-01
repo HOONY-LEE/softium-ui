@@ -11,8 +11,9 @@ export type DataGridProps<T> = TableProps<T>;
  *
  * Row/column borders aren't forced here — Table shows them by default while edit
  * mode is active and hides them otherwise (see Table's own default), unless this
- * caller passes `rowBorders`/`columnBorders` explicitly.
+ * caller passes `rowBorders`/`columnBorders` explicitly. Striping defaults to off
+ * (grid lines carry row separation in edit mode instead), unless overridden.
  */
 export function DataGrid<T>(props: DataGridProps<T>): ReactNode {
-  return <Table {...props} editable={props.editable ?? true} />;
+  return <Table {...props} editable={props.editable ?? true} striped={props.striped ?? false} />;
 }
