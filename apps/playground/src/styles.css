@@ -285,3 +285,35 @@ body {
 .demo-row--center {
   align-items: center;
 }
+
+/* ── layout demo page (contained AppShell-shaped preview) ── */
+.layout-demo {
+  display: flex;
+  height: 380px;
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
+  overflow: hidden;
+}
+
+.layout-demo__aside {
+  flex-shrink: 0;
+  border-right: 1px solid var(--sft-color-border);
+  transition: width var(--sft-duration-base) var(--sft-ease);
+  overflow: hidden;
+}
+
+.layout-demo__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.layout-demo__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sft-space-5);
+  color: var(--sft-color-text-secondary);
+  font-size: var(--sft-font-size-sm);
+}

@@ -15,6 +15,7 @@ import { type PageKey, nav, navLabel } from './nav';
 import { ButtonsPage } from './pages/ButtonsPage';
 import { CellTypesPage } from './pages/CellTypesPage';
 import { DataGridPage } from './pages/DataGridPage';
+import { LayoutPage } from './pages/LayoutPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { PivotPage } from './pages/PivotPage';
 import { SheetPage } from './pages/SheetPage';
@@ -151,6 +152,7 @@ export function App() {
       {page === 'sheet' && <SheetPage locale={locale} />}
       {page === 'pivot' && <PivotPage locale={locale} />}
       {page === 'cell-types' && <CellTypesPage locale={locale} />}
+      {page === 'layout' && <LayoutPage locale={locale} />}
       {page === 'button' && <ButtonsPage locale={locale} />}
     </AppShell>
   );

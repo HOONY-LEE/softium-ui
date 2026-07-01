@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   LayoutGrid,
   type LucideIcon,
+  PanelsTopLeft,
   Sigma,
   Square,
   Table,
@@ -17,6 +18,7 @@ export type PageKey =
   | 'sheet'
   | 'pivot'
   | 'cell-types'
+  | 'layout'
   | 'button';
 
 export interface NavItem {
@@ -44,6 +46,7 @@ export const nav: NavGroup[] = [
       { key: 'sheet', icon: Grid2x2, ko: '시트', en: 'Sheet' },
       { key: 'pivot', icon: Sigma, ko: '피벗', en: 'Pivot' },
       { key: 'cell-types', icon: LayoutGrid, ko: '셀 타입', en: 'Cell Types' },
+      { key: 'layout', icon: PanelsTopLeft, ko: '레이아웃', en: 'Layout' },
       { key: 'button', icon: Square, ko: 'Button', en: 'Button' },
     ],
   },
