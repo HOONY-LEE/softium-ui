@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TableInstance } from '../hooks/useTable';
 import { useVirtualRows } from '../hooks/useVirtualRows';
 import { resolveMessages } from '../i18n';
@@ -49,9 +49,10 @@ export interface TableProps<T> {
   indexColumn?: boolean;
   /** allow horizontal scrolling. Default false — columns shrink to fit (no x-scroll). */
   scrollX?: boolean;
-  /** horizontal separators between rows. Default false. */
+  /** horizontal separators between rows. Default false — except an editable grid
+   *  (DataGrid) defaults to showing borders while edit mode is active. */
   rowBorders?: boolean;
-  /** vertical separators between columns. Default false. */
+  /** vertical separators between columns. Same default rule as `rowBorders`. */
   columnBorders?: boolean;
   /** very-light alternating row background (zebra). Default true. */
   striped?: boolean;
@@ -97,8 +98,8 @@ export function Table<T>({
   selectable = false,
   indexColumn = false,
   scrollX = false,
-  rowBorders = false,
-  columnBorders = false,
+  rowBorders: rowBordersProp,
+  columnBorders: columnBordersProp,
   striped = true,
   maxHeight,
   density = 'normal',
@@ -189,18 +190,22 @@ export function Table<T>({
   }, [dirty, onSave, onCellChange]);
   const discardAll = useCallback(() => setDirty(new Map()), []);
 
-  // display settings — seeded by props, then editable via the footer settings menu
+  // display settings — seeded by props, then editable via the footer settings menu.
+  // Border defaults: an explicit prop always wins; otherwise an editable grid shows
+  // borders while edit mode is active and hides them while read-only (see the effect
+  // below, which keeps this in sync as edit mode toggles at runtime).
   const [settings, setSettings] = useState<TableSettings>(() => ({
-    rowBorders,
-    columnBorders,
+    rowBorders: rowBordersProp ?? (editable ? editEnabled : false),
+    columnBorders: columnBordersProp ?? (editable ? editEnabled : false),
     striped,
     scrollX,
     stickyHeader: maxHeight != null,
+    indexColumn,
     density,
   }));
   const setSetting = useCallback(
     (
-      key: 'rowBorders' | 'columnBorders' | 'striped' | 'scrollX' | 'stickyHeader',
+      key: 'rowBorders' | 'columnBorders' | 'striped' | 'scrollX' | 'stickyHeader' | 'indexColumn',
       value: boolean,
     ) => setSettings((s) => ({ ...s, [key]: value })),
     [],
@@ -209,6 +214,17 @@ export function Table<T>({
     (d: TableDensity) => setSettings((s) => ({ ...s, density: d })),
     [],
   );
+
+  // keep row/column borders following edit-mode transitions, unless the caller
+  // pinned an explicit value via props
+  useEffect(() => {
+    if (!editable || rowBordersProp !== undefined) return;
+    setSettings((s) => ({ ...s, rowBorders: editEnabled }));
+  }, [editable, editEnabled, rowBordersProp]);
+  useEffect(() => {
+    if (!editable || columnBordersProp !== undefined) return;
+    setSettings((s) => ({ ...s, columnBorders: editEnabled }));
+  }, [editable, editEnabled, columnBordersProp]);
 
   // row height: explicit prop overrides the density preset
   const rowH = rowHeight ?? DENSITY_ROW_HEIGHT[settings.density];
@@ -226,7 +242,6 @@ export function Table<T>({
       table,
       messages: resolvedMessages,
       selectable,
-      indexColumn,
       indexOffset,
       scrollX: settings.scrollX,
       resizeMode,
@@ -255,7 +270,6 @@ export function Table<T>({
       table,
       resolvedMessages,
       selectable,
-      indexColumn,
       indexOffset,
       resizeMode,
       toggleResizeMode,

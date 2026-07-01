@@ -26,9 +26,10 @@ export function Settings<T>(): ReactNode {
   };
 
   const toggles: {
-    key: 'rowBorders' | 'columnBorders' | 'striped' | 'scrollX' | 'stickyHeader';
+    key: 'rowBorders' | 'columnBorders' | 'striped' | 'scrollX' | 'stickyHeader' | 'indexColumn';
     label: string;
   }[] = [
+    { key: 'indexColumn', label: messages.settingIndexColumn },
     { key: 'rowBorders', label: messages.settingRowBorders },
     { key: 'columnBorders', label: messages.settingColumnBorders },
     { key: 'striped', label: messages.settingStriped },

@@ -23,6 +23,8 @@ export interface TableSettings {
   striped: boolean;
   scrollX: boolean;
   stickyHeader: boolean;
+  /** leading row-number (index) column. Off by default; user-toggleable. */
+  indexColumn: boolean;
   density: TableDensity;
 }
 
@@ -31,8 +33,6 @@ export interface TableContextValue<T> {
   messages: TableMessages;
   /** whether a leading selection checkbox column is rendered */
   selectable: boolean;
-  /** whether a leading row-number (index) column is rendered */
-  indexColumn: boolean;
   /** absolute index of the first row on the current page (for the index column) */
   indexOffset: number;
   /** horizontal scroll mode: fixed columns stay rigid (vs. shrink-to-fit) */
@@ -70,7 +70,7 @@ export interface TableContextValue<T> {
   /** live display settings + setters (footer settings popups) */
   settings: TableSettings;
   setSetting: (
-    key: 'rowBorders' | 'columnBorders' | 'striped' | 'scrollX' | 'stickyHeader',
+    key: 'rowBorders' | 'columnBorders' | 'striped' | 'scrollX' | 'stickyHeader' | 'indexColumn',
     value: boolean,
   ) => void;
   setDensity: (density: TableDensity) => void;

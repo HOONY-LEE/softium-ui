@@ -8,14 +8,11 @@ export type DataGridProps<T> = TableProps<T>;
  * paginate/columns) plus inline cell editing: double-click an `editable` column's
  * cell (or focus + type) to edit; Enter/blur commits, Escape cancels. Wire up
  * `onCellChange` to persist edits.
+ *
+ * Row/column borders aren't forced here — Table shows them by default while edit
+ * mode is active and hides them otherwise (see Table's own default), unless this
+ * caller passes `rowBorders`/`columnBorders` explicitly.
  */
 export function DataGrid<T>(props: DataGridProps<T>): ReactNode {
-  return (
-    <Table
-      {...props}
-      rowBorders={props.rowBorders ?? true}
-      columnBorders={props.columnBorders ?? true}
-      editable={props.editable ?? true}
-    />
-  );
+  return <Table {...props} editable={props.editable ?? true} />;
 }

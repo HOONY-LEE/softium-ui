@@ -12,11 +12,11 @@ export interface RowProps<T> {
 }
 
 export function Row<T>({ row, columns, index }: RowProps<T>): ReactNode {
-  const { table, selectable, indexColumn, indexOffset } = useTableContext<T>();
+  const { table, selectable, settings, indexOffset } = useTableContext<T>();
 
   return (
     <div className="sft-tr" role="row" data-selected={row.selected ?? undefined}>
-      {indexColumn && (
+      {settings.indexColumn && (
         <div
           className="sft-td sft-td--index"
           role="cell"

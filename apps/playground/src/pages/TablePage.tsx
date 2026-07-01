@@ -34,7 +34,6 @@ export function TablePage({ locale }: { locale: Locale }) {
       <Table
         table={table}
         locale={locale}
-        indexColumn
         selectable
         toolbarActions={
           <Button variant="primary" size="sm" iconLeft={<Plus size={15} />}>

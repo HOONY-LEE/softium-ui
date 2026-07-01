@@ -25,6 +25,7 @@ export interface TableMessages {
   settingStriped: string;
   settingScrollX: string;
   settingStickyHeader: string;
+  settingIndexColumn: string;
   /** row density */
   density: string;
   densityCompact: string;
@@ -85,6 +86,7 @@ export const ko: TableMessages = {
   settingStriped: '줄무늬',
   settingScrollX: '좌우 스크롤',
   settingStickyHeader: '헤더 고정',
+  settingIndexColumn: '인덱스 컬럼',
   density: '행 높이',
   densityCompact: '좁게',
   densityNormal: '보통',
@@ -128,6 +130,7 @@ export const en: TableMessages = {
   settingStriped: 'Striped',
   settingScrollX: 'Horizontal scroll',
   settingStickyHeader: 'Sticky header',
+  settingIndexColumn: 'Index column',
   density: 'Row height',
   densityCompact: 'Compact',
   densityNormal: 'Normal',

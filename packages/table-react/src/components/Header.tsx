@@ -21,7 +21,7 @@ export interface HeaderProps<T> {
 const MIN_RESIZE_WIDTH = 48;
 
 export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
-  const { table, selectable, indexColumn, scrollX, messages } = useTableContext<T>();
+  const { table, selectable, settings, scrollX, messages } = useTableContext<T>();
   const sortRules = table.getSortRules();
 
   const pageRows = table.getRows();
@@ -45,7 +45,7 @@ export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
   return (
     <div className="sft-thead" role="rowgroup">
       <div className="sft-tr sft-tr--head" role="row">
-        {indexColumn && (
+        {settings.indexColumn && (
           <div
             className="sft-th sft-th--index"
             role="columnheader"
