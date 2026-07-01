@@ -1,11 +1,11 @@
 import { Button, Header, Sidebar, SidebarBrand, SidebarItem, SidebarSection } from '@softium/ui';
 import {
   Bell,
+  ChevronLeft,
+  ChevronRight,
   Grid3x3,
   LayoutDashboard,
   Menu,
-  PanelLeftClose,
-  PanelLeftOpen,
   Search,
   Table,
 } from 'lucide-react';
@@ -55,7 +55,7 @@ export function LayoutPage({ locale }: { locale: Locale }) {
                 {DEMO_ITEMS.map((item) => (
                   <SidebarItem
                     key={item.key}
-                    icon={<item.icon size={16} />}
+                    icon={<item.icon size={18} />}
                     tooltip={locale === 'ko' ? item.ko : item.en}
                     active={active === item.key}
                     onClick={() => setActive(item.key)}
@@ -138,7 +138,7 @@ export function LayoutPage({ locale }: { locale: Locale }) {
           <Button
             size="sm"
             variant="secondary"
-            iconLeft={collapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
+            iconLeft={collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             onClick={() => setCollapsed((v) => !v)}
           >
             {collapsed ? t('펼치기', 'Expand') : t('접기', 'Collapse')}

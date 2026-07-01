@@ -68,7 +68,7 @@ export function App() {
           {group.items.map((item) => (
             <SidebarItem
               key={item.key}
-              icon={<item.icon size={16} />}
+              icon={<item.icon size={18} />}
               tooltip={navLabel(item, locale)}
               active={page === item.key}
               onClick={() => go(item.key)}

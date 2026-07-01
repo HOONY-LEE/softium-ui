@@ -1,4 +1,4 @@
-import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronDown, ChevronLeft } from 'lucide-react';
 import { type MouseEvent, type ReactNode, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cx } from '../util/cx';
@@ -34,7 +34,6 @@ export function Sidebar({
   className,
 }: SidebarProps) {
   const toggle = collapsed ? onExpand : onCollapse;
-  const CollapseIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
 
   return (
     <div className={cx('sft-sidebar', collapsed && 'sft-sidebar--collapsed', className)}>
@@ -48,7 +47,13 @@ export function Sidebar({
               onClick={toggle}
               aria-label={collapsed ? 'expand sidebar' : 'collapse sidebar'}
             >
-              <CollapseIcon size={18} />
+              <ChevronLeft
+                size={16}
+                className={cx(
+                  'sft-sidebar__collapse-icon',
+                  collapsed && 'sft-sidebar__collapse-icon--flipped',
+                )}
+              />
             </button>
           )}
         </div>
