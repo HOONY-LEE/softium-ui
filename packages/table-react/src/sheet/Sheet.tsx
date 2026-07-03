@@ -20,13 +20,12 @@ export interface SheetProps {
   className?: string;
 }
 
-const DEFAULT_COL_WIDTH = 96;
-const DEFAULT_ROW_HEIGHT = 28;
-const MIN_COL_WIDTH = 40;
-const MIN_ROW_HEIGHT = 20;
-/** faint preview strip past the last real column/row, hinting the grid continues */
-const GHOST_COLS = 3;
-const GHOST_ROWS = 3;
+const DEFAULT_COL_WIDTH = 120;
+const DEFAULT_ROW_HEIGHT = 34;
+const MIN_COL_WIDTH = 48;
+const MIN_ROW_HEIGHT = 22;
+/** fixed width of the row-header column */
+const ROW_HEAD_WIDTH = 48;
 
 /**
  * Sheet — a minimal spreadsheet: A1-addressed editable grid with formulas
@@ -34,10 +33,12 @@ const GHOST_ROWS = 3;
  * the data Table/DataGrid. Click to select, double-click or type to edit;
  * Enter commits + moves down, Tab moves right, Esc cancels.
  *
- * Google Sheets / Excel / Numbers parity: drag a column's right edge or a row's
- * bottom edge to resize it (double-click to auto-fit); a "+" at the end of the
- * last column / below the last row appends another column / row; a faint
- * gridline preview past the edge hints the sheet keeps going.
+ * Google Sheets / Excel / Numbers parity:
+ *   - click a column letter / row number to select the whole column/row; only
+ *     then does dragging its edge resize it (double-click the edge to auto-fit)
+ *   - a "+" past the last column / below the last row appends another,
+ *     sized exactly like a real column/row; a single faint gridline past it
+ *     previews the column/row that would be created
  */
 export function Sheet({
   rows = 20,
@@ -54,6 +55,10 @@ export function Sheet({
   const [active, setActive] = useState<{ c: number; r: number }>({ c: 0, r: 0 });
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
+  // Excel-style whole-column / whole-row selection: only the selected header's
+  // edge can be dragged to resize.
+  const [selectedCol, setSelectedCol] = useState<number | null>(null);
+  const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
   const getRaw = useMemo(() => (addr: string) => cells[addr] ?? '', [cells]);
@@ -61,6 +66,23 @@ export function Sheet({
   const rowHeight = (r: number) => rowHeights[r] ?? DEFAULT_ROW_HEIGHT;
 
   const focusGrid = () => gridRef.current?.focus();
+
+  const selectCell = (c: number, r: number) => {
+    setEditing(false);
+    setActive({ c, r });
+    setSelectedCol(null);
+    setSelectedRow(null);
+  };
+
+  const selectColumn = (c: number) => {
+    setSelectedCol(c);
+    setSelectedRow(null);
+  };
+
+  const selectRow = (r: number) => {
+    setSelectedRow(r);
+    setSelectedCol(null);
+  };
 
   const commit = (addr: string, value: string, move: 'down' | 'right' | null) => {
     setCells((prev) => {
@@ -107,7 +129,10 @@ export function Sheet({
     });
   }
 
+  // Resizing is only live once the column/row has been selected via its header
+  // (Excel-style): otherwise the handle is visually present but inert.
   function startColResize(e: ReactPointerEvent<HTMLSpanElement>, c: number) {
+    if (selectedCol !== c) return;
     e.preventDefault();
     e.stopPropagation();
     const startX = e.clientX;
@@ -125,6 +150,7 @@ export function Sheet({
   }
 
   function startRowResize(e: ReactPointerEvent<HTMLSpanElement>, r: number) {
+    if (selectedRow !== r) return;
     e.preventDefault();
     e.stopPropagation();
     const startY = e.clientY;
@@ -173,15 +199,22 @@ export function Sheet({
       onKeyDown={onGridKeyDown}
     >
       <div className="sft-sheet__row sft-sheet__row--head">
-        <div className="sft-sheet__corner" />
+        <div className="sft-sheet__corner" style={{ width: ROW_HEAD_WIDTH }} />
         {Array.from({ length: colCount }, (_, c) => (
-          <div className="sft-sheet__colhead" key={indexToCol(c)} style={{ width: colWidth(c) }}>
+          <div
+            className="sft-sheet__colhead"
+            key={indexToCol(c)}
+            data-selected={selectedCol === c || undefined}
+            style={{ width: colWidth(c) }}
+            onMouseDown={() => selectColumn(c)}
+          >
             {indexToCol(c)}
             <span
               className="sft-sheet__col-resizer"
+              data-active={selectedCol === c || undefined}
               onPointerDown={(e) => startColResize(e, c)}
-              onDoubleClick={() => autoFitColumn(c)}
-              title="더블클릭: 너비 자동 맞춤"
+              onDoubleClick={() => selectedCol === c && autoFitColumn(c)}
+              title="열을 선택한 뒤 드래그: 너비 조절 · 더블클릭: 자동 맞춤"
               aria-hidden="true"
             />
           </div>
@@ -192,25 +225,30 @@ export function Sheet({
           onClick={addColumn}
           aria-label="add column"
           title="열 추가"
+          style={{ width: DEFAULT_COL_WIDTH }}
         >
           <Plus size={14} />
         </button>
-        {Array.from({ length: GHOST_COLS }, (_, g) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: purely decorative filler
-          <div key={g} className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
-        ))}
+        {/* single faint preview of the column a "+" click would create */}
+        <div className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
       </div>
 
       {Array.from({ length: rowCount }, (_, r) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: fixed positional grid
         <div className="sft-sheet__row" key={r} style={{ height: rowHeight(r) }}>
-          <div className="sft-sheet__rowhead">
+          <div
+            className="sft-sheet__rowhead"
+            data-selected={selectedRow === r || undefined}
+            style={{ width: ROW_HEAD_WIDTH }}
+            onMouseDown={() => selectRow(r)}
+          >
             {r + 1}
             <span
               className="sft-sheet__row-resizer"
+              data-active={selectedRow === r || undefined}
               onPointerDown={(e) => startRowResize(e, r)}
-              onDoubleClick={() => autoFitRow(r)}
-              title="더블클릭: 기본 높이로"
+              onDoubleClick={() => selectedRow === r && autoFitRow(r)}
+              title="행을 선택한 뒤 드래그: 높이 조절 · 더블클릭: 기본 높이로"
               aria-hidden="true"
             />
           </div>
@@ -224,11 +262,10 @@ export function Sheet({
                 className="sft-sheet__cell"
                 data-active={isActive || undefined}
                 data-col-idx={c}
+                data-col-selected={selectedCol === c || undefined}
+                data-row-selected={selectedRow === r || undefined}
                 style={{ width: colWidth(c) }}
-                onMouseDown={() => {
-                  setEditing(false);
-                  setActive({ c, r });
-                }}
+                onMouseDown={() => selectCell(c, r)}
                 onDoubleClick={() => startEdit()}
               >
                 {isEditing ? (
@@ -259,10 +296,7 @@ export function Sheet({
               </div>
             );
           })}
-          <div
-            className="sft-sheet__ghost"
-            style={{ width: 28 + GHOST_COLS * DEFAULT_COL_WIDTH }}
-          />
+          <div className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
         </div>
       ))}
 
@@ -273,28 +307,15 @@ export function Sheet({
           onClick={addRow}
           aria-label="add row"
           title="행 추가"
+          style={{ width: ROW_HEAD_WIDTH, height: DEFAULT_ROW_HEIGHT }}
         >
           <Plus size={14} />
         </button>
         {Array.from({ length: colCount }, (_, c) => (
           <div key={indexToCol(c)} className="sft-sheet__ghost" style={{ width: colWidth(c) }} />
         ))}
-        <div className="sft-sheet__ghost" style={{ width: 28 + GHOST_COLS * DEFAULT_COL_WIDTH }} />
+        <div className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
       </div>
-
-      {Array.from({ length: GHOST_ROWS }, (_, g) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: purely decorative filler
-        <div className="sft-sheet__row sft-sheet__row--ghost" key={g}>
-          <div className="sft-sheet__ghost" style={{ width: 44 }} />
-          {Array.from({ length: colCount }, (_, c) => (
-            <div key={indexToCol(c)} className="sft-sheet__ghost" style={{ width: colWidth(c) }} />
-          ))}
-          <div
-            className="sft-sheet__ghost"
-            style={{ width: 28 + GHOST_COLS * DEFAULT_COL_WIDTH }}
-          />
-        </div>
-      ))}
     </div>
   );
 }

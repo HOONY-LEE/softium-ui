@@ -899,7 +899,7 @@
   overflow: auto;
   max-width: 100%;
   background: var(--sft-color-bg);
-  font-size: var(--sft-font-size-sm);
+  font-size: var(--sft-font-size-md);
   outline: none;
 }
 
@@ -919,11 +919,12 @@
   color: var(--sft-color-text-secondary);
   font-weight: var(--sft-font-weight-medium);
   box-shadow: inset -1px -1px 0 var(--sft-color-border);
+  transition: background var(--sft-duration-fast) var(--sft-ease), color var(--sft-duration-fast)
+    var(--sft-ease);
 }
 
 .sft-sheet__corner,
 .sft-sheet__rowhead {
-  width: 44px;
   position: sticky;
   left: 0;
   z-index: 1;
@@ -931,18 +932,36 @@
 
 .sft-sheet__corner,
 .sft-sheet__colhead {
-  height: 28px;
+  height: 34px;
 }
 
-/* drag handles: column width (right edge) / row height (bottom edge) */
+/* Excel-style: click a column letter / row number to select the whole
+   column/row — this is also the gate that lets its edge be dragged to resize */
+.sft-sheet__colhead,
+.sft-sheet__rowhead {
+  cursor: pointer;
+}
+
+.sft-sheet__colhead[data-selected],
+.sft-sheet__rowhead[data-selected] {
+  background: var(--sft-color-accent);
+  color: var(--sft-color-text-on-accent);
+}
+
+/* drag handles: column width (right edge) / row height (bottom edge). Inert
+   (no cursor, no pointer events) until the column/row is selected. */
 .sft-sheet__col-resizer {
   position: absolute;
   top: 0;
   right: -2px;
   width: 4px;
   height: 100%;
-  cursor: col-resize;
   z-index: 2;
+  pointer-events: none;
+}
+.sft-sheet__col-resizer[data-active] {
+  cursor: col-resize;
+  pointer-events: auto;
 }
 
 .sft-sheet__row-resizer {
@@ -951,8 +970,12 @@
   bottom: -2px;
   width: 100%;
   height: 4px;
-  cursor: row-resize;
   z-index: 2;
+  pointer-events: none;
+}
+.sft-sheet__row-resizer[data-active] {
+  cursor: row-resize;
+  pointer-events: auto;
 }
 
 .sft-sheet__cell {
@@ -974,6 +997,12 @@
   white-space: nowrap;
 }
 
+/* whole-column / whole-row selection tint (Excel's light highlight) */
+.sft-sheet__cell[data-col-selected],
+.sft-sheet__cell[data-row-selected] {
+  background: var(--sft-color-accent-subtle);
+}
+
 .sft-sheet__cell[data-active] {
   box-shadow: inset -1px -1px 0 var(--sft-color-border), inset 0 0 0 2px var(--sft-color-accent);
   z-index: 2;
@@ -993,11 +1022,11 @@
   padding: 0 var(--sft-space-2);
 }
 
-/* "+" add-column (end of the header row) / add-row (below the last row) */
+/* "+" add-column (end of the header row) / add-row (below the last row) —
+   sized exactly like a real column/row so it reads as part of the grid */
 .sft-sheet__addcol {
   flex: none;
-  width: 28px;
-  height: 28px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1014,8 +1043,6 @@
 
 .sft-sheet__addrow {
   flex: none;
-  width: 44px;
-  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1032,16 +1059,12 @@
   color: var(--sft-color-accent);
 }
 
-/* faint preview strip past the real grid — hints the sheet keeps going before
-   you've clicked "+", same idea as Google Sheets/Excel's unallocated canvas */
+/* a single faint gridline past the "+" — previews the exact column/row that
+   would be created, then stops (no further unallocated-canvas illusion) */
 .sft-sheet__ghost {
   flex: none;
   box-shadow: inset -1px -1px 0 color-mix(in srgb, var(--sft-color-border) 45%, transparent);
   background: color-mix(in srgb, var(--sft-color-bg-subtle) 40%, transparent);
-}
-
-.sft-sheet__row--ghost {
-  height: 28px;
 }
 
 /* ── PivotTable (cross-tab) ──────────────────────────────── */
