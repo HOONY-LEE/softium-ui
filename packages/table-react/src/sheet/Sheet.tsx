@@ -24,6 +24,9 @@ const DEFAULT_COL_WIDTH = 96;
 const DEFAULT_ROW_HEIGHT = 28;
 const MIN_COL_WIDTH = 40;
 const MIN_ROW_HEIGHT = 20;
+/** faint preview strip past the last real column/row, hinting the grid continues */
+const GHOST_COLS = 3;
+const GHOST_ROWS = 3;
 
 /**
  * Sheet — a minimal spreadsheet: A1-addressed editable grid with formulas
@@ -32,8 +35,9 @@ const MIN_ROW_HEIGHT = 20;
  * Enter commits + moves down, Tab moves right, Esc cancels.
  *
  * Google Sheets / Excel / Numbers parity: drag a column's right edge or a row's
- * bottom edge to resize it; a "+" at the end of the last column / below the last
- * row appends another column / row.
+ * bottom edge to resize it (double-click to auto-fit); a "+" at the end of the
+ * last column / below the last row appends another column / row; a faint
+ * gridline preview past the edge hints the sheet keeps going.
  */
 export function Sheet({
   rows = 20,
@@ -78,6 +82,30 @@ export function Sheet({
 
   const addColumn = () => setColCount((c) => c + 1);
   const addRow = () => setRowCount((r) => r + 1);
+
+  /** Excel-style double-click: fit the column to its widest visible value */
+  function autoFitColumn(c: number) {
+    const root = gridRef.current;
+    if (!root) return;
+    let widest = 0;
+    for (const el of root.querySelectorAll(
+      `.sft-sheet__cell[data-col-idx="${c}"] .sft-sheet__value`,
+    )) {
+      if (el instanceof HTMLElement) widest = Math.max(widest, el.scrollWidth);
+    }
+    if (widest === 0) return;
+    setColWidths((w) => ({ ...w, [c]: Math.min(400, Math.max(MIN_COL_WIDTH, widest + 16)) }));
+  }
+
+  /** Excel-style double-click: reset the row back to the standard height */
+  function autoFitRow(r: number) {
+    setRowHeights((h) => {
+      if (!(r in h)) return h;
+      const next = { ...h };
+      delete next[r];
+      return next;
+    });
+  }
 
   function startColResize(e: ReactPointerEvent<HTMLSpanElement>, c: number) {
     e.preventDefault();
@@ -152,6 +180,8 @@ export function Sheet({
             <span
               className="sft-sheet__col-resizer"
               onPointerDown={(e) => startColResize(e, c)}
+              onDoubleClick={() => autoFitColumn(c)}
+              title="더블클릭: 너비 자동 맞춤"
               aria-hidden="true"
             />
           </div>
@@ -165,6 +195,10 @@ export function Sheet({
         >
           <Plus size={14} />
         </button>
+        {Array.from({ length: GHOST_COLS }, (_, g) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: purely decorative filler
+          <div key={g} className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
+        ))}
       </div>
 
       {Array.from({ length: rowCount }, (_, r) => (
@@ -175,6 +209,8 @@ export function Sheet({
             <span
               className="sft-sheet__row-resizer"
               onPointerDown={(e) => startRowResize(e, r)}
+              onDoubleClick={() => autoFitRow(r)}
+              title="더블클릭: 기본 높이로"
               aria-hidden="true"
             />
           </div>
@@ -187,6 +223,7 @@ export function Sheet({
                 key={addr}
                 className="sft-sheet__cell"
                 data-active={isActive || undefined}
+                data-col-idx={c}
                 style={{ width: colWidth(c) }}
                 onMouseDown={() => {
                   setEditing(false);
@@ -222,6 +259,10 @@ export function Sheet({
               </div>
             );
           })}
+          <div
+            className="sft-sheet__ghost"
+            style={{ width: 28 + GHOST_COLS * DEFAULT_COL_WIDTH }}
+          />
         </div>
       ))}
 
@@ -235,7 +276,25 @@ export function Sheet({
         >
           <Plus size={14} />
         </button>
+        {Array.from({ length: colCount }, (_, c) => (
+          <div key={indexToCol(c)} className="sft-sheet__ghost" style={{ width: colWidth(c) }} />
+        ))}
+        <div className="sft-sheet__ghost" style={{ width: 28 + GHOST_COLS * DEFAULT_COL_WIDTH }} />
       </div>
+
+      {Array.from({ length: GHOST_ROWS }, (_, g) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: purely decorative filler
+        <div className="sft-sheet__row sft-sheet__row--ghost" key={g}>
+          <div className="sft-sheet__ghost" style={{ width: 44 }} />
+          {Array.from({ length: colCount }, (_, c) => (
+            <div key={indexToCol(c)} className="sft-sheet__ghost" style={{ width: colWidth(c) }} />
+          ))}
+          <div
+            className="sft-sheet__ghost"
+            style={{ width: 28 + GHOST_COLS * DEFAULT_COL_WIDTH }}
+          />
+        </div>
+      ))}
     </div>
   );
 }

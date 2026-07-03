@@ -1032,6 +1032,18 @@
   color: var(--sft-color-accent);
 }
 
+/* faint preview strip past the real grid — hints the sheet keeps going before
+   you've clicked "+", same idea as Google Sheets/Excel's unallocated canvas */
+.sft-sheet__ghost {
+  flex: none;
+  box-shadow: inset -1px -1px 0 color-mix(in srgb, var(--sft-color-border) 45%, transparent);
+  background: color-mix(in srgb, var(--sft-color-bg-subtle) 40%, transparent);
+}
+
+.sft-sheet__row--ghost {
+  height: 28px;
+}
+
 /* ── PivotTable (cross-tab) ──────────────────────────────── */
 .sft-pivot {
   display: inline-block;
