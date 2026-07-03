@@ -17,6 +17,9 @@ importers:
 
   apps/playground:
     dependencies:
+      '@softium/calendar':
+        specifier: workspace:*
+        version: link:../../packages/calendar
       '@softium/table-core':
         specifier: workspace:*
         version: link:../../packages/table-core
@@ -54,6 +57,37 @@ importers:
       vite:
         specifier: ^6.0.7
         version: 6.4.3
+
+  packages/calendar:
+    dependencies:
+      '@softium/styles':
+        specifier: workspace:*
+        version: link:../styles
+      lucide-react:
+        specifier: ^0.460.0
+        version: 0.460.0(react@18.3.1)
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.18
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ^18.3.5
+        version: 18.3.7(@types/react@18.3.31)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.15)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9
 
   packages/styles: {}
 

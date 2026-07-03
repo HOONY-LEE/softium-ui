@@ -1,8 +1,10 @@
-import { Plus } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, Plus } from 'lucide-react';
 import {
   type KeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
   type PointerEvent as ReactPointerEvent,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -20,12 +22,44 @@ export interface SheetProps {
   className?: string;
 }
 
+interface CellPos {
+  c: number;
+  r: number;
+}
+
+/** one rectangular selection: `anchor` is its own editable cell, `focus` is
+ * the far corner it's dragged/extended to. A single cell is anchor===focus. */
+interface CellRange {
+  anchor: CellPos;
+  focus: CellPos;
+}
+
+interface CellRect {
+  minC: number;
+  maxC: number;
+  minR: number;
+  maxR: number;
+}
+
+function rectOf(range: CellRange): CellRect {
+  return {
+    minC: Math.min(range.anchor.c, range.focus.c),
+    maxC: Math.max(range.anchor.c, range.focus.c),
+    minR: Math.min(range.anchor.r, range.focus.r),
+    maxR: Math.max(range.anchor.r, range.focus.r),
+  };
+}
+
+type CellAlign = 'left' | 'center' | 'right';
+
 const DEFAULT_COL_WIDTH = 120;
 const DEFAULT_ROW_HEIGHT = 34;
 const MIN_COL_WIDTH = 48;
 const MIN_ROW_HEIGHT = 22;
 /** fixed width of the row-header column */
 const ROW_HEAD_WIDTH = 48;
+/** fixed height of the column-header row */
+const HEADER_HEIGHT = 34;
 
 /**
  * Sheet — a minimal spreadsheet: A1-addressed editable grid with formulas
@@ -39,6 +73,13 @@ const ROW_HEAD_WIDTH = 48;
  *   - a "+" past the last column / below the last row appends another,
  *     sized exactly like a real column/row; a single faint gridline past it
  *     previews the column/row that would be created
+ *   - click-drag or shift-click selects a rectangular range of cells; the
+ *     range boundary is one floating overlay computed from column/row offsets
+ *     (not per-cell borders), so it never gets clipped at cell edges
+ *   - Cmd/Ctrl-click (or Cmd/Ctrl-drag) adds a separate, disjoint range
+ *     without clearing the existing ones — each renders its own outline
+ *   - selecting a column/row header releases any active cell-range selection,
+ *     matching Sheets (only one selection kind is visually active at a time)
  */
 export function Sheet({
   rows = 20,
@@ -52,11 +93,27 @@ export function Sheet({
   const [colCount, setColCount] = useState(cols);
   const [colWidths, setColWidths] = useState<Record<number, number>>({});
   const [rowHeights, setRowHeights] = useState<Record<number, number>>({});
-  const [active, setActive] = useState<{ c: number; r: number }>({ c: 0, r: 0 });
+  // per-column alignment override. Unset columns fall back to Excel's
+  // type-based default: numbers (including formula results) right-align,
+  // everything else left-aligns.
+  const [colAlign, setColAlign] = useState<Record<number, CellAlign>>({});
+  // Cell-range selection: a list so Cmd/Ctrl-click can add disjoint ranges
+  // (Sheets/Excel parity); the *last* one is "active" — it owns the
+  // editable/anchor cell, keyboard nav, and the fill handle.
+  const [ranges, setRanges] = useState<CellRange[]>([
+    { anchor: { c: 0, r: 0 }, focus: { c: 0, r: 0 } },
+  ]);
+  const [dragging, setDragging] = useState(false);
+  // fill handle (bottom-right dot of the range outline): dragging it extends
+  // the selection down or right and repeats the source range into the new
+  // cells, Excel/Sheets "fill" style
+  const [fillDragging, setFillDragging] = useState(false);
+  const [fillEnd, setFillEnd] = useState<CellPos | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   // Excel-style whole-column / whole-row selection: only the selected header's
-  // edge can be dragged to resize.
+  // edge can be dragged to resize. Selecting one releases the cell range
+  // (Google Sheets: only one selection kind is shown at a time).
   const [selectedCol, setSelectedCol] = useState<number | null>(null);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -67,21 +124,196 @@ export function Sheet({
 
   const focusGrid = () => gridRef.current?.focus();
 
-  const selectCell = (c: number, r: number) => {
+  // cumulative pixel offsets, used to place the floating selection overlay
+  // without measuring the DOM
+  const colOffsets = useMemo(() => {
+    const offsets: number[] = [];
+    let x = ROW_HEAD_WIDTH;
+    for (let c = 0; c < colCount; c++) {
+      offsets.push(x);
+      x += colWidth(c);
+    }
+    offsets.push(x);
+    return offsets;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colCount, colWidths]);
+
+  const rowOffsets = useMemo(() => {
+    const offsets: number[] = [];
+    let y = HEADER_HEIGHT;
+    for (let r = 0; r < rowCount; r++) {
+      offsets.push(y);
+      y += rowHeight(r);
+    }
+    offsets.push(y);
+    return offsets;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowCount, rowHeights]);
+
+  const activeRange = ranges[ranges.length - 1]!;
+  const anchor = activeRange.anchor;
+  const focus = activeRange.focus;
+  const minC = Math.min(anchor.c, focus.c);
+  const maxC = Math.max(anchor.c, focus.c);
+  const minR = Math.min(anchor.r, focus.r);
+  const maxR = Math.max(anchor.r, focus.r);
+
+  const rangeRects = useMemo(() => ranges.map(rectOf), [ranges]);
+
+  // true when (c, r) sits inside some range but isn't that specific range's
+  // own anchor cell — the anchor is left untinted so it still reads as the
+  // one editable cell within its range (Sheets parity), for every range
+  const cellTinted = (c: number, r: number) => {
+    for (let i = 0; i < ranges.length; i++) {
+      const rect = rangeRects[i]!;
+      if (c < rect.minC || c > rect.maxC || r < rect.minR || r > rect.maxR) continue;
+      const rng = ranges[i]!;
+      const isMulti = rect.minC !== rect.maxC || rect.minR !== rect.maxR;
+      if (isMulti && !(rng.anchor.c === c && rng.anchor.r === r)) return true;
+    }
+    return false;
+  };
+
+  // only one selection kind renders at a time: picking a column/row header
+  // releases every cell-range outline entirely
+  const rangeOutlines =
+    selectedCol == null && selectedRow == null
+      ? ranges.map((_, i) => {
+          const rect = rangeRects[i]!;
+          return {
+            left: colOffsets[rect.minC]!,
+            top: rowOffsets[rect.minR]!,
+            width: colOffsets[rect.maxC + 1]! - colOffsets[rect.minC]!,
+            height: rowOffsets[rect.maxR + 1]! - rowOffsets[rect.minR]!,
+            isActive: i === ranges.length - 1,
+          };
+        })
+      : [];
+
+  // the active (last) range's focus corner — used while dragging to grow a
+  // range, and by keyboard shift-extend
+  const setActiveFocus = (pos: CellPos) => {
+    setRanges((prev) => {
+      const next = [...prev];
+      next[next.length - 1] = { ...next[next.length - 1]!, focus: pos };
+      return next;
+    });
+  };
+
+  // the fill handle only extends outward from the range's bottom-right
+  // corner: whichever axis (down vs right) the pointer has moved further
+  // along wins, matching Sheets' single-axis fill drag
+  const fillAxis = (() => {
+    if (!fillDragging || !fillEnd) return null;
+    const dR = fillEnd.r - maxR;
+    const dC = fillEnd.c - maxC;
+    if (dR > 0 && dR >= dC) return 'row' as const;
+    if (dC > 0) return 'col' as const;
+    return null;
+  })();
+
+  const fillPreviewRect =
+    fillAxis === 'row' && fillEnd
+      ? {
+          left: colOffsets[minC]!,
+          top: rowOffsets[maxR + 1]!,
+          width: colOffsets[maxC + 1]! - colOffsets[minC]!,
+          height: rowOffsets[fillEnd.r + 1]! - rowOffsets[maxR + 1]!,
+        }
+      : fillAxis === 'col' && fillEnd
+        ? {
+            left: colOffsets[maxC + 1]!,
+            top: rowOffsets[minR]!,
+            width: colOffsets[fillEnd.c + 1]! - colOffsets[maxC + 1]!,
+            height: rowOffsets[maxR + 1]! - rowOffsets[minR]!,
+          }
+        : null;
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onUp = () => setDragging(false);
+    window.addEventListener('mouseup', onUp);
+    return () => window.removeEventListener('mouseup', onUp);
+  }, [dragging]);
+
+  useEffect(() => {
+    if (!fillDragging) return;
+    const onUp = () => {
+      if (fillAxis === 'row' && fillEnd) {
+        const height = maxR - minR + 1;
+        const targetR = fillEnd.r;
+        setCells((prev) => {
+          const next = { ...prev };
+          for (let r = maxR + 1; r <= targetR; r++) {
+            const srcR = minR + ((r - minR) % height);
+            for (let c = minC; c <= maxC; c++) next[cellAddr(c, r)] = prev[cellAddr(c, srcR)] ?? '';
+          }
+          onChange?.(next);
+          return next;
+        });
+        setRanges([{ anchor: { c: minC, r: minR }, focus: { c: maxC, r: targetR } }]);
+      } else if (fillAxis === 'col' && fillEnd) {
+        const width = maxC - minC + 1;
+        const targetC = fillEnd.c;
+        setCells((prev) => {
+          const next = { ...prev };
+          for (let c = maxC + 1; c <= targetC; c++) {
+            const srcC = minC + ((c - minC) % width);
+            for (let r = minR; r <= maxR; r++) next[cellAddr(c, r)] = prev[cellAddr(srcC, r)] ?? '';
+          }
+          onChange?.(next);
+          return next;
+        });
+        setRanges([{ anchor: { c: minC, r: minR }, focus: { c: targetC, r: maxR } }]);
+      }
+      setFillDragging(false);
+      setFillEnd(null);
+    };
+    window.addEventListener('mouseup', onUp);
+    return () => window.removeEventListener('mouseup', onUp);
+  }, [fillDragging, fillAxis, fillEnd, minC, maxC, minR, maxR, onChange]);
+
+  const selectCell = (c: number, r: number, opts: { shift?: boolean; additive?: boolean } = {}) => {
     setEditing(false);
-    setActive({ c, r });
     setSelectedCol(null);
     setSelectedRow(null);
+    if (opts.additive) {
+      // Cmd/Ctrl-click: start a new independent range, keeping earlier ones
+      setRanges((prev) => [...prev, { anchor: { c, r }, focus: { c, r } }]);
+    } else if (opts.shift) {
+      // shift-click: extend the active (last) range's far corner only
+      setActiveFocus({ c, r });
+    } else {
+      // plain click: replace the whole selection with a single new range
+      setRanges([{ anchor: { c, r }, focus: { c, r } }]);
+    }
+    // preventDefault() on the triggering mousedown (to stop native text
+    // selection while dragging a range) also suppresses the browser's
+    // default focus-delegation, so re-focus the grid explicitly
+    focusGrid();
   };
 
   const selectColumn = (c: number) => {
     setSelectedCol(c);
     setSelectedRow(null);
+    focusGrid();
+  };
+
+  // clicking the already-active alignment again resets the column back to
+  // the type-based auto default, rather than getting stuck on an override
+  const setColumnAlign = (c: number, align: CellAlign) => {
+    setColAlign((prev) => {
+      const next = { ...prev };
+      if (next[c] === align) delete next[c];
+      else next[c] = align;
+      return next;
+    });
   };
 
   const selectRow = (r: number) => {
     setSelectedRow(r);
     setSelectedCol(null);
+    focusGrid();
   };
 
   const commit = (addr: string, value: string, move: 'down' | 'right' | null) => {
@@ -91,13 +323,18 @@ export function Sheet({
       return next;
     });
     setEditing(false);
-    if (move === 'down') setActive((a) => ({ c: a.c, r: Math.min(rowCount - 1, a.r + 1) }));
-    else if (move === 'right') setActive((a) => ({ c: Math.min(colCount - 1, a.c + 1), r: a.r }));
+    if (move === 'down') {
+      const next = { c: anchor.c, r: Math.min(rowCount - 1, anchor.r + 1) };
+      setRanges([{ anchor: next, focus: next }]);
+    } else if (move === 'right') {
+      const next = { c: Math.min(colCount - 1, anchor.c + 1), r: anchor.r };
+      setRanges([{ anchor: next, focus: next }]);
+    }
     requestAnimationFrame(focusGrid);
   };
 
   const startEdit = (initialChar?: string) => {
-    const addr = cellAddr(active.c, active.r);
+    const addr = cellAddr(anchor.c, anchor.r);
     setDraft(initialChar ?? cells[addr] ?? '');
     setEditing(true);
   };
@@ -130,16 +367,23 @@ export function Sheet({
   }
 
   // Resizing is only live once the column/row has been selected via its header
-  // (Excel-style): otherwise the handle is visually present but inert.
-  function startColResize(e: ReactPointerEvent<HTMLSpanElement>, c: number) {
-    if (selectedCol !== c) return;
+  // (Excel-style): otherwise the handle is visually present but inert. A
+  // column's left edge is the same boundary as the previous column's right
+  // edge, so both handles resize `targetCol` — only which column is
+  // currently selected (and thus showing active handles) differs.
+  function startColResize(
+    e: ReactPointerEvent<HTMLSpanElement>,
+    targetCol: number,
+    isActive: boolean,
+  ) {
+    if (!isActive) return;
     e.preventDefault();
     e.stopPropagation();
     const startX = e.clientX;
-    const startWidth = colWidth(c);
+    const startWidth = colWidth(targetCol);
     function onMove(ev: PointerEvent) {
       const next = Math.max(MIN_COL_WIDTH, startWidth + (ev.clientX - startX));
-      setColWidths((w) => ({ ...w, [c]: next }));
+      setColWidths((w) => ({ ...w, [targetCol]: next }));
     }
     function onUp() {
       window.removeEventListener('pointermove', onMove);
@@ -149,15 +393,23 @@ export function Sheet({
     window.addEventListener('pointerup', onUp);
   }
 
-  function startRowResize(e: ReactPointerEvent<HTMLSpanElement>, r: number) {
-    if (selectedRow !== r) return;
+  // A row's top edge is the same boundary as the previous row's bottom edge,
+  // so both handles resize `targetRow` — only which row is currently
+  // selected (and thus showing active handles) differs. Mirrors
+  // startColResize's left/right symmetry.
+  function startRowResize(
+    e: ReactPointerEvent<HTMLSpanElement>,
+    targetRow: number,
+    isActive: boolean,
+  ) {
+    if (!isActive) return;
     e.preventDefault();
     e.stopPropagation();
     const startY = e.clientY;
-    const startHeight = rowHeight(r);
+    const startHeight = rowHeight(targetRow);
     function onMove(ev: PointerEvent) {
       const next = Math.max(MIN_ROW_HEIGHT, startHeight + (ev.clientY - startY));
-      setRowHeights((h) => ({ ...h, [r]: next }));
+      setRowHeights((h) => ({ ...h, [targetRow]: next }));
     }
     function onUp() {
       window.removeEventListener('pointermove', onMove);
@@ -169,16 +421,34 @@ export function Sheet({
 
   function onGridKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (editing) return;
-    const { c, r } = active;
-    if (e.key === 'ArrowUp') setActive({ c, r: Math.max(0, r - 1) });
-    else if (e.key === 'ArrowDown') setActive({ c, r: Math.min(rowCount - 1, r + 1) });
-    else if (e.key === 'ArrowLeft') setActive({ c: Math.max(0, c - 1), r });
-    else if (e.key === 'ArrowRight') setActive({ c: Math.min(colCount - 1, c + 1), r });
+
+    const moveTo = (dc: number, dr: number, extend: boolean) => {
+      const base = extend ? focus : anchor;
+      const next = {
+        c: Math.max(0, Math.min(colCount - 1, base.c + dc)),
+        r: Math.max(0, Math.min(rowCount - 1, base.r + dr)),
+      };
+      setSelectedCol(null);
+      setSelectedRow(null);
+      if (extend) setActiveFocus(next);
+      // plain arrow-key movement collapses any disjoint (Cmd-click) ranges
+      // back down to a single cell, matching Sheets/Excel navigation
+      else setRanges([{ anchor: next, focus: next }]);
+    };
+
+    if (e.key === 'ArrowUp') moveTo(0, -1, e.shiftKey);
+    else if (e.key === 'ArrowDown') moveTo(0, 1, e.shiftKey);
+    else if (e.key === 'ArrowLeft') moveTo(-1, 0, e.shiftKey);
+    else if (e.key === 'ArrowRight') moveTo(1, 0, e.shiftKey);
     else if (e.key === 'Enter') startEdit();
     else if (e.key === 'Backspace' || e.key === 'Delete') {
-      const addr = cellAddr(c, r);
       setCells((prev) => {
-        const next = { ...prev, [addr]: '' };
+        const next = { ...prev };
+        for (const rect of rangeRects) {
+          for (let r = rect.minR; r <= rect.maxR; r++) {
+            for (let c = rect.minC; c <= rect.maxC; c++) next[cellAddr(c, r)] = '';
+          }
+        }
         onChange?.(next);
         return next;
       });
@@ -205,14 +475,70 @@ export function Sheet({
             className="sft-sheet__colhead"
             key={indexToCol(c)}
             data-selected={selectedCol === c || undefined}
+            data-in-range={
+              (selectedCol == null &&
+                selectedRow == null &&
+                rangeRects.some((rect) => c >= rect.minC && c <= rect.maxC)) ||
+              undefined
+            }
             style={{ width: colWidth(c) }}
             onMouseDown={() => selectColumn(c)}
           >
-            {indexToCol(c)}
+            {selectedCol === c ? (
+              <div
+                className="sft-sheet__align-group"
+                onMouseDown={(e: ReactMouseEvent) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  className="sft-sheet__align-btn"
+                  data-active={colAlign[c] === 'left' || undefined}
+                  onClick={() => setColumnAlign(c, 'left')}
+                  title="왼쪽 정렬"
+                  aria-label="왼쪽 정렬"
+                >
+                  <AlignLeft size={12} />
+                </button>
+                <button
+                  type="button"
+                  className="sft-sheet__align-btn"
+                  data-active={colAlign[c] === 'center' || undefined}
+                  onClick={() => setColumnAlign(c, 'center')}
+                  title="가운데 정렬"
+                  aria-label="가운데 정렬"
+                >
+                  <AlignCenter size={12} />
+                </button>
+                <button
+                  type="button"
+                  className="sft-sheet__align-btn"
+                  data-active={colAlign[c] === 'right' || undefined}
+                  onClick={() => setColumnAlign(c, 'right')}
+                  title="오른쪽 정렬"
+                  aria-label="오른쪽 정렬"
+                >
+                  <AlignRight size={12} />
+                </button>
+              </div>
+            ) : (
+              indexToCol(c)
+            )}
+            {/* left edge: same boundary as the previous column's right edge —
+                only rendered from B onward, since A has no column to its left */}
+            {c > 0 && (
+              <span
+                className="sft-sheet__col-resizer sft-sheet__col-resizer--left"
+                data-active={selectedCol === c || undefined}
+                onPointerDown={(e) => startColResize(e, c - 1, selectedCol === c)}
+                onDoubleClick={() => selectedCol === c && autoFitColumn(c - 1)}
+                title="열을 선택한 뒤 드래그: 너비 조절 · 더블클릭: 자동 맞춤"
+                aria-hidden="true"
+              />
+            )}
             <span
-              className="sft-sheet__col-resizer"
+              className="sft-sheet__col-resizer sft-sheet__col-resizer--right"
               data-active={selectedCol === c || undefined}
-              onPointerDown={(e) => startColResize(e, c)}
+              onPointerDown={(e) => startColResize(e, c, selectedCol === c)}
               onDoubleClick={() => selectedCol === c && autoFitColumn(c)}
               title="열을 선택한 뒤 드래그: 너비 조절 · 더블클릭: 자동 맞춤"
               aria-hidden="true"
@@ -239,14 +565,32 @@ export function Sheet({
           <div
             className="sft-sheet__rowhead"
             data-selected={selectedRow === r || undefined}
+            data-in-range={
+              (selectedCol == null &&
+                selectedRow == null &&
+                rangeRects.some((rect) => r >= rect.minR && r <= rect.maxR)) ||
+              undefined
+            }
             style={{ width: ROW_HEAD_WIDTH }}
             onMouseDown={() => selectRow(r)}
           >
             {r + 1}
+            {/* top edge: same boundary as the previous row's bottom edge —
+                only rendered from row 2 onward, since row 1 has no row above it */}
+            {r > 0 && (
+              <span
+                className="sft-sheet__row-resizer sft-sheet__row-resizer--top"
+                data-active={selectedRow === r || undefined}
+                onPointerDown={(e) => startRowResize(e, r - 1, selectedRow === r)}
+                onDoubleClick={() => selectedRow === r && autoFitRow(r - 1)}
+                title="행을 선택한 뒤 드래그: 높이 조절 · 더블클릭: 기본 높이로"
+                aria-hidden="true"
+              />
+            )}
             <span
-              className="sft-sheet__row-resizer"
+              className="sft-sheet__row-resizer sft-sheet__row-resizer--bottom"
               data-active={selectedRow === r || undefined}
-              onPointerDown={(e) => startRowResize(e, r)}
+              onPointerDown={(e) => startRowResize(e, r, selectedRow === r)}
               onDoubleClick={() => selectedRow === r && autoFitRow(r)}
               title="행을 선택한 뒤 드래그: 높이 조절 · 더블클릭: 기본 높이로"
               aria-hidden="true"
@@ -254,18 +598,35 @@ export function Sheet({
           </div>
           {Array.from({ length: colCount }, (_, c) => {
             const addr = cellAddr(c, r);
-            const isActive = active.c === c && active.r === r;
-            const isEditing = editing && isActive;
+            const isAnchor = anchor.c === c && anchor.r === r;
+            const isEditing = editing && isAnchor;
+            const value = evaluateCell(addr, getRaw);
+            // Excel default: numbers (incl. formula results) right-align,
+            // everything else left-aligns — unless the column overrides it
+            const align: CellAlign = colAlign[c] ?? (typeof value === 'number' ? 'right' : 'left');
             return (
               <div
                 key={addr}
                 className="sft-sheet__cell"
-                data-active={isActive || undefined}
                 data-col-idx={c}
+                data-in-range={cellTinted(c, r) || undefined}
                 data-col-selected={selectedCol === c || undefined}
                 data-row-selected={selectedRow === r || undefined}
                 style={{ width: colWidth(c) }}
-                onMouseDown={() => selectCell(c, r)}
+                onMouseDown={(e) => {
+                  // range-select drags would otherwise also trigger the
+                  // browser's native text selection across cell contents
+                  e.preventDefault();
+                  selectCell(c, r, {
+                    shift: e.shiftKey,
+                    additive: !e.shiftKey && (e.metaKey || e.ctrlKey),
+                  });
+                  setDragging(true);
+                }}
+                onMouseEnter={() => {
+                  if (fillDragging) setFillEnd({ c, r });
+                  else if (dragging && !editing) setActiveFocus({ c, r });
+                }}
                 onDoubleClick={() => startEdit()}
               >
                 {isEditing ? (
@@ -273,6 +634,7 @@ export function Sheet({
                     // biome-ignore lint/a11y/noAutofocus: editing a freshly-opened cell
                     autoFocus
                     className="sft-sheet__input"
+                    style={{ textAlign: align }}
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     onBlur={() => commit(addr, draft, null)}
@@ -291,7 +653,9 @@ export function Sheet({
                     }}
                   />
                 ) : (
-                  <span className="sft-sheet__value">{String(evaluateCell(addr, getRaw))}</span>
+                  <span className="sft-sheet__value" style={{ textAlign: align }}>
+                    {String(value)}
+                  </span>
                 )}
               </div>
             );
@@ -316,6 +680,44 @@ export function Sheet({
         ))}
         <div className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
       </div>
+
+      {/* floating selection outline: one overlay per range, sized/positioned
+          from column and row offsets, instead of per-cell borders that clip
+          at edges. Cmd/Ctrl-click can add more than one of these. */}
+      {rangeOutlines.map((ro, i) => (
+        <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: ranges are appended/replaced, never reordered
+          key={i}
+          className="sft-sheet__range-outline"
+          style={{ left: ro.left, top: ro.top, width: ro.width, height: ro.height }}
+        >
+          {/* fill handle only on the active range: drag to repeat it down/right */}
+          {ro.isActive && !editing && (
+            <span
+              className="sft-sheet__fill-handle"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setFillEnd(null);
+                setFillDragging(true);
+              }}
+            />
+          )}
+        </div>
+      ))}
+
+      {/* dashed preview of the cells a fill-handle drag would populate */}
+      {fillPreviewRect && (
+        <div
+          className="sft-sheet__fill-preview"
+          style={{
+            left: fillPreviewRect.left,
+            top: fillPreviewRect.top,
+            width: fillPreviewRect.width,
+            height: fillPreviewRect.height,
+          }}
+        />
+      )}
     </div>
   );
 }

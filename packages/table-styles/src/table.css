@@ -895,6 +895,7 @@
 
 /* ── Sheet (minimal spreadsheet) ────────────────────────── */
 .sft-sheet {
+  position: relative;
   display: inline-block;
   border: 1px solid var(--sft-color-border);
   border-radius: var(--sft-radius-md);
@@ -903,6 +904,9 @@
   background: var(--sft-color-bg);
   font-size: var(--sft-font-size-md);
   outline: none;
+  /* range-select drags must not also trigger native text selection across
+     cell contents; the edit <input> opts back in (see .sft-sheet__input) */
+  user-select: none;
 }
 
 .sft-sheet__row {
@@ -929,7 +933,9 @@
 .sft-sheet__rowhead {
   position: sticky;
   left: 0;
-  z-index: 1;
+  /* above the floating range overlay, which must slide under the frozen
+     row-head column when the sheet is scrolled horizontally */
+  z-index: 2;
 }
 
 .sft-sheet__corner,
@@ -950,16 +956,61 @@
   color: var(--sft-color-text-on-accent);
 }
 
-/* drag handles: column width (right edge) / row height (bottom edge). Inert
-   (no cursor, no pointer events) until the column/row is selected. */
+/* Sheets-style: the header of every column/row a cell-range selection spans
+   gets a light tint (distinct from the solid [data-selected] whole-column/row
+   pick), so you can see at a glance which headers the selection touches */
+.sft-sheet__colhead[data-in-range],
+.sft-sheet__rowhead[data-in-range] {
+  background: var(--sft-color-accent-subtle);
+  color: var(--sft-color-accent);
+}
+
+/* per-column alignment override: replaces the column letter while that
+   column's header is selected, so the setting lives right where you'd look
+   for it — no separate settings panel needed */
+.sft-sheet__align-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.sft-sheet__align-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: var(--sft-radius-sm);
+  background: transparent;
+  color: inherit;
+  opacity: 0.75;
+  cursor: pointer;
+}
+.sft-sheet__align-btn:hover {
+  opacity: 1;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+}
+.sft-sheet__align-btn[data-active] {
+  opacity: 1;
+  background: color-mix(in srgb, currentColor 25%, transparent);
+}
+
+/* drag handles: column width (both edges) / row height (bottom edge). Inert
+   (no cursor, no pointer events) until the column/row is selected. Widened
+   past the hairline border itself so the handle is easier to grab. */
 .sft-sheet__col-resizer {
   position: absolute;
   top: 0;
-  right: -2px;
-  width: 4px;
+  width: 9px;
   height: 100%;
   z-index: 2;
   pointer-events: none;
+}
+.sft-sheet__col-resizer--right {
+  right: -5px;
+}
+.sft-sheet__col-resizer--left {
+  left: -5px;
 }
 .sft-sheet__col-resizer[data-active] {
   cursor: col-resize;
@@ -969,11 +1020,16 @@
 .sft-sheet__row-resizer {
   position: absolute;
   left: 0;
-  bottom: -2px;
   width: 100%;
-  height: 4px;
+  height: 9px;
   z-index: 2;
   pointer-events: none;
+}
+.sft-sheet__row-resizer--bottom {
+  bottom: -5px;
+}
+.sft-sheet__row-resizer--top {
+  top: -5px;
 }
 .sft-sheet__row-resizer[data-active] {
   cursor: row-resize;
@@ -1005,9 +1061,47 @@
   background: var(--sft-color-accent-subtle);
 }
 
-.sft-sheet__cell[data-active] {
-  box-shadow: inset -1px -1px 0 var(--sft-color-border), inset 0 0 0 2px var(--sft-color-accent);
-  z-index: 2;
+/* multi-cell range tint — the anchor cell itself is left untinted so it
+   still reads as the one editable cell within the range (Sheets parity) */
+.sft-sheet__cell[data-in-range] {
+  background: var(--sft-color-accent-subtle);
+}
+
+/* the range/active-cell border itself is drawn once as a floating overlay
+   (see .sft-sheet__range-outline) rather than per-cell, so it never gets
+   clipped at cell boundaries or fights neighboring cells' box-shadows */
+.sft-sheet__range-outline {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--sft-color-accent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* fill handle: small square anchored to the range outline's own bottom-right
+   corner, so it always tracks the current selection without recomputing its
+   own offset. Dragging it fills the range down/right (see fillDragging). */
+.sft-sheet__fill-handle {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sft-color-accent);
+  border: 1.5px solid var(--sft-color-bg);
+  cursor: crosshair;
+  pointer-events: auto;
+}
+
+/* dashed preview of the cells a fill-handle drag would populate, rendered
+   only over the delta area so it doesn't overlap the solid range outline */
+.sft-sheet__fill-preview {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1.5px dashed var(--sft-color-accent);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .sft-sheet__input {
@@ -1022,6 +1116,7 @@
   color: var(--sft-color-text);
   font: inherit;
   padding: 0 var(--sft-space-2);
+  user-select: text;
 }
 
 /* "+" add-column (end of the header row) / add-row (below the last row) —

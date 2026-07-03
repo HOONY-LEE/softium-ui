@@ -1,0 +1,10 @@
+/**
+ * @softium/calendar — single-import stylesheet.
+ *
+ *   import '@softium/calendar/styles.css';
+ *
+ * Shared tokens/theme (@softium/styles) + the calendar component styles.
+ */
+
+@import "@softium/styles";
+@import "./src/styles/calendar.css";

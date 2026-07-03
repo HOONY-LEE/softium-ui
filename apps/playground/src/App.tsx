@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { type Locale, shellStrings } from './i18n';
 import { type PageKey, nav, navLabel } from './nav';
 import { ButtonsPage } from './pages/ButtonsPage';
+import { CalendarPage } from './pages/CalendarPage';
 import { CellTypesPage } from './pages/CellTypesPage';
 import { DataGridPage } from './pages/DataGridPage';
 import { LayoutPage } from './pages/LayoutPage';
@@ -152,6 +153,7 @@ export function App() {
       {page === 'sheet' && <SheetPage locale={locale} />}
       {page === 'pivot' && <PivotPage locale={locale} />}
       {page === 'cell-types' && <CellTypesPage locale={locale} />}
+      {page === 'calendar' && <CalendarPage locale={locale} />}
       {page === 'layout' && <LayoutPage locale={locale} />}
       {page === 'button' && <ButtonsPage locale={locale} />}
     </AppShell>

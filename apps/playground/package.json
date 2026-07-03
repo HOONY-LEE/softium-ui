@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@softium/calendar": "workspace:*",
     "@softium/table-core": "workspace:*",
     "@softium/table-react": "workspace:*",
     "@softium/table-styles": "workspace:*",
