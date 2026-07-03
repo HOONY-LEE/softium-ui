@@ -124,9 +124,12 @@ export function resolveColumns<T, TNode>(
   });
 }
 
-/** Numbers default to right alignment; everything else to left. */
-function defaultAlign(type: ColumnDef<unknown>['type']): 'left' | 'right' {
-  return type === 'number' ? 'right' : 'left';
+/** Numbers default to right, booleans to center (the check reads best centered),
+ *  everything else to left. Header and cell share this, so they always agree. */
+function defaultAlign(type: ColumnDef<unknown>['type']): 'left' | 'right' | 'center' {
+  if (type === 'number') return 'right';
+  if (type === 'boolean') return 'center';
+  return 'left';
 }
 
 /**

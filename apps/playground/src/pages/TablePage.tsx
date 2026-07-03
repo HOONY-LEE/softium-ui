@@ -12,7 +12,7 @@ export function TablePage({ locale }: { locale: Locale }) {
     columns: employeeColumns,
     getRowId: (r) => r.id,
     pageSize: 10,
-    persistKey: 'softium.playground.employees',
+    persistKey: 'softium.playground.employees.v2',
   });
 
   const t = (ko: string, en: string) => (locale === 'ko' ? ko : en);

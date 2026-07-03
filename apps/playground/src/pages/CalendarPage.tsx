@@ -82,7 +82,7 @@ export function CalendarPage({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+      <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
         <Calendar
           language={locale}
           initialEvents={events}

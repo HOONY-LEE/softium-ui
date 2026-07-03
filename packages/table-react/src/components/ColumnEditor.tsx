@@ -26,7 +26,10 @@ export function ColumnEditor<T>(): ReactNode {
   const defAlignByKey = useMemo(() => {
     const map = new Map<string, ColumnAlign>();
     for (const def of table.columns) {
-      map.set(def.key, def.align ?? (def.type === 'number' ? 'right' : 'left'));
+      map.set(
+        def.key,
+        def.align ?? (def.type === 'number' ? 'right' : def.type === 'boolean' ? 'center' : 'left'),
+      );
     }
     return map;
   }, [table.columns]);

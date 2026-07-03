@@ -1,5 +1,19 @@
-import { AlignCenter, AlignLeft, AlignRight, Plus } from 'lucide-react';
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Baseline,
+  Bold,
+  Italic,
+  PaintBucket,
+  Plus,
+  Redo2,
+  Strikethrough,
+  Underline,
+  Undo2,
+} from 'lucide-react';
+import {
+  type CSSProperties,
   type KeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
@@ -51,6 +65,23 @@ function rectOf(range: CellRange): CellRect {
 }
 
 type CellAlign = 'left' | 'center' | 'right';
+
+/** per-cell character formatting, applied from the toolbar to the selection.
+ * Separate from cell *values* so it can be undone/serialized independently. */
+interface CellFormat {
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strike?: boolean;
+  /** text color (any CSS color) */
+  color?: string;
+  /** fill / background color */
+  bg?: string;
+  /** per-cell horizontal align, overriding the column's type-based default */
+  align?: CellAlign;
+}
+
+type BoolFormatKey = 'bold' | 'italic' | 'underline' | 'strike';
 
 const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -140,6 +171,16 @@ export function Sheet({
   // type-based default: numbers (including formula results) right-align,
   // everything else left-aligns.
   const [colAlign, setColAlign] = useState<Record<number, CellAlign>>({});
+  // per-cell character formatting (bold, colors, …) keyed by address
+  const [formats, setFormats] = useState<Record<string, CellFormat>>({});
+  // undo / redo stacks. Each entry is a full {cells, formats} document
+  // snapshot; taken just before a mutating action (snapshot()).
+  const [past, setPast] = useState<
+    { cells: Record<string, string>; formats: Record<string, CellFormat> }[]
+  >([]);
+  const [future, setFuture] = useState<
+    { cells: Record<string, string>; formats: Record<string, CellFormat> }[]
+  >([]);
   // Cell-range selection: a list so Cmd/Ctrl-click can add disjoint ranges
   // (Sheets/Excel parity); the *last* one is "active" — it owns the
   // editable/anchor cell, keyboard nav, and the fill handle.
@@ -282,6 +323,7 @@ export function Sheet({
   useEffect(() => {
     if (!fillDragging) return;
     const onUp = () => {
+      if ((fillAxis === 'row' || fillAxis === 'col') && fillEnd) snapshot();
       if (fillAxis === 'row' && fillEnd) {
         const height = maxR - minR + 1;
         const targetR = fillEnd.r;
@@ -363,18 +405,9 @@ export function Sheet({
   const selectColumn = (c: number) => {
     setSelectedCol(c);
     setSelectedRow(null);
+    // move the anchor to the column's top cell so the toolbar reflects it
+    setRanges([{ anchor: { c, r: 0 }, focus: { c, r: 0 } }]);
     focusGrid();
-  };
-
-  // clicking the already-active alignment again resets the column back to
-  // the type-based auto default, rather than getting stuck on an override
-  const setColumnAlign = (c: number, align: CellAlign) => {
-    setColAlign((prev) => {
-      const next = { ...prev };
-      if (next[c] === align) delete next[c];
-      else next[c] = align;
-      return next;
-    });
   };
 
   const selectRow = (r: number) => {
@@ -383,7 +416,99 @@ export function Sheet({
     focusGrid();
   };
 
+  // ── history ────────────────────────────────────────────────
+  // record the pre-mutation document so it can be restored by undo. Callers
+  // invoke this immediately before changing cells/formats.
+  const snapshot = () => {
+    setPast((p) => [...p, { cells, formats }]);
+    setFuture([]);
+  };
+
+  const undo = () => {
+    if (!past.length) return;
+    const prev = past[past.length - 1]!;
+    setFuture((f) => [...f, { cells, formats }]);
+    setPast((p) => p.slice(0, -1));
+    setCells(prev.cells);
+    setFormats(prev.formats);
+    onChange?.(prev.cells);
+  };
+
+  const redo = () => {
+    if (!future.length) return;
+    const nxt = future[future.length - 1]!;
+    setPast((p) => [...p, { cells, formats }]);
+    setFuture((f) => f.slice(0, -1));
+    setCells(nxt.cells);
+    setFormats(nxt.formats);
+    onChange?.(nxt.cells);
+  };
+
+  // ── selection-wide formatting ──────────────────────────────
+  const selectedAddrs = (): string[] => {
+    const addrs: string[] = [];
+    for (const rect of rangeRects) {
+      for (let r = rect.minR; r <= rect.maxR; r++) {
+        for (let c = rect.minC; c <= rect.maxC; c++) addrs.push(cellAddr(c, r));
+      }
+    }
+    return addrs;
+  };
+
+  const anchorFormat = formats[cellAddr(anchor.c, anchor.r)] ?? {};
+  // effective alignment of the anchor cell, so the toolbar can highlight the
+  // currently-active align button (matching Sheets)
+  const anchorValue = evaluateCell(cellAddr(anchor.c, anchor.r), getRaw);
+  const anchorAlign: CellAlign =
+    anchorFormat.align ??
+    colAlign[anchor.c] ??
+    (typeof anchorValue === 'number' ? 'right' : 'left');
+
+  /** toggle a boolean format across the selection: if every cell already has
+   * it, clear it everywhere; otherwise set it everywhere (Sheets behaviour) */
+  const toggleFormat = (key: BoolFormatKey) => {
+    const addrs = selectedAddrs();
+    if (!addrs.length) return;
+    const allOn = addrs.every((a) => formats[a]?.[key]);
+    snapshot();
+    setFormats((prev) => {
+      const next = { ...prev };
+      for (const a of addrs) {
+        const f: CellFormat = { ...next[a] };
+        if (allOn) delete f[key];
+        else f[key] = true;
+        if (Object.keys(f).length) next[a] = f;
+        else delete next[a];
+      }
+      return next;
+    });
+    focusGrid();
+  };
+
+  /** set (or clear, when value is null) a value-typed format across the selection */
+  const setFormatValue = <K extends 'color' | 'bg' | 'align'>(
+    key: K,
+    value: CellFormat[K] | null,
+  ) => {
+    const addrs = selectedAddrs();
+    if (!addrs.length) return;
+    snapshot();
+    setFormats((prev) => {
+      const next = { ...prev };
+      for (const a of addrs) {
+        const f: CellFormat = { ...next[a] };
+        if (value == null) delete f[key];
+        else f[key] = value;
+        if (Object.keys(f).length) next[a] = f;
+        else delete next[a];
+      }
+      return next;
+    });
+    focusGrid();
+  };
+
   const commit = (addr: string, value: string, move: 'down' | 'right' | null) => {
+    if ((cells[addr] ?? '') !== value) snapshot();
     setCells((prev) => {
       const next = { ...prev, [addr]: value };
       onChange?.(next);
@@ -491,6 +616,38 @@ export function Sheet({
   function onGridKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (editing) return;
 
+    // keyboard shortcuts that mirror the toolbar (Cmd/Ctrl on mac/win)
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod) {
+      const k = e.key.toLowerCase();
+      if (k === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if (k === 'y') {
+        e.preventDefault();
+        redo();
+        return;
+      }
+      if (k === 'b') {
+        e.preventDefault();
+        toggleFormat('bold');
+        return;
+      }
+      if (k === 'i') {
+        e.preventDefault();
+        toggleFormat('italic');
+        return;
+      }
+      if (k === 'u') {
+        e.preventDefault();
+        toggleFormat('underline');
+        return;
+      }
+    }
+
     const moveTo = (dc: number, dr: number, extend: boolean) => {
       const base = extend ? focus : anchor;
       const next = {
@@ -511,6 +668,7 @@ export function Sheet({
     else if (e.key === 'ArrowRight') moveTo(1, 0, e.shiftKey);
     else if (e.key === 'Enter') startEdit();
     else if (e.key === 'Backspace' || e.key === 'Delete') {
+      snapshot();
       setCells((prev) => {
         const next = { ...prev };
         for (const rect of rangeRects) {
@@ -533,263 +691,431 @@ export function Sheet({
     e.preventDefault();
   }
 
+  // keeps a toolbar button click from blurring the grid / collapsing the
+  // current selection before its handler runs
+  const keepFocus = (e: ReactMouseEvent) => e.preventDefault();
+
   return (
-    <div
-      ref={gridRef}
-      className={className ? `sft-sheet ${className}` : 'sft-sheet'}
-      tabIndex={0}
-      role="grid"
-      onKeyDown={onGridKeyDown}
-    >
-      <div className="sft-sheet__row sft-sheet__row--head">
-        <div className="sft-sheet__corner" style={{ width: ROW_HEAD_WIDTH }} />
-        {Array.from({ length: colCount }, (_, c) => (
-          <div
-            className="sft-sheet__colhead"
-            key={indexToCol(c)}
-            data-selected={selectedCol === c || undefined}
-            data-in-range={
-              (selectedCol == null &&
-                selectedRow == null &&
-                rangeRects.some((rect) => c >= rect.minC && c <= rect.maxC)) ||
-              undefined
-            }
-            style={{ width: colWidth(c) }}
-            onMouseDown={() => selectColumn(c)}
+    <div className={className ? `sft-sheet-wrap ${className}` : 'sft-sheet-wrap'}>
+      <div className="sft-sheet__toolbar" role="toolbar" aria-label="시트 도구 모음">
+        <div className="sft-sheet__tb-group">
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            onMouseDown={keepFocus}
+            onClick={undo}
+            disabled={!past.length}
+            title="실행 취소 (⌘Z)"
+            aria-label="실행 취소"
           >
-            {selectedCol === c ? (
-              <div
-                className="sft-sheet__align-group"
-                onMouseDown={(e: ReactMouseEvent) => e.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  className="sft-sheet__align-btn"
-                  data-active={colAlign[c] === 'left' || undefined}
-                  onClick={() => setColumnAlign(c, 'left')}
-                  title="왼쪽 정렬"
-                  aria-label="왼쪽 정렬"
+            <Undo2 size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            onMouseDown={keepFocus}
+            onClick={redo}
+            disabled={!future.length}
+            title="다시 실행 (⌘Y)"
+            aria-label="다시 실행"
+          >
+            <Redo2 size={16} />
+          </button>
+        </div>
+
+        <div className="sft-sheet__tb-sep" />
+
+        <div className="sft-sheet__tb-group">
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={anchorFormat.bold || undefined}
+            onMouseDown={keepFocus}
+            onClick={() => toggleFormat('bold')}
+            title="굵게 (⌘B)"
+            aria-label="굵게"
+          >
+            <Bold size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={anchorFormat.italic || undefined}
+            onMouseDown={keepFocus}
+            onClick={() => toggleFormat('italic')}
+            title="기울임 (⌘I)"
+            aria-label="기울임"
+          >
+            <Italic size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={anchorFormat.underline || undefined}
+            onMouseDown={keepFocus}
+            onClick={() => toggleFormat('underline')}
+            title="밑줄 (⌘U)"
+            aria-label="밑줄"
+          >
+            <Underline size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={anchorFormat.strike || undefined}
+            onMouseDown={keepFocus}
+            onClick={() => toggleFormat('strike')}
+            title="취소선"
+            aria-label="취소선"
+          >
+            <Strikethrough size={16} />
+          </button>
+        </div>
+
+        <div className="sft-sheet__tb-sep" />
+
+        <div className="sft-sheet__tb-group">
+          <label
+            className="sft-sheet__tb-btn sft-sheet__tb-color"
+            title="텍스트 색상"
+            onMouseDown={keepFocus}
+          >
+            <Baseline size={16} />
+            <span
+              className="sft-sheet__tb-color-bar"
+              style={{ background: anchorFormat.color ?? 'var(--sft-color-text)' }}
+            />
+            <input
+              type="color"
+              value={anchorFormat.color ?? '#000000'}
+              onChange={(e) => setFormatValue('color', e.target.value)}
+            />
+          </label>
+          <label
+            className="sft-sheet__tb-btn sft-sheet__tb-color"
+            title="채우기 색상"
+            onMouseDown={keepFocus}
+          >
+            <PaintBucket size={16} />
+            <span
+              className="sft-sheet__tb-color-bar"
+              style={{ background: anchorFormat.bg ?? 'transparent' }}
+            />
+            <input
+              type="color"
+              value={anchorFormat.bg ?? '#ffffff'}
+              onChange={(e) => setFormatValue('bg', e.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="sft-sheet__tb-sep" />
+
+        <div className="sft-sheet__tb-group">
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={anchorAlign === 'left' || undefined}
+            onMouseDown={keepFocus}
+            onClick={() => setFormatValue('align', 'left')}
+            title="왼쪽 정렬"
+            aria-label="왼쪽 정렬"
+          >
+            <AlignLeft size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={anchorAlign === 'center' || undefined}
+            onMouseDown={keepFocus}
+            onClick={() => setFormatValue('align', 'center')}
+            title="가운데 정렬"
+            aria-label="가운데 정렬"
+          >
+            <AlignCenter size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={anchorAlign === 'right' || undefined}
+            onMouseDown={keepFocus}
+            onClick={() => setFormatValue('align', 'right')}
+            title="오른쪽 정렬"
+            aria-label="오른쪽 정렬"
+          >
+            <AlignRight size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div ref={gridRef} className="sft-sheet" tabIndex={0} role="grid" onKeyDown={onGridKeyDown}>
+        <div className="sft-sheet__row sft-sheet__row--head">
+          <div className="sft-sheet__corner" style={{ width: ROW_HEAD_WIDTH }} />
+          {Array.from({ length: colCount }, (_, c) => (
+            <div
+              className="sft-sheet__colhead"
+              key={indexToCol(c)}
+              data-selected={selectedCol === c || undefined}
+              data-in-range={
+                (selectedCol == null &&
+                  selectedRow == null &&
+                  rangeRects.some((rect) => c >= rect.minC && c <= rect.maxC)) ||
+                undefined
+              }
+              style={{ width: colWidth(c) }}
+              onMouseDown={() => selectColumn(c)}
+            >
+              {selectedCol === c ? (
+                <div
+                  className="sft-sheet__align-group"
+                  onMouseDown={(e: ReactMouseEvent) => e.stopPropagation()}
                 >
-                  <AlignLeft size={12} />
-                </button>
-                <button
-                  type="button"
-                  className="sft-sheet__align-btn"
-                  data-active={colAlign[c] === 'center' || undefined}
-                  onClick={() => setColumnAlign(c, 'center')}
-                  title="가운데 정렬"
-                  aria-label="가운데 정렬"
-                >
-                  <AlignCenter size={12} />
-                </button>
-                <button
-                  type="button"
-                  className="sft-sheet__align-btn"
-                  data-active={colAlign[c] === 'right' || undefined}
-                  onClick={() => setColumnAlign(c, 'right')}
-                  title="오른쪽 정렬"
-                  aria-label="오른쪽 정렬"
-                >
-                  <AlignRight size={12} />
-                </button>
-              </div>
-            ) : (
-              indexToCol(c)
-            )}
-            {/* left edge: same boundary as the previous column's right edge —
+                  <button
+                    type="button"
+                    className="sft-sheet__align-btn"
+                    data-active={colAlign[c] === 'left' || undefined}
+                    onClick={() => setColumnAlign(c, 'left')}
+                    title="왼쪽 정렬"
+                    aria-label="왼쪽 정렬"
+                  >
+                    <AlignLeft size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    className="sft-sheet__align-btn"
+                    data-active={colAlign[c] === 'center' || undefined}
+                    onClick={() => setColumnAlign(c, 'center')}
+                    title="가운데 정렬"
+                    aria-label="가운데 정렬"
+                  >
+                    <AlignCenter size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    className="sft-sheet__align-btn"
+                    data-active={colAlign[c] === 'right' || undefined}
+                    onClick={() => setColumnAlign(c, 'right')}
+                    title="오른쪽 정렬"
+                    aria-label="오른쪽 정렬"
+                  >
+                    <AlignRight size={12} />
+                  </button>
+                </div>
+              ) : (
+                indexToCol(c)
+              )}
+              {/* left edge: same boundary as the previous column's right edge —
                 only rendered from B onward, since A has no column to its left */}
-            {c > 0 && (
+              {c > 0 && (
+                <span
+                  className="sft-sheet__col-resizer sft-sheet__col-resizer--left"
+                  data-active={selectedCol === c || undefined}
+                  onPointerDown={(e) => startColResize(e, c - 1, selectedCol === c)}
+                  onDoubleClick={() => selectedCol === c && autoFitColumn(c - 1)}
+                  title="열을 선택한 뒤 드래그: 너비 조절 · 더블클릭: 자동 맞춤"
+                  aria-hidden="true"
+                />
+              )}
               <span
-                className="sft-sheet__col-resizer sft-sheet__col-resizer--left"
+                className="sft-sheet__col-resizer sft-sheet__col-resizer--right"
                 data-active={selectedCol === c || undefined}
-                onPointerDown={(e) => startColResize(e, c - 1, selectedCol === c)}
-                onDoubleClick={() => selectedCol === c && autoFitColumn(c - 1)}
+                onPointerDown={(e) => startColResize(e, c, selectedCol === c)}
+                onDoubleClick={() => selectedCol === c && autoFitColumn(c)}
                 title="열을 선택한 뒤 드래그: 너비 조절 · 더블클릭: 자동 맞춤"
                 aria-hidden="true"
               />
-            )}
-            <span
-              className="sft-sheet__col-resizer sft-sheet__col-resizer--right"
-              data-active={selectedCol === c || undefined}
-              onPointerDown={(e) => startColResize(e, c, selectedCol === c)}
-              onDoubleClick={() => selectedCol === c && autoFitColumn(c)}
-              title="열을 선택한 뒤 드래그: 너비 조절 · 더블클릭: 자동 맞춤"
-              aria-hidden="true"
-            />
-          </div>
-        ))}
-        <button
-          type="button"
-          className="sft-sheet__addcol"
-          onClick={addColumn}
-          aria-label="add column"
-          title="열 추가"
-          style={{ width: DEFAULT_COL_WIDTH }}
-        >
-          <Plus size={14} />
-        </button>
-      </div>
-
-      {Array.from({ length: rowCount }, (_, r) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: fixed positional grid
-        <div className="sft-sheet__row" key={r} style={{ height: rowHeight(r) }}>
-          <div
-            className="sft-sheet__rowhead"
-            data-selected={selectedRow === r || undefined}
-            data-in-range={
-              (selectedCol == null &&
-                selectedRow == null &&
-                rangeRects.some((rect) => r >= rect.minR && r <= rect.maxR)) ||
-              undefined
-            }
-            style={{ width: ROW_HEAD_WIDTH }}
-            onMouseDown={() => selectRow(r)}
+            </div>
+          ))}
+          <button
+            type="button"
+            className="sft-sheet__addcol"
+            onClick={addColumn}
+            aria-label="add column"
+            title="열 추가"
+            style={{ width: DEFAULT_COL_WIDTH }}
           >
-            {r + 1}
-            {/* top edge: only rendered from row 2 onward (row 1 has no row
+            <Plus size={14} />
+          </button>
+        </div>
+
+        {Array.from({ length: rowCount }, (_, r) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: fixed positional grid
+          <div className="sft-sheet__row" key={r} style={{ height: rowHeight(r) }}>
+            <div
+              className="sft-sheet__rowhead"
+              data-selected={selectedRow === r || undefined}
+              data-in-range={
+                (selectedCol == null &&
+                  selectedRow == null &&
+                  rangeRects.some((rect) => r >= rect.minR && r <= rect.maxR)) ||
+                undefined
+              }
+              style={{ width: ROW_HEAD_WIDTH }}
+              onMouseDown={() => selectRow(r)}
+            >
+              {r + 1}
+              {/* top edge: only rendered from row 2 onward (row 1 has no row
                 above it to show a boundary line against) — but it still
                 resizes THIS row, not the one above */}
-            {r > 0 && (
+              {r > 0 && (
+                <span
+                  className="sft-sheet__row-resizer sft-sheet__row-resizer--top"
+                  data-active={selectedRow === r || undefined}
+                  onPointerDown={(e) => startRowResize(e, r, selectedRow === r, -1)}
+                  onDoubleClick={() => selectedRow === r && autoFitRow(r)}
+                  title="행을 선택한 뒤 드래그: 높이 조절 · 더블클릭: 기본 높이로"
+                  aria-hidden="true"
+                />
+              )}
               <span
-                className="sft-sheet__row-resizer sft-sheet__row-resizer--top"
+                className="sft-sheet__row-resizer sft-sheet__row-resizer--bottom"
                 data-active={selectedRow === r || undefined}
-                onPointerDown={(e) => startRowResize(e, r, selectedRow === r, -1)}
+                onPointerDown={(e) => startRowResize(e, r, selectedRow === r, 1)}
                 onDoubleClick={() => selectedRow === r && autoFitRow(r)}
                 title="행을 선택한 뒤 드래그: 높이 조절 · 더블클릭: 기본 높이로"
                 aria-hidden="true"
               />
-            )}
-            <span
-              className="sft-sheet__row-resizer sft-sheet__row-resizer--bottom"
-              data-active={selectedRow === r || undefined}
-              onPointerDown={(e) => startRowResize(e, r, selectedRow === r, 1)}
-              onDoubleClick={() => selectedRow === r && autoFitRow(r)}
-              title="행을 선택한 뒤 드래그: 높이 조절 · 더블클릭: 기본 높이로"
-              aria-hidden="true"
-            />
+            </div>
+            {Array.from({ length: colCount }, (_, c) => {
+              const addr = cellAddr(c, r);
+              const isAnchor = anchor.c === c && anchor.r === r;
+              const isEditing = editing && isAnchor;
+              const value = evaluateCell(addr, getRaw);
+              const fmt = formats[addr] ?? {};
+              // Excel default: numbers (incl. formula results) right-align,
+              // everything else left-aligns — column override, then per-cell
+              // override layered on top
+              const align: CellAlign =
+                fmt.align ?? colAlign[c] ?? (typeof value === 'number' ? 'right' : 'left');
+              const contentStyle: CSSProperties = {
+                textAlign: align,
+                fontWeight: fmt.bold ? 700 : undefined,
+                fontStyle: fmt.italic ? 'italic' : undefined,
+                textDecoration:
+                  [fmt.underline ? 'underline' : '', fmt.strike ? 'line-through' : '']
+                    .filter(Boolean)
+                    .join(' ') || undefined,
+                color: fmt.color,
+              };
+              return (
+                <div
+                  key={addr}
+                  className="sft-sheet__cell"
+                  data-col-idx={c}
+                  data-in-range={cellTinted(c, r) || undefined}
+                  data-col-selected={selectedCol === c || undefined}
+                  data-row-selected={selectedRow === r || undefined}
+                  style={{ width: colWidth(c), background: fmt.bg }}
+                  onMouseDown={(e) => {
+                    // range-select drags would otherwise also trigger the
+                    // browser's native text selection across cell contents
+                    e.preventDefault();
+                    selectCell(c, r, {
+                      shift: e.shiftKey,
+                      additive: !e.shiftKey && (e.metaKey || e.ctrlKey),
+                    });
+                    setDragging(true);
+                  }}
+                  onMouseEnter={() => {
+                    if (fillDragging) setFillEnd({ c, r });
+                    else if (dragging && !editing) setActiveFocus({ c, r });
+                  }}
+                  onDoubleClick={() => startEdit()}
+                >
+                  {isEditing ? (
+                    <input
+                      // biome-ignore lint/a11y/noAutofocus: editing a freshly-opened cell
+                      autoFocus
+                      className="sft-sheet__input"
+                      style={contentStyle}
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onBlur={() => commit(addr, draft, null)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          commit(addr, draft, 'down');
+                        } else if (e.key === 'Tab') {
+                          e.preventDefault();
+                          commit(addr, draft, 'right');
+                        } else if (e.key === 'Escape') {
+                          e.preventDefault();
+                          setEditing(false);
+                          focusGrid();
+                        }
+                      }}
+                    />
+                  ) : (
+                    <span className="sft-sheet__value" style={contentStyle}>
+                      {String(value)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+            {/* faint preview of the column the header "+" would create, drawn
+              down every row so the add-column strip reads as part of the grid */}
+            <div className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
           </div>
-          {Array.from({ length: colCount }, (_, c) => {
-            const addr = cellAddr(c, r);
-            const isAnchor = anchor.c === c && anchor.r === r;
-            const isEditing = editing && isAnchor;
-            const value = evaluateCell(addr, getRaw);
-            // Excel default: numbers (incl. formula results) right-align,
-            // everything else left-aligns — unless the column overrides it
-            const align: CellAlign = colAlign[c] ?? (typeof value === 'number' ? 'right' : 'left');
-            return (
-              <div
-                key={addr}
-                className="sft-sheet__cell"
-                data-col-idx={c}
-                data-in-range={cellTinted(c, r) || undefined}
-                data-col-selected={selectedCol === c || undefined}
-                data-row-selected={selectedRow === r || undefined}
-                style={{ width: colWidth(c) }}
-                onMouseDown={(e) => {
-                  // range-select drags would otherwise also trigger the
-                  // browser's native text selection across cell contents
-                  e.preventDefault();
-                  selectCell(c, r, {
-                    shift: e.shiftKey,
-                    additive: !e.shiftKey && (e.metaKey || e.ctrlKey),
-                  });
-                  setDragging(true);
-                }}
-                onMouseEnter={() => {
-                  if (fillDragging) setFillEnd({ c, r });
-                  else if (dragging && !editing) setActiveFocus({ c, r });
-                }}
-                onDoubleClick={() => startEdit()}
-              >
-                {isEditing ? (
-                  <input
-                    // biome-ignore lint/a11y/noAutofocus: editing a freshly-opened cell
-                    autoFocus
-                    className="sft-sheet__input"
-                    style={{ textAlign: align }}
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onBlur={() => commit(addr, draft, null)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        commit(addr, draft, 'down');
-                      } else if (e.key === 'Tab') {
-                        e.preventDefault();
-                        commit(addr, draft, 'right');
-                      } else if (e.key === 'Escape') {
-                        e.preventDefault();
-                        setEditing(false);
-                        focusGrid();
-                      }
-                    }}
-                  />
-                ) : (
-                  <span className="sft-sheet__value" style={{ textAlign: align }}>
-                    {String(value)}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ))}
-
-      <div className="sft-sheet__row sft-sheet__row--addrow">
-        <button
-          type="button"
-          className="sft-sheet__addrow"
-          onClick={addRow}
-          aria-label="add row"
-          title="행 추가"
-          style={{ width: ROW_HEAD_WIDTH, height: DEFAULT_ROW_HEIGHT }}
-        >
-          <Plus size={14} />
-        </button>
-        {/* faint preview of the row a "+" click would create, across the
-            existing columns */}
-        {Array.from({ length: colCount }, (_, c) => (
-          <div key={indexToCol(c)} className="sft-sheet__ghost" style={{ width: colWidth(c) }} />
         ))}
-      </div>
 
-      {/* floating selection outline: one overlay per range, sized/positioned
+        <div className="sft-sheet__row sft-sheet__row--addrow">
+          <button
+            type="button"
+            className="sft-sheet__addrow"
+            onClick={addRow}
+            aria-label="add row"
+            title="행 추가"
+            style={{ width: ROW_HEAD_WIDTH, height: DEFAULT_ROW_HEIGHT }}
+          >
+            <Plus size={14} />
+          </button>
+          {/* faint preview of the row a "+" click would create, across the
+            existing columns + the add-column strip corner */}
+          {Array.from({ length: colCount }, (_, c) => (
+            <div key={indexToCol(c)} className="sft-sheet__ghost" style={{ width: colWidth(c) }} />
+          ))}
+          <div className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
+        </div>
+
+        {/* floating selection outline: one overlay per range, sized/positioned
           from column and row offsets, instead of per-cell borders that clip
           at edges. Cmd/Ctrl-click can add more than one of these. */}
-      {rangeOutlines.map((ro, i) => (
-        <div
-          // biome-ignore lint/suspicious/noArrayIndexKey: ranges are appended/replaced, never reordered
-          key={i}
-          className="sft-sheet__range-outline"
-          style={{ left: ro.left, top: ro.top, width: ro.width, height: ro.height }}
-        >
-          {/* fill handle only on the active range: drag to repeat it down/right */}
-          {ro.isActive && !editing && (
-            <span
-              className="sft-sheet__fill-handle"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setFillEnd(null);
-                setFillDragging(true);
-              }}
-            />
-          )}
-        </div>
-      ))}
+        {rangeOutlines.map((ro, i) => (
+          <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: ranges are appended/replaced, never reordered
+            key={i}
+            className="sft-sheet__range-outline"
+            style={{ left: ro.left, top: ro.top, width: ro.width, height: ro.height }}
+          >
+            {/* fill handle only on the active range: drag to repeat it down/right */}
+            {ro.isActive && !editing && (
+              <span
+                className="sft-sheet__fill-handle"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setFillEnd(null);
+                  setFillDragging(true);
+                }}
+              />
+            )}
+          </div>
+        ))}
 
-      {/* dashed preview of the cells a fill-handle drag would populate */}
-      {fillPreviewRect && (
-        <div
-          className="sft-sheet__fill-preview"
-          style={{
-            left: fillPreviewRect.left,
-            top: fillPreviewRect.top,
-            width: fillPreviewRect.width,
-            height: fillPreviewRect.height,
-          }}
-        />
-      )}
+        {/* dashed preview of the cells a fill-handle drag would populate */}
+        {fillPreviewRect && (
+          <div
+            className="sft-sheet__fill-preview"
+            style={{
+              left: fillPreviewRect.left,
+              top: fillPreviewRect.top,
+              width: fillPreviewRect.width,
+              height: fillPreviewRect.height,
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

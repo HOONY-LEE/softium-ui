@@ -955,6 +955,100 @@
 }
 
 /* ── Sheet (minimal spreadsheet) ────────────────────────── */
+/* wrapper stacks the toolbar over the scrollable grid */
+.sft-sheet-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+/* Google-Sheets-style formatting toolbar */
+.sft-sheet__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-1);
+  flex-wrap: wrap;
+  padding: var(--sft-space-1) var(--sft-space-2);
+  margin-bottom: var(--sft-space-2);
+  background: var(--sft-color-bg-subtle);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-full);
+}
+
+.sft-sheet__tb-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sft-sheet__tb-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 6px;
+  background: var(--sft-color-border);
+}
+
+.sft-sheet__tb-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--sft-radius-sm);
+  background: transparent;
+  color: var(--sft-color-text-secondary);
+  cursor: pointer;
+  transition: background var(--sft-duration-fast) var(--sft-ease);
+}
+
+.sft-sheet__tb-btn:hover {
+  background: var(--sft-color-bg-hover);
+  color: var(--sft-color-text);
+}
+
+.sft-sheet__tb-btn[data-active] {
+  background: var(--sft-color-accent-subtle);
+  color: var(--sft-color-accent);
+}
+
+.sft-sheet__tb-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sft-sheet__tb-btn:disabled:hover {
+  background: transparent;
+  color: var(--sft-color-text-secondary);
+}
+
+/* color pickers: icon stacked over a thin swatch bar, native input hidden
+   but still click-triggering the OS palette */
+.sft-sheet__tb-color {
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sft-sheet__tb-color-bar {
+  width: 16px;
+  height: 3px;
+  border-radius: 1px;
+  box-shadow: inset 0 0 0 1px var(--sft-color-border);
+}
+
+.sft-sheet__tb-color input[type="color"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
 .sft-sheet {
   position: relative;
   display: inline-block;
