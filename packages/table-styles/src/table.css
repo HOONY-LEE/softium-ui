@@ -1120,36 +1120,6 @@
   color: var(--sft-color-accent);
 }
 
-/* per-column alignment override: replaces the column letter while that
-   column's header is selected, so the setting lives right where you'd look
-   for it — no separate settings panel needed */
-.sft-sheet__align-group {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-.sft-sheet__align-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border: none;
-  border-radius: var(--sft-radius-sm);
-  background: transparent;
-  color: inherit;
-  opacity: 0.75;
-  cursor: pointer;
-}
-.sft-sheet__align-btn:hover {
-  opacity: 1;
-  background: color-mix(in srgb, currentColor 15%, transparent);
-}
-.sft-sheet__align-btn[data-active] {
-  opacity: 1;
-  background: color-mix(in srgb, currentColor 25%, transparent);
-}
-
 /* drag handles: column width (both edges) / row height (bottom edge). Inert
    (no cursor, no pointer events) until the column/row is selected. Widened
    past the hairline border itself so the handle is easier to grab. */

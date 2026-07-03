@@ -167,10 +167,6 @@ export function Sheet({
   const [colCount, setColCount] = useState(cols);
   const [colWidths, setColWidths] = useState<Record<number, number>>({});
   const [rowHeights, setRowHeights] = useState<Record<number, number>>({});
-  // per-column alignment override. Unset columns fall back to Excel's
-  // type-based default: numbers (including formula results) right-align,
-  // everything else left-aligns.
-  const [colAlign, setColAlign] = useState<Record<number, CellAlign>>({});
   // per-cell character formatting (bold, colors, …) keyed by address
   const [formats, setFormats] = useState<Record<string, CellFormat>>({});
   // undo / redo stacks. Each entry is a full {cells, formats} document
@@ -413,6 +409,8 @@ export function Sheet({
   const selectRow = (r: number) => {
     setSelectedRow(r);
     setSelectedCol(null);
+    // move the anchor to the row's first cell so the toolbar reflects it
+    setRanges([{ anchor: { c: 0, r }, focus: { c: 0, r } }]);
     focusGrid();
   };
 
@@ -445,8 +443,19 @@ export function Sheet({
   };
 
   // ── selection-wide formatting ──────────────────────────────
+  // every cell the current selection covers — a whole column when a column
+  // header is picked, a whole row for a row header, otherwise the cell
+  // range(s). Toolbar formatting (bold, color, align, …) applies to these.
   const selectedAddrs = (): string[] => {
     const addrs: string[] = [];
+    if (selectedCol != null) {
+      for (let r = 0; r < rowCount; r++) addrs.push(cellAddr(selectedCol, r));
+      return addrs;
+    }
+    if (selectedRow != null) {
+      for (let c = 0; c < colCount; c++) addrs.push(cellAddr(c, selectedRow));
+      return addrs;
+    }
     for (const rect of rangeRects) {
       for (let r = rect.minR; r <= rect.maxR; r++) {
         for (let c = rect.minC; c <= rect.maxC; c++) addrs.push(cellAddr(c, r));
@@ -455,14 +464,18 @@ export function Sheet({
     return addrs;
   };
 
-  const anchorFormat = formats[cellAddr(anchor.c, anchor.r)] ?? {};
-  // effective alignment of the anchor cell, so the toolbar can highlight the
-  // currently-active align button (matching Sheets)
-  const anchorValue = evaluateCell(cellAddr(anchor.c, anchor.r), getRaw);
-  const anchorAlign: CellAlign =
-    anchorFormat.align ??
-    colAlign[anchor.c] ??
-    (typeof anchorValue === 'number' ? 'right' : 'left');
+  // representative cell whose format drives the toolbar's active states —
+  // the top cell of a selected column/row, else the range anchor
+  const activeAddr =
+    selectedCol != null
+      ? cellAddr(selectedCol, 0)
+      : selectedRow != null
+        ? cellAddr(0, selectedRow)
+        : cellAddr(anchor.c, anchor.r);
+  const activeFormat = formats[activeAddr] ?? {};
+  const activeValue = evaluateCell(activeAddr, getRaw);
+  const activeAlign: CellAlign =
+    activeFormat.align ?? (typeof activeValue === 'number' ? 'right' : 'left');
 
   /** toggle a boolean format across the selection: if every cell already has
    * it, clear it everywhere; otherwise set it everywhere (Sheets behaviour) */
@@ -729,7 +742,7 @@ export function Sheet({
           <button
             type="button"
             className="sft-sheet__tb-btn"
-            data-active={anchorFormat.bold || undefined}
+            data-active={activeFormat.bold || undefined}
             onMouseDown={keepFocus}
             onClick={() => toggleFormat('bold')}
             title="굵게 (⌘B)"
@@ -740,7 +753,7 @@ export function Sheet({
           <button
             type="button"
             className="sft-sheet__tb-btn"
-            data-active={anchorFormat.italic || undefined}
+            data-active={activeFormat.italic || undefined}
             onMouseDown={keepFocus}
             onClick={() => toggleFormat('italic')}
             title="기울임 (⌘I)"
@@ -751,7 +764,7 @@ export function Sheet({
           <button
             type="button"
             className="sft-sheet__tb-btn"
-            data-active={anchorFormat.underline || undefined}
+            data-active={activeFormat.underline || undefined}
             onMouseDown={keepFocus}
             onClick={() => toggleFormat('underline')}
             title="밑줄 (⌘U)"
@@ -762,7 +775,7 @@ export function Sheet({
           <button
             type="button"
             className="sft-sheet__tb-btn"
-            data-active={anchorFormat.strike || undefined}
+            data-active={activeFormat.strike || undefined}
             onMouseDown={keepFocus}
             onClick={() => toggleFormat('strike')}
             title="취소선"
@@ -783,11 +796,11 @@ export function Sheet({
             <Baseline size={16} />
             <span
               className="sft-sheet__tb-color-bar"
-              style={{ background: anchorFormat.color ?? 'var(--sft-color-text)' }}
+              style={{ background: activeFormat.color ?? 'var(--sft-color-text)' }}
             />
             <input
               type="color"
-              value={anchorFormat.color ?? '#000000'}
+              value={activeFormat.color ?? '#000000'}
               onChange={(e) => setFormatValue('color', e.target.value)}
             />
           </label>
@@ -799,11 +812,11 @@ export function Sheet({
             <PaintBucket size={16} />
             <span
               className="sft-sheet__tb-color-bar"
-              style={{ background: anchorFormat.bg ?? 'transparent' }}
+              style={{ background: activeFormat.bg ?? 'transparent' }}
             />
             <input
               type="color"
-              value={anchorFormat.bg ?? '#ffffff'}
+              value={activeFormat.bg ?? '#ffffff'}
               onChange={(e) => setFormatValue('bg', e.target.value)}
             />
           </label>
@@ -815,7 +828,7 @@ export function Sheet({
           <button
             type="button"
             className="sft-sheet__tb-btn"
-            data-active={anchorAlign === 'left' || undefined}
+            data-active={activeAlign === 'left' || undefined}
             onMouseDown={keepFocus}
             onClick={() => setFormatValue('align', 'left')}
             title="왼쪽 정렬"
@@ -826,7 +839,7 @@ export function Sheet({
           <button
             type="button"
             className="sft-sheet__tb-btn"
-            data-active={anchorAlign === 'center' || undefined}
+            data-active={activeAlign === 'center' || undefined}
             onMouseDown={keepFocus}
             onClick={() => setFormatValue('align', 'center')}
             title="가운데 정렬"
@@ -837,7 +850,7 @@ export function Sheet({
           <button
             type="button"
             className="sft-sheet__tb-btn"
-            data-active={anchorAlign === 'right' || undefined}
+            data-active={activeAlign === 'right' || undefined}
             onMouseDown={keepFocus}
             onClick={() => setFormatValue('align', 'right')}
             title="오른쪽 정렬"
@@ -865,45 +878,7 @@ export function Sheet({
               style={{ width: colWidth(c) }}
               onMouseDown={() => selectColumn(c)}
             >
-              {selectedCol === c ? (
-                <div
-                  className="sft-sheet__align-group"
-                  onMouseDown={(e: ReactMouseEvent) => e.stopPropagation()}
-                >
-                  <button
-                    type="button"
-                    className="sft-sheet__align-btn"
-                    data-active={colAlign[c] === 'left' || undefined}
-                    onClick={() => setColumnAlign(c, 'left')}
-                    title="왼쪽 정렬"
-                    aria-label="왼쪽 정렬"
-                  >
-                    <AlignLeft size={12} />
-                  </button>
-                  <button
-                    type="button"
-                    className="sft-sheet__align-btn"
-                    data-active={colAlign[c] === 'center' || undefined}
-                    onClick={() => setColumnAlign(c, 'center')}
-                    title="가운데 정렬"
-                    aria-label="가운데 정렬"
-                  >
-                    <AlignCenter size={12} />
-                  </button>
-                  <button
-                    type="button"
-                    className="sft-sheet__align-btn"
-                    data-active={colAlign[c] === 'right' || undefined}
-                    onClick={() => setColumnAlign(c, 'right')}
-                    title="오른쪽 정렬"
-                    aria-label="오른쪽 정렬"
-                  >
-                    <AlignRight size={12} />
-                  </button>
-                </div>
-              ) : (
-                indexToCol(c)
-              )}
+              {indexToCol(c)}
               {/* left edge: same boundary as the previous column's right edge —
                 only rendered from B onward, since A has no column to its left */}
               {c > 0 && (
@@ -983,10 +958,8 @@ export function Sheet({
               const value = evaluateCell(addr, getRaw);
               const fmt = formats[addr] ?? {};
               // Excel default: numbers (incl. formula results) right-align,
-              // everything else left-aligns — column override, then per-cell
-              // override layered on top
-              const align: CellAlign =
-                fmt.align ?? colAlign[c] ?? (typeof value === 'number' ? 'right' : 'left');
+              // everything else left-aligns — per-cell format overrides it
+              const align: CellAlign = fmt.align ?? (typeof value === 'number' ? 'right' : 'left');
               const contentStyle: CSSProperties = {
                 textAlign: align,
                 fontWeight: fmt.bold ? 700 : undefined,
