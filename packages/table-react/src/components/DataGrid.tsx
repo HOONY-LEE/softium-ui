@@ -9,11 +9,12 @@ export type DataGridProps<T> = TableProps<T>;
  * cell (or focus + type) to edit; Enter/blur commits, Escape cancels. Wire up
  * `onCellChange` to persist edits.
  *
- * Row/column borders aren't forced here — Table shows them by default while edit
- * mode is active and hides them otherwise (see Table's own default), unless this
- * caller passes `rowBorders`/`columnBorders` explicitly. Striping defaults to off
- * (grid lines carry row separation in edit mode instead), unless overridden.
+ * Row/column borders and striping aren't forced here — Table's own defaults
+ * already flip based on edit-mode state: while read-only, rows are striped
+ * with a row-hover highlight (same feel as the plain Table); once edit mode
+ * turns on, striping gives way to grid lines and a per-cell hover. Pass
+ * `rowBorders`/`columnBorders`/`striped` explicitly to pin a fixed value.
  */
 export function DataGrid<T>(props: DataGridProps<T>): ReactNode {
-  return <Table {...props} editable={props.editable ?? true} striped={props.striped ?? false} />;
+  return <Table {...props} editable={props.editable ?? true} />;
 }

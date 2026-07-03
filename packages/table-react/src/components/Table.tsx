@@ -54,7 +54,9 @@ export interface TableProps<T> {
   rowBorders?: boolean;
   /** vertical separators between columns. Same default rule as `rowBorders`. */
   columnBorders?: boolean;
-  /** very-light alternating row background (zebra). Default true. */
+  /** very-light alternating row background (zebra). Default true — except an
+   *  editable grid (DataGrid) defaults to striping only while read-only, and
+   *  turns it off while edit mode is active (grid lines take over instead). */
   striped?: boolean;
   /** max body height (px). When set, the header stays fixed and the body scrolls
    *  vertically; also enables row virtualization. */
@@ -100,7 +102,7 @@ export function Table<T>({
   scrollX = false,
   rowBorders: rowBordersProp,
   columnBorders: columnBordersProp,
-  striped = true,
+  striped: stripedProp,
   maxHeight,
   density = 'normal',
   rowHeight,
@@ -197,7 +199,7 @@ export function Table<T>({
   const [settings, setSettings] = useState<TableSettings>(() => ({
     rowBorders: rowBordersProp ?? (editable ? editEnabled : false),
     columnBorders: columnBordersProp ?? (editable ? editEnabled : false),
-    striped,
+    striped: stripedProp ?? (editable ? !editEnabled : true),
     scrollX,
     stickyHeader: maxHeight != null,
     indexColumn,
@@ -225,6 +227,12 @@ export function Table<T>({
     if (!editable || columnBordersProp !== undefined) return;
     setSettings((s) => ({ ...s, columnBorders: editEnabled }));
   }, [editable, editEnabled, columnBordersProp]);
+  // striping follows the opposite rule: on while read-only, off while editing
+  // (grid lines carry row separation instead)
+  useEffect(() => {
+    if (!editable || stripedProp !== undefined) return;
+    setSettings((s) => ({ ...s, striped: !editEnabled }));
+  }, [editable, editEnabled, stripedProp]);
 
   // row height: explicit prop overrides the density preset
   const rowH = rowHeight ?? DENSITY_ROW_HEIGHT[settings.density];
@@ -315,6 +323,7 @@ export function Table<T>({
           data-striped={settings.striped || undefined}
           data-resizing={resizeMode || undefined}
           data-editable={editable || undefined}
+          data-edit-active={(editable && editEnabled) || undefined}
         >
           <div className="sft-table__scroll" role="table" ref={scrollRef} style={scrollStyle}>
             <Header columns={columns} />
