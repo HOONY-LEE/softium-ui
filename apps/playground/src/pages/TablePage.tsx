@@ -35,6 +35,8 @@ export function TablePage({ locale }: { locale: Locale }) {
         table={table}
         locale={locale}
         selectable
+        exportable
+        exportFileName="employees"
         toolbarActions={
           <Button variant="primary" size="sm" iconLeft={<Plus size={15} />}>
             {t('직원 추가', 'Add')}

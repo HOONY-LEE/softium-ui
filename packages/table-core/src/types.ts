@@ -40,6 +40,9 @@ export interface ColumnDef<T, TNode = unknown> {
   editable?: boolean;
   /** allow copying a selected cell's value (Ctrl/Cmd+C) in a grid. Default true. */
   copyable?: boolean;
+  /** override the exported value for this column (CSV/JSON/XML/XLSX). Defaults to
+   *  the raw cell value; dates/numbers are handled automatically otherwise. */
+  exportValue?: (row: T) => string | number | boolean | null | undefined;
   /** custom cell renderer. Returns `TNode` so core has no React dependency. */
   renderCell?: (ctx: CellContext<T>) => TNode;
   renderHeader?: (ctx: HeaderContext<T, TNode>) => TNode;

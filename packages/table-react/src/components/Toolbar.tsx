@@ -1,6 +1,7 @@
 import { Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EditControls } from './EditControls';
+import { ExportMenu } from './ExportMenu';
 import { useTableContext } from './context';
 
 export interface ToolbarProps {
@@ -13,7 +14,7 @@ export interface ToolbarProps {
  * lives in the footer settings menu (the gear), not here.
  */
 export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
-  const { table, messages } = useTableContext<T>();
+  const { table, messages, exportable } = useTableContext<T>();
   const search = table.getSearch();
 
   return (
@@ -34,6 +35,7 @@ export function Toolbar<T>({ actions }: ToolbarProps = {}): ReactNode {
       </div>
 
       <div className="sft-toolbar__right">
+        {exportable && <ExportMenu />}
         <EditControls />
         {actions}
       </div>

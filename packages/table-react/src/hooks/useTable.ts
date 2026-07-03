@@ -61,8 +61,10 @@ export type ColumnStateUpdater = (prev: ColumnState[]) => ColumnState[];
 export interface TableInstance<T> {
   /** resolved, ordered, visible columns ready to render */
   getRenderColumns: () => ResolvedReactColumn<T>[];
-  /** indexed rows (rowId / displayIndex / globalIndex) */
+  /** indexed rows for the current page (rowId / displayIndex / globalIndex) */
   getRows: () => Row<T>[];
+  /** every filtered/searched/sorted row, ignoring pagination (used for export) */
+  getAllRows: () => Row<T>[];
   /** current user view state (the persistable layer) */
   getColumnState: () => ColumnState[];
   /** replace the view state; never touches data or columnDefs */
@@ -209,6 +211,12 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
       : built.map((r) => (selection.has(r.rowId) ? { ...r, selected: true } : r));
   }, [processed, page, pageSize, getRowId, selection]);
 
+  // all processed rows (no pagination) — the export/full-view surface
+  const allRows = useMemo(
+    () => buildRows(processed, { getRowId, offset: 0 }),
+    [processed, getRowId],
+  );
+
   const setColumnState = useCallback((updater: ColumnState[] | ColumnStateUpdater) => {
     setColumnStateRaw((prev) => (typeof updater === 'function' ? updater(prev) : updater));
   }, []);
@@ -302,6 +310,7 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
     () => ({
       getRenderColumns: () => renderColumns,
       getRows: () => rows,
+      getAllRows: () => allRows,
       getColumnState: () => columnState,
       setColumnState,
       resetColumnState,
@@ -339,6 +348,7 @@ export function useTable<T>(options: UseTableOptions<T>): TableInstance<T> {
     [
       renderColumns,
       rows,
+      allRows,
       columnState,
       setColumnState,
       resetColumnState,

@@ -33,6 +33,10 @@ export interface TableContextValue<T> {
   messages: TableMessages;
   /** whether a leading selection checkbox column is rendered */
   selectable: boolean;
+  /** whether the toolbar shows the export (CSV/Excel/JSON/XML) menu */
+  exportable: boolean;
+  /** base file name for exports (without extension) */
+  exportFileName: string;
   /** absolute index of the first row on the current page (for the index column) */
   indexOffset: number;
   /** horizontal scroll mode: fixed columns stay rigid (vs. shrink-to-fit) */

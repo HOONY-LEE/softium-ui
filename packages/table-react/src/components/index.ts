@@ -15,6 +15,7 @@ export { Toolbar } from './Toolbar';
 export type { ToolbarProps } from './Toolbar';
 export { Footer } from './Footer';
 export { Settings } from './Settings';
+export { ExportMenu } from './ExportMenu';
 export { ColumnEditor } from './ColumnEditor';
 export { Body } from './Body';
 export type { BodyProps } from './Body';

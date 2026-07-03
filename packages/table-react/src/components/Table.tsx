@@ -47,6 +47,10 @@ export interface TableProps<T> {
   selectable?: boolean;
   /** render a leading row-number (index) column. Default false. */
   indexColumn?: boolean;
+  /** show a toolbar export menu (CSV / Excel / JSON / XML). Default false. */
+  exportable?: boolean;
+  /** base file name for exports (without extension). Default 'table'. */
+  exportFileName?: string;
   /** allow horizontal scrolling. Default false — columns shrink to fit (no x-scroll). */
   scrollX?: boolean;
   /** horizontal separators between rows. Default false — except an editable grid
@@ -99,6 +103,8 @@ export function Table<T>({
   filterRow = false,
   selectable = false,
   indexColumn = false,
+  exportable = false,
+  exportFileName = 'table',
   scrollX = false,
   rowBorders: rowBordersProp,
   columnBorders: columnBordersProp,
@@ -250,6 +256,8 @@ export function Table<T>({
       table,
       messages: resolvedMessages,
       selectable,
+      exportable,
+      exportFileName,
       indexOffset,
       scrollX: settings.scrollX,
       resizeMode,
@@ -278,6 +286,8 @@ export function Table<T>({
       table,
       resolvedMessages,
       selectable,
+      exportable,
+      exportFileName,
       indexOffset,
       resizeMode,
       toggleResizeMode,

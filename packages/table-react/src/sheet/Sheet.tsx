@@ -52,6 +52,49 @@ function rectOf(range: CellRange): CellRect {
 
 type CellAlign = 'left' | 'center' | 'right';
 
+const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'];
+
+function roundNum(n: number): number {
+  return Math.round(n * 1e9) / 1e9;
+}
+
+/**
+ * Excel/Sheets-style autofill series detection. Given the raw source cells
+ * in fill order, returns a function producing the raw value `offset` cells
+ * past the source (1-based) — or null if no recognizable series exists, so
+ * the caller falls back to cyclically repeating the source block.
+ *
+ * Recognizes: arithmetic numeric sequences (1,2,3,4 → 5,6,7 / 2,4,6,8 →
+ * 10,12 / 1,1,1,1 → 1,1,1, a constant is just step-0 arithmetic) and the
+ * Korean weekday cycle (월,화,수,목 → 금,토,일).
+ */
+function makeSeriesExtender(rawValues: string[]): ((offset: number) => string) | null {
+  const trimmed = rawValues.map((v) => v.trim());
+  if (trimmed.length < 2 || trimmed.some((v) => v.startsWith('='))) return null;
+
+  if (trimmed.every((v) => v !== '' && !Number.isNaN(Number(v)))) {
+    const nums = trimmed.map(Number);
+    const step = nums[1]! - nums[0]!;
+    const isArithmetic = nums.every((n, i) => i === 0 || Math.abs(n - nums[i - 1]! - step) < 1e-9);
+    if (isArithmetic) {
+      const last = nums[nums.length - 1]!;
+      return (offset: number) => String(roundNum(last + step * offset));
+    }
+  }
+
+  const idxs = trimmed.map((v) => WEEKDAYS_KO.indexOf(v));
+  if (idxs.every((i) => i >= 0)) {
+    const step = (((idxs[1]! - idxs[0]!) % 7) + 7) % 7;
+    const stepOk = idxs.every((i, k) => k === 0 || (idxs[k - 1]! + step) % 7 === i);
+    if (stepOk) {
+      const lastIdx = idxs[idxs.length - 1]!;
+      return (offset: number) => WEEKDAYS_KO[(((lastIdx + step * offset) % 7) + 7) % 7]!;
+    }
+  }
+
+  return null;
+}
+
 const DEFAULT_COL_WIDTH = 120;
 const DEFAULT_ROW_HEIGHT = 34;
 const MIN_COL_WIDTH = 48;
@@ -71,8 +114,8 @@ const HEADER_HEIGHT = 34;
  *   - click a column letter / row number to select the whole column/row; only
  *     then does dragging its edge resize it (double-click the edge to auto-fit)
  *   - a "+" past the last column / below the last row appends another,
- *     sized exactly like a real column/row; a single faint gridline past it
- *     previews the column/row that would be created
+ *     sized exactly like a real column/row; below the last row, a faint
+ *     gridline previews the row that would be created
  *   - click-drag or shift-click selects a rectangular range of cells; the
  *     range boundary is one floating overlay computed from column/row offsets
  *     (not per-cell borders), so it never gets clipped at cell edges
@@ -244,9 +287,22 @@ export function Sheet({
         const targetR = fillEnd.r;
         setCells((prev) => {
           const next = { ...prev };
-          for (let r = maxR + 1; r <= targetR; r++) {
-            const srcR = minR + ((r - minR) % height);
-            for (let c = minC; c <= maxC; c++) next[cellAddr(c, r)] = prev[cellAddr(c, srcR)] ?? '';
+          // each column extends its own series independently, matching how
+          // Excel/Sheets fill multiple adjacent series in one drag
+          for (let c = minC; c <= maxC; c++) {
+            const source = Array.from(
+              { length: height },
+              (_, i) => prev[cellAddr(c, minR + i)] ?? '',
+            );
+            const extend = makeSeriesExtender(source);
+            for (let r = maxR + 1; r <= targetR; r++) {
+              if (extend) {
+                next[cellAddr(c, r)] = extend(r - maxR);
+              } else {
+                const srcR = minR + ((r - minR) % height);
+                next[cellAddr(c, r)] = prev[cellAddr(c, srcR)] ?? '';
+              }
+            }
           }
           onChange?.(next);
           return next;
@@ -257,9 +313,20 @@ export function Sheet({
         const targetC = fillEnd.c;
         setCells((prev) => {
           const next = { ...prev };
-          for (let c = maxC + 1; c <= targetC; c++) {
-            const srcC = minC + ((c - minC) % width);
-            for (let r = minR; r <= maxR; r++) next[cellAddr(c, r)] = prev[cellAddr(srcC, r)] ?? '';
+          for (let r = minR; r <= maxR; r++) {
+            const source = Array.from(
+              { length: width },
+              (_, i) => prev[cellAddr(minC + i, r)] ?? '',
+            );
+            const extend = makeSeriesExtender(source);
+            for (let c = maxC + 1; c <= targetC; c++) {
+              if (extend) {
+                next[cellAddr(c, r)] = extend(c - maxC);
+              } else {
+                const srcC = minC + ((c - minC) % width);
+                next[cellAddr(c, r)] = prev[cellAddr(srcC, r)] ?? '';
+              }
+            }
           }
           onChange?.(next);
           return next;
@@ -393,14 +460,16 @@ export function Sheet({
     window.addEventListener('pointerup', onUp);
   }
 
-  // A row's top edge is the same boundary as the previous row's bottom edge,
-  // so both handles resize `targetRow` — only which row is currently
-  // selected (and thus showing active handles) differs. Mirrors
-  // startColResize's left/right symmetry.
+  // Unlike columns, both row handles resize the *selected* row itself —
+  // dragging its top edge up grows the row (direction -1), dragging its
+  // bottom edge down also grows it (direction 1). The row above/below never
+  // changes size; only the selected row's own height does, either way you
+  // grab it.
   function startRowResize(
     e: ReactPointerEvent<HTMLSpanElement>,
     targetRow: number,
     isActive: boolean,
+    direction: 1 | -1,
   ) {
     if (!isActive) return;
     e.preventDefault();
@@ -408,7 +477,7 @@ export function Sheet({
     const startY = e.clientY;
     const startHeight = rowHeight(targetRow);
     function onMove(ev: PointerEvent) {
-      const next = Math.max(MIN_ROW_HEIGHT, startHeight + (ev.clientY - startY));
+      const next = Math.max(MIN_ROW_HEIGHT, startHeight + direction * (ev.clientY - startY));
       setRowHeights((h) => ({ ...h, [targetRow]: next }));
     }
     function onUp() {
@@ -454,6 +523,10 @@ export function Sheet({
       });
       return;
     } else if (e.key.length === 1 && !e.metaKey && !e.ctrlKey) {
+      // without this, the same keystroke that opens the editor also reaches
+      // the just-mounted <input> as its native default action, doubling the
+      // typed character (e.g. "1" → "11")
+      e.preventDefault();
       startEdit(e.key);
       return;
     } else return;
@@ -555,8 +628,6 @@ export function Sheet({
         >
           <Plus size={14} />
         </button>
-        {/* single faint preview of the column a "+" click would create */}
-        <div className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
       </div>
 
       {Array.from({ length: rowCount }, (_, r) => (
@@ -575,14 +646,15 @@ export function Sheet({
             onMouseDown={() => selectRow(r)}
           >
             {r + 1}
-            {/* top edge: same boundary as the previous row's bottom edge —
-                only rendered from row 2 onward, since row 1 has no row above it */}
+            {/* top edge: only rendered from row 2 onward (row 1 has no row
+                above it to show a boundary line against) — but it still
+                resizes THIS row, not the one above */}
             {r > 0 && (
               <span
                 className="sft-sheet__row-resizer sft-sheet__row-resizer--top"
                 data-active={selectedRow === r || undefined}
-                onPointerDown={(e) => startRowResize(e, r - 1, selectedRow === r)}
-                onDoubleClick={() => selectedRow === r && autoFitRow(r - 1)}
+                onPointerDown={(e) => startRowResize(e, r, selectedRow === r, -1)}
+                onDoubleClick={() => selectedRow === r && autoFitRow(r)}
                 title="행을 선택한 뒤 드래그: 높이 조절 · 더블클릭: 기본 높이로"
                 aria-hidden="true"
               />
@@ -590,7 +662,7 @@ export function Sheet({
             <span
               className="sft-sheet__row-resizer sft-sheet__row-resizer--bottom"
               data-active={selectedRow === r || undefined}
-              onPointerDown={(e) => startRowResize(e, r, selectedRow === r)}
+              onPointerDown={(e) => startRowResize(e, r, selectedRow === r, 1)}
               onDoubleClick={() => selectedRow === r && autoFitRow(r)}
               title="행을 선택한 뒤 드래그: 높이 조절 · 더블클릭: 기본 높이로"
               aria-hidden="true"
@@ -660,7 +732,6 @@ export function Sheet({
               </div>
             );
           })}
-          <div className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
         </div>
       ))}
 
@@ -675,10 +746,11 @@ export function Sheet({
         >
           <Plus size={14} />
         </button>
+        {/* faint preview of the row a "+" click would create, across the
+            existing columns */}
         {Array.from({ length: colCount }, (_, c) => (
           <div key={indexToCol(c)} className="sft-sheet__ghost" style={{ width: colWidth(c) }} />
         ))}
-        <div className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
       </div>
 
       {/* floating selection outline: one overlay per range, sized/positioned

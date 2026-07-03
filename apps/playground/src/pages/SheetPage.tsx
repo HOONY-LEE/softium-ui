@@ -41,7 +41,7 @@ export function SheetPage({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      <Sheet rows={12} cols={6} initial={initial} />
+      <Sheet rows={20} cols={6} initial={initial} />
     </div>
   );
 }

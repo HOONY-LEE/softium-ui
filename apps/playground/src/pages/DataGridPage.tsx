@@ -58,6 +58,8 @@ export function DataGridPage({ locale }: { locale: Locale }) {
       <DataGrid
         table={table}
         locale={locale}
+        exportable
+        exportFileName="employees"
         editMode="toggle"
         commitMode="batch"
         onSave={onSave}

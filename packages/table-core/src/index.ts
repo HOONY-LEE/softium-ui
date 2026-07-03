@@ -31,3 +31,6 @@ export * from './adapters';
 
 // derive — pure view derivations (no mutation of inputs)
 export * from './derive';
+
+// export — CSV / JSON / XML / XLSX serializers (DOM-free)
+export * from './export';

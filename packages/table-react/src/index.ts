@@ -35,6 +35,10 @@ export * from './cells';
 // sheet (minimal spreadsheet)
 export * from './sheet';
 
+// export helpers (build the export matrix from a table instance + trigger a download)
+export { buildExportTable, downloadTableExport } from './export/download';
+export type { DownloadOptions } from './export/download';
+
 // i18n
 export {
   defaultMessages,
