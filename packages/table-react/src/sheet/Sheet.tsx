@@ -26,6 +26,7 @@ import {
 import {
   type CSSProperties,
   type KeyboardEvent,
+  type ClipboardEvent as ReactClipboardEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
   type PointerEvent as ReactPointerEvent,
@@ -972,6 +973,85 @@ export function Sheet({
     e.preventDefault();
   }
 
+  // ── clipboard (T7: copy/paste of values + formats, single or multi-cell) ──
+  // native browser 'copy'/'paste' events on the focused grid — no document
+  // execCommand or navigator.clipboard permission prompt needed. Plain text is
+  // TSV (rows \n, cols \t) so it round-trips with Excel/Sheets; a second,
+  // custom clipboard type carries our per-cell formats for internal pastes.
+  const CLIPBOARD_FORMAT_MIME = 'application/x-softium-sheet-formats';
+
+  function onGridCopy(e: ReactClipboardEvent<HTMLDivElement>) {
+    if (editing) return; // let the native <input> handle its own text copy
+    e.preventDefault();
+    const rect = effectiveRect();
+    const rows: string[] = [];
+    const fmtByOffset: Record<string, CellFormat> = {};
+    for (let r = rect.minR; r <= rect.maxR; r++) {
+      const cols: string[] = [];
+      for (let c = rect.minC; c <= rect.maxC; c++) {
+        const addr = cellAddr(c, r);
+        cols.push(cells[addr] ?? '');
+        const fmt = formats[addr];
+        if (fmt) fmtByOffset[`${r - rect.minR},${c - rect.minC}`] = fmt;
+      }
+      rows.push(cols.join('\t'));
+    }
+    e.clipboardData.setData('text/plain', rows.join('\n'));
+    e.clipboardData.setData(CLIPBOARD_FORMAT_MIME, JSON.stringify(fmtByOffset));
+  }
+
+  function onGridPaste(e: ReactClipboardEvent<HTMLDivElement>) {
+    if (editing) return; // let the native <input> handle its own text paste
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    if (!text) return;
+    let fmtByOffset: Record<string, CellFormat> = {};
+    try {
+      fmtByOffset = JSON.parse(e.clipboardData.getData(CLIPBOARD_FORMAT_MIME) || '{}');
+    } catch {
+      fmtByOffset = {};
+    }
+    const grid = text
+      .replace(/\r/g, '')
+      .split('\n')
+      .filter((row, i, arr) => row !== '' || i < arr.length - 1) // drop one trailing blank line
+      .map((row) => row.split('\t'));
+    if (!grid.length) return;
+
+    const pasteRows = grid.length;
+    const pasteCols = Math.max(...grid.map((row) => row.length));
+    const endC = anchor.c + pasteCols - 1;
+    const endR = anchor.r + pasteRows - 1;
+    // Sheets-style: grow the sheet rather than silently dropping cells that
+    // fall past the current row/column count
+    if (endC >= colCount) setColCount(endC + 1);
+    if (endR >= rowCount) setRowCount(endR + 1);
+
+    snapshot();
+    setCells((prev) => {
+      const next = { ...prev };
+      for (let r = 0; r < grid.length; r++) {
+        const row = grid[r]!;
+        for (let c = 0; c < row.length; c++) {
+          next[cellAddr(anchor.c + c, anchor.r + r)] = row[c] ?? '';
+        }
+      }
+      onChange?.(next);
+      return next;
+    });
+    if (Object.keys(fmtByOffset).length) {
+      setFormats((prev) => {
+        const next = { ...prev };
+        for (const [key, fmt] of Object.entries(fmtByOffset)) {
+          const [dr, dc] = key.split(',').map(Number);
+          next[cellAddr(anchor.c + (dc ?? 0), anchor.r + (dr ?? 0))] = fmt;
+        }
+        return next;
+      });
+    }
+    setRanges([{ anchor: { c: anchor.c, r: anchor.r }, focus: { c: endC, r: endR } }]);
+  }
+
   // keeps a toolbar button click from blurring the grid / collapsing the
   // current selection before its handler runs
   const keepFocus = (e: ReactMouseEvent) => e.preventDefault();
@@ -1413,7 +1493,15 @@ export function Sheet({
         </div>
       </div>
 
-      <div ref={gridRef} className="sft-sheet" tabIndex={0} role="grid" onKeyDown={onGridKeyDown}>
+      <div
+        ref={gridRef}
+        className="sft-sheet"
+        tabIndex={0}
+        role="grid"
+        onKeyDown={onGridKeyDown}
+        onCopy={onGridCopy}
+        onPaste={onGridPaste}
+      >
         <div className="sft-sheet__row sft-sheet__row--head">
           <div className="sft-sheet__corner" style={{ width: ROW_HEAD_WIDTH }} />
           {Array.from({ length: colCount }, (_, c) => (
