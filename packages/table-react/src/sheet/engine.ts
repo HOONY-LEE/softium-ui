@@ -46,6 +46,41 @@ function expandRange(a: string, b: string): string[] {
   return out;
 }
 
+/**
+ * Format a numeric value for display per a Sheets-style pattern, without
+ * touching the underlying raw value. Supports the small preset vocabulary the
+ * toolbar offers: plain grouped integers/decimals, percent, and USD currency.
+ */
+export function formatNumber(value: number, pattern: string): string {
+  const percent = pattern.endsWith('%');
+  const currency = pattern.startsWith('$');
+  const core = percent ? pattern.slice(0, -1) : currency ? pattern.slice(1) : pattern;
+  const decimals = core.includes('.') ? (core.split('.')[1]?.length ?? 0) : 0;
+  const n = percent ? value * 100 : value;
+  const body = n.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+  return `${currency ? '$' : ''}${body}${percent ? '%' : ''}`;
+}
+
+/** decimal-place count encoded in a numFmt pattern (e.g. '0.00%' → 2) */
+export function decimalsOf(pattern: string | undefined): number {
+  if (!pattern) return 0;
+  const core = pattern.endsWith('%') ? pattern.slice(0, -1) : pattern;
+  const m = /\.(0+)$/.exec(core);
+  return m ? (m[1] as string).length : 0;
+}
+
+/** returns a copy of `pattern` with its decimal-place count set to `n` */
+export function withDecimals(pattern: string | undefined, n: number): string {
+  const base = pattern ?? '#,##0';
+  const suffix = base.endsWith('%') ? '%' : '';
+  const core = suffix ? base.slice(0, -suffix.length) : base;
+  const stripped = core.replace(/\.0+$/, '');
+  return (n > 0 ? `${stripped}.${'0'.repeat(n)}` : stripped) + suffix;
+}
+
 /** Evaluate one cell's display value. */
 export function evaluateCell(
   addr: string,

@@ -1,16 +1,27 @@
 import {
   AlignCenter,
+  AlignEndVertical,
   AlignLeft,
   AlignRight,
+  AlignStartVertical,
   Baseline,
   Bold,
+  ChevronDown,
+  Combine,
+  DollarSign,
+  Eraser,
+  Grid3x3,
   Italic,
+  Minus,
   PaintBucket,
+  Paintbrush,
+  Percent,
   Plus,
   Redo2,
   Strikethrough,
   Underline,
   Undo2,
+  WrapText,
 } from 'lucide-react';
 import {
   type CSSProperties,
@@ -23,7 +34,14 @@ import {
   useRef,
   useState,
 } from 'react';
-import { cellAddr, evaluateCell, indexToCol } from './engine';
+import {
+  cellAddr,
+  decimalsOf,
+  evaluateCell,
+  formatNumber,
+  indexToCol,
+  withDecimals,
+} from './engine';
 
 export interface SheetProps {
   /** initial row count. Users can add more via the "+" button at the bottom row. */
@@ -65,6 +83,21 @@ function rectOf(range: CellRange): CellRect {
 }
 
 type CellAlign = 'left' | 'center' | 'right';
+type CellValign = 'top' | 'middle' | 'bottom';
+type CellWrap = 'overflow' | 'wrap' | 'clip';
+
+interface BorderSpec {
+  color: string;
+  width: number;
+  style: 'solid' | 'dashed' | 'dotted';
+}
+
+interface CellBorders {
+  top?: BorderSpec;
+  right?: BorderSpec;
+  bottom?: BorderSpec;
+  left?: BorderSpec;
+}
 
 /** per-cell character formatting, applied from the toolbar to the selection.
  * Separate from cell *values* so it can be undone/serialized independently. */
@@ -79,9 +112,54 @@ interface CellFormat {
   bg?: string;
   /** per-cell horizontal align, overriding the column's type-based default */
   align?: CellAlign;
+  /** display-only number format pattern (e.g. '#,##0.00', '0.00%', '$#,##0.00') */
+  numFmt?: string;
+  fontFamily?: string;
+  /** px */
+  fontSize?: number;
+  valign?: CellValign;
+  wrap?: CellWrap;
+  borders?: CellBorders;
+}
+
+/** a merged rectangular block of cells, anchored at (c, r) */
+interface CellMerge {
+  c: number;
+  r: number;
+  colSpan: number;
+  rowSpan: number;
+}
+
+/** the full undo/redo-able document state */
+interface SheetSnapshot {
+  cells: Record<string, string>;
+  formats: Record<string, CellFormat>;
+  colWidths: Record<number, number>;
+  rowHeights: Record<number, number>;
+  rowCount: number;
+  colCount: number;
+  merges: CellMerge[];
 }
 
 type BoolFormatKey = 'bold' | 'italic' | 'underline' | 'strike';
+
+const DEFAULT_BORDER: BorderSpec = { color: 'var(--sft-color-text)', width: 1, style: 'solid' };
+
+const FONT_FAMILIES = [
+  { label: '기본', value: '' },
+  { label: 'Arial', value: 'Arial, sans-serif' },
+  { label: 'Georgia', value: 'Georgia, serif' },
+  { label: 'Courier New', value: '"Courier New", monospace' },
+  { label: 'Times New Roman', value: '"Times New Roman", serif' },
+];
+
+const NUM_FORMATS = [
+  { label: '자동', value: undefined },
+  { label: '숫자 (1,000)', value: '#,##0' },
+  { label: '소수점 두 자리 (1,000.00)', value: '#,##0.00' },
+  { label: '백분율 (12%)', value: '0%' },
+  { label: '통화 ($1,000.00)', value: '$#,##0.00' },
+];
 
 const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -169,14 +247,19 @@ export function Sheet({
   const [rowHeights, setRowHeights] = useState<Record<number, number>>({});
   // per-cell character formatting (bold, colors, …) keyed by address
   const [formats, setFormats] = useState<Record<string, CellFormat>>({});
-  // undo / redo stacks. Each entry is a full {cells, formats} document
-  // snapshot; taken just before a mutating action (snapshot()).
-  const [past, setPast] = useState<
-    { cells: Record<string, string>; formats: Record<string, CellFormat> }[]
-  >([]);
-  const [future, setFuture] = useState<
-    { cells: Record<string, string>; formats: Record<string, CellFormat> }[]
-  >([]);
+  // merged cell blocks (T5)
+  const [merges, setMerges] = useState<CellMerge[]>([]);
+  // undo / redo stacks. Each entry is a full document snapshot (T10: covers
+  // structural changes too — column/row sizing, row/col counts, merges — not
+  // just cell values/formats), taken just before a mutating action (snapshot()).
+  const [past, setPast] = useState<SheetSnapshot[]>([]);
+  const [future, setFuture] = useState<SheetSnapshot[]>([]);
+  // which toolbar dropdown (number format / borders / merge / font) is open
+  const [openMenu, setOpenMenu] = useState<'numfmt' | 'borders' | 'merge' | 'font' | null>(null);
+  // format painter (T6): armed after clicking the paintbrush button, applies
+  // the captured source format to the next cell clicked, then disarms
+  const [paintActive, setPaintActive] = useState(false);
+  const [paintSource, setPaintSource] = useState<CellFormat>({});
   // Cell-range selection: a list so Cmd/Ctrl-click can add disjoint ranges
   // (Sheets/Excel parity); the *last* one is "active" — it owns the
   // editable/anchor cell, keyboard nav, and the fill handle.
@@ -316,6 +399,17 @@ export function Sheet({
     return () => window.removeEventListener('mouseup', onUp);
   }, [dragging]);
 
+  // close an open toolbar dropdown (number format / borders / merge) on any
+  // click outside it
+  useEffect(() => {
+    if (!openMenu) return;
+    const onDown = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('.sft-sheet__tb-menu-wrap')) setOpenMenu(null);
+    };
+    window.addEventListener('mousedown', onDown);
+    return () => window.removeEventListener('mousedown', onDown);
+  }, [openMenu]);
+
   useEffect(() => {
     if (!fillDragging) return;
     const onUp = () => {
@@ -416,30 +510,47 @@ export function Sheet({
 
   // ── history ────────────────────────────────────────────────
   // record the pre-mutation document so it can be restored by undo. Callers
-  // invoke this immediately before changing cells/formats.
+  // invoke this immediately before changing cells/formats/structure (T10).
+  const currentSnapshot = (): SheetSnapshot => ({
+    cells,
+    formats,
+    colWidths,
+    rowHeights,
+    rowCount,
+    colCount,
+    merges,
+  });
+
+  const applySnapshot = (s: SheetSnapshot) => {
+    setCells(s.cells);
+    setFormats(s.formats);
+    setColWidths(s.colWidths);
+    setRowHeights(s.rowHeights);
+    setRowCount(s.rowCount);
+    setColCount(s.colCount);
+    setMerges(s.merges);
+    onChange?.(s.cells);
+  };
+
   const snapshot = () => {
-    setPast((p) => [...p, { cells, formats }]);
+    setPast((p) => [...p, currentSnapshot()]);
     setFuture([]);
   };
 
   const undo = () => {
     if (!past.length) return;
     const prev = past[past.length - 1]!;
-    setFuture((f) => [...f, { cells, formats }]);
+    setFuture((f) => [...f, currentSnapshot()]);
     setPast((p) => p.slice(0, -1));
-    setCells(prev.cells);
-    setFormats(prev.formats);
-    onChange?.(prev.cells);
+    applySnapshot(prev);
   };
 
   const redo = () => {
     if (!future.length) return;
     const nxt = future[future.length - 1]!;
-    setPast((p) => [...p, { cells, formats }]);
+    setPast((p) => [...p, currentSnapshot()]);
     setFuture((f) => f.slice(0, -1));
-    setCells(nxt.cells);
-    setFormats(nxt.formats);
-    onChange?.(nxt.cells);
+    applySnapshot(nxt);
   };
 
   // ── selection-wide formatting ──────────────────────────────
@@ -476,6 +587,7 @@ export function Sheet({
   const activeValue = evaluateCell(activeAddr, getRaw);
   const activeAlign: CellAlign =
     activeFormat.align ?? (typeof activeValue === 'number' ? 'right' : 'left');
+  const activeValign: CellValign = activeFormat.valign ?? 'middle';
 
   /** toggle a boolean format across the selection: if every cell already has
    * it, clear it everywhere; otherwise set it everywhere (Sheets behaviour) */
@@ -498,10 +610,10 @@ export function Sheet({
     focusGrid();
   };
 
-  /** set (or clear, when value is null) a value-typed format across the selection */
-  const setFormatValue = <K extends 'color' | 'bg' | 'align'>(
+  /** set (or clear, when value is null/undefined) a value-typed format across the selection */
+  const setFormatValue = <K extends keyof CellFormat>(
     key: K,
-    value: CellFormat[K] | null,
+    value: CellFormat[K] | null | undefined,
   ) => {
     const addrs = selectedAddrs();
     if (!addrs.length) return;
@@ -518,6 +630,147 @@ export function Sheet({
       return next;
     });
     focusGrid();
+  };
+
+  /** cycle the active selection's decimal-place count by ±1 (T1) */
+  const stepDecimals = (delta: number) => {
+    const addrs = selectedAddrs();
+    if (!addrs.length) return;
+    snapshot();
+    setFormats((prev) => {
+      const next = { ...prev };
+      for (const a of addrs) {
+        const f: CellFormat = { ...next[a] };
+        const n = Math.max(0, decimalsOf(f.numFmt) + delta);
+        f.numFmt = withDecimals(f.numFmt, n);
+        next[a] = f;
+      }
+      return next;
+    });
+    focusGrid();
+  };
+
+  /** T4 borders: the bounding rect the toolbar's border presets act on —
+   * a whole column/row when one is header-selected, else the active range */
+  const effectiveRect = (): CellRect =>
+    selectedCol != null
+      ? { minC: selectedCol, maxC: selectedCol, minR: 0, maxR: rowCount - 1 }
+      : selectedRow != null
+        ? { minC: 0, maxC: colCount - 1, minR: selectedRow, maxR: selectedRow }
+        : { minC, maxC, minR, maxR };
+
+  const applyBordersPreset = (preset: 'all' | 'outer' | 'inner' | 'none') => {
+    const rect = effectiveRect();
+    snapshot();
+    setFormats((prev) => {
+      const next = { ...prev };
+      for (let r = rect.minR; r <= rect.maxR; r++) {
+        for (let c = rect.minC; c <= rect.maxC; c++) {
+          const addr = cellAddr(c, r);
+          const f: CellFormat = { ...next[addr] };
+          const b: CellBorders = preset === 'none' ? {} : { ...f.borders };
+          if (preset === 'all') {
+            b.top = DEFAULT_BORDER;
+            b.left = DEFAULT_BORDER;
+            if (r === rect.maxR) b.bottom = DEFAULT_BORDER;
+            if (c === rect.maxC) b.right = DEFAULT_BORDER;
+          } else if (preset === 'outer') {
+            if (r === rect.minR) b.top = DEFAULT_BORDER;
+            if (r === rect.maxR) b.bottom = DEFAULT_BORDER;
+            if (c === rect.minC) b.left = DEFAULT_BORDER;
+            if (c === rect.maxC) b.right = DEFAULT_BORDER;
+          } else if (preset === 'inner') {
+            if (r !== rect.minR) b.top = DEFAULT_BORDER;
+            if (c !== rect.minC) b.left = DEFAULT_BORDER;
+          }
+          if (Object.keys(b).length) f.borders = b;
+          else f.borders = undefined;
+          if (Object.keys(f).length) next[addr] = f;
+          else delete next[addr];
+        }
+      }
+      return next;
+    });
+    setOpenMenu(null);
+    focusGrid();
+  };
+
+  /** the merge (if any) covering (c, r) */
+  const mergeCovering = (c: number, r: number): CellMerge | undefined =>
+    merges.find((m) => c >= m.c && c < m.c + m.colSpan && r >= m.r && r < m.r + m.rowSpan);
+
+  const activeMerge = mergeCovering(anchor.c, anchor.r);
+
+  const mergeSelection = () => {
+    const rect = effectiveRect();
+    if (rect.minC === rect.maxC && rect.minR === rect.maxR) return;
+    snapshot();
+    const next: CellMerge = {
+      c: rect.minC,
+      r: rect.minR,
+      colSpan: rect.maxC - rect.minC + 1,
+      rowSpan: rect.maxR - rect.minR + 1,
+    };
+    setMerges((prev) => [
+      ...prev.filter(
+        (m) =>
+          m.c + m.colSpan - 1 < rect.minC ||
+          m.c > rect.maxC ||
+          m.r + m.rowSpan - 1 < rect.minR ||
+          m.r > rect.maxR,
+      ),
+      next,
+    ]);
+    setRanges([{ anchor: { c: rect.minC, r: rect.minR }, focus: { c: rect.maxC, r: rect.maxR } }]);
+    setSelectedCol(null);
+    setSelectedRow(null);
+    setOpenMenu(null);
+    focusGrid();
+  };
+
+  const unmergeSelection = () => {
+    const rect = effectiveRect();
+    snapshot();
+    setMerges((prev) =>
+      prev.filter(
+        (m) => !(m.c >= rect.minC && m.c <= rect.maxC && m.r >= rect.minR && m.r <= rect.maxR),
+      ),
+    );
+    setOpenMenu(null);
+    focusGrid();
+  };
+
+  /** T6: clear all character formatting from the selection (⌘\) */
+  const clearFormatting = () => {
+    const addrs = selectedAddrs();
+    if (!addrs.length) return;
+    snapshot();
+    setFormats((prev) => {
+      const next = { ...prev };
+      for (const a of addrs) delete next[a];
+      return next;
+    });
+    focusGrid();
+  };
+
+  /** T6: format painter — arm with the active cell's format, then apply it
+   * to whichever single cell is clicked next */
+  const startPaintFormat = () => {
+    setPaintSource({ ...(formats[activeAddr] ?? {}) });
+    setPaintActive(true);
+  };
+
+  const applyPaintFormatToAddrs = (addrs: string[]) => {
+    if (!addrs.length) return;
+    snapshot();
+    setFormats((prev) => {
+      const next = { ...prev };
+      for (const a of addrs) {
+        if (Object.keys(paintSource).length) next[a] = { ...paintSource };
+        else delete next[a];
+      }
+      return next;
+    });
   };
 
   const commit = (addr: string, value: string, move: 'down' | 'right' | null) => {
@@ -544,8 +797,14 @@ export function Sheet({
     setEditing(true);
   };
 
-  const addColumn = () => setColCount((c) => c + 1);
-  const addRow = () => setRowCount((r) => r + 1);
+  const addColumn = () => {
+    snapshot();
+    setColCount((c) => c + 1);
+  };
+  const addRow = () => {
+    snapshot();
+    setRowCount((r) => r + 1);
+  };
 
   /** Excel-style double-click: fit the column to its widest visible value */
   function autoFitColumn(c: number) {
@@ -558,13 +817,15 @@ export function Sheet({
       if (el instanceof HTMLElement) widest = Math.max(widest, el.scrollWidth);
     }
     if (widest === 0) return;
+    snapshot();
     setColWidths((w) => ({ ...w, [c]: Math.min(400, Math.max(MIN_COL_WIDTH, widest + 16)) }));
   }
 
   /** Excel-style double-click: reset the row back to the standard height */
   function autoFitRow(r: number) {
+    if (!(r in rowHeights)) return;
+    snapshot();
     setRowHeights((h) => {
-      if (!(r in h)) return h;
       const next = { ...h };
       delete next[r];
       return next;
@@ -584,6 +845,7 @@ export function Sheet({
     if (!isActive) return;
     e.preventDefault();
     e.stopPropagation();
+    snapshot();
     const startX = e.clientX;
     const startWidth = colWidth(targetCol);
     function onMove(ev: PointerEvent) {
@@ -612,6 +874,7 @@ export function Sheet({
     if (!isActive) return;
     e.preventDefault();
     e.stopPropagation();
+    snapshot();
     const startY = e.clientY;
     const startHeight = rowHeight(targetRow);
     function onMove(ev: PointerEvent) {
@@ -657,6 +920,11 @@ export function Sheet({
       if (k === 'u') {
         e.preventDefault();
         toggleFormat('underline');
+        return;
+      }
+      if (e.key === '\\') {
+        e.preventDefault();
+        clearFormatting();
         return;
       }
     }
@@ -859,6 +1127,290 @@ export function Sheet({
             <AlignRight size={16} />
           </button>
         </div>
+
+        <div className="sft-sheet__tb-sep" />
+
+        {/* T3: vertical align + wrap */}
+        <div className="sft-sheet__tb-group">
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={activeValign === 'top' || undefined}
+            onMouseDown={keepFocus}
+            onClick={() => setFormatValue('valign', 'top')}
+            title="위쪽 맞춤"
+            aria-label="위쪽 맞춤"
+          >
+            <AlignStartVertical size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={activeValign === 'middle' || undefined}
+            onMouseDown={keepFocus}
+            onClick={() => setFormatValue('valign', 'middle')}
+            title="가운데 맞춤"
+            aria-label="가운데 맞춤"
+          >
+            <Baseline size={16} style={{ transform: 'rotate(90deg)' }} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={activeValign === 'bottom' || undefined}
+            onMouseDown={keepFocus}
+            onClick={() => setFormatValue('valign', 'bottom')}
+            title="아래쪽 맞춤"
+            aria-label="아래쪽 맞춤"
+          >
+            <AlignEndVertical size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={activeFormat.wrap === 'wrap' || undefined}
+            onMouseDown={keepFocus}
+            onClick={() => setFormatValue('wrap', activeFormat.wrap === 'wrap' ? null : 'wrap')}
+            title="텍스트 줄바꿈"
+            aria-label="텍스트 줄바꿈"
+          >
+            <WrapText size={16} />
+          </button>
+        </div>
+
+        <div className="sft-sheet__tb-sep" />
+
+        {/* T1: number formats */}
+        <div className="sft-sheet__tb-group">
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={activeFormat.numFmt === '$#,##0.00' || undefined}
+            onMouseDown={keepFocus}
+            onClick={() =>
+              setFormatValue('numFmt', activeFormat.numFmt === '$#,##0.00' ? null : '$#,##0.00')
+            }
+            title="통화 서식"
+            aria-label="통화 서식"
+          >
+            <DollarSign size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={activeFormat.numFmt?.endsWith('%') || undefined}
+            onMouseDown={keepFocus}
+            onClick={() =>
+              setFormatValue('numFmt', activeFormat.numFmt?.endsWith('%') ? null : '0%')
+            }
+            title="백분율 서식"
+            aria-label="백분율 서식"
+          >
+            <Percent size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            onMouseDown={keepFocus}
+            onClick={() => stepDecimals(1)}
+            title="소수점 자릿수 늘리기"
+            aria-label="소수점 자릿수 늘리기"
+          >
+            <Plus size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            onMouseDown={keepFocus}
+            onClick={() => stepDecimals(-1)}
+            title="소수점 자릿수 줄이기"
+            aria-label="소수점 자릿수 줄이기"
+          >
+            <Minus size={16} />
+          </button>
+          <div className="sft-sheet__tb-menu-wrap">
+            <button
+              type="button"
+              className="sft-sheet__tb-btn sft-sheet__tb-btn--wide"
+              onMouseDown={keepFocus}
+              onClick={() => setOpenMenu((m) => (m === 'numfmt' ? null : 'numfmt'))}
+              title="숫자 서식 더보기"
+              aria-label="숫자 서식 더보기"
+            >
+              123 <ChevronDown size={12} />
+            </button>
+            {openMenu === 'numfmt' && (
+              <div className="sft-sheet__tb-menu" role="menu">
+                {NUM_FORMATS.map((opt) => (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    className="sft-sheet__tb-menu-item"
+                    data-active={activeFormat.numFmt === opt.value || undefined}
+                    onMouseDown={keepFocus}
+                    onClick={() => {
+                      setFormatValue('numFmt', opt.value ?? null);
+                      setOpenMenu(null);
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="sft-sheet__tb-sep" />
+
+        {/* T2: font family + size */}
+        <div className="sft-sheet__tb-group">
+          <select
+            className="sft-sheet__tb-select"
+            value={activeFormat.fontFamily ?? ''}
+            onMouseDown={keepFocus}
+            onChange={(e) => setFormatValue('fontFamily', e.target.value || null)}
+            title="글꼴"
+            aria-label="글꼴"
+          >
+            {FONT_FAMILIES.map((f) => (
+              <option key={f.label} value={f.value}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+          <input
+            type="number"
+            className="sft-sheet__tb-num"
+            min={8}
+            max={96}
+            value={activeFormat.fontSize ?? ''}
+            placeholder="14"
+            onMouseDown={keepFocus}
+            onChange={(e) =>
+              setFormatValue('fontSize', e.target.value ? Number(e.target.value) : null)
+            }
+            title="글자 크기"
+            aria-label="글자 크기"
+          />
+        </div>
+
+        <div className="sft-sheet__tb-sep" />
+
+        {/* T4: borders */}
+        <div className="sft-sheet__tb-group">
+          <div className="sft-sheet__tb-menu-wrap">
+            <button
+              type="button"
+              className="sft-sheet__tb-btn"
+              onMouseDown={keepFocus}
+              onClick={() => setOpenMenu((m) => (m === 'borders' ? null : 'borders'))}
+              title="테두리"
+              aria-label="테두리"
+            >
+              <Grid3x3 size={16} />
+            </button>
+            {openMenu === 'borders' && (
+              <div className="sft-sheet__tb-menu" role="menu">
+                <button
+                  type="button"
+                  className="sft-sheet__tb-menu-item"
+                  onMouseDown={keepFocus}
+                  onClick={() => applyBordersPreset('all')}
+                >
+                  전체 테두리
+                </button>
+                <button
+                  type="button"
+                  className="sft-sheet__tb-menu-item"
+                  onMouseDown={keepFocus}
+                  onClick={() => applyBordersPreset('outer')}
+                >
+                  바깥쪽 테두리
+                </button>
+                <button
+                  type="button"
+                  className="sft-sheet__tb-menu-item"
+                  onMouseDown={keepFocus}
+                  onClick={() => applyBordersPreset('inner')}
+                >
+                  안쪽 테두리
+                </button>
+                <button
+                  type="button"
+                  className="sft-sheet__tb-menu-item"
+                  onMouseDown={keepFocus}
+                  onClick={() => applyBordersPreset('none')}
+                >
+                  테두리 없음
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* T5: merge cells */}
+          <div className="sft-sheet__tb-menu-wrap">
+            <button
+              type="button"
+              className="sft-sheet__tb-btn"
+              data-active={!!activeMerge || undefined}
+              onMouseDown={keepFocus}
+              onClick={() => setOpenMenu((m) => (m === 'merge' ? null : 'merge'))}
+              title="셀 병합"
+              aria-label="셀 병합"
+            >
+              <Combine size={16} />
+            </button>
+            {openMenu === 'merge' && (
+              <div className="sft-sheet__tb-menu" role="menu">
+                <button
+                  type="button"
+                  className="sft-sheet__tb-menu-item"
+                  onMouseDown={keepFocus}
+                  onClick={mergeSelection}
+                >
+                  선택 영역 병합
+                </button>
+                <button
+                  type="button"
+                  className="sft-sheet__tb-menu-item"
+                  onMouseDown={keepFocus}
+                  onClick={unmergeSelection}
+                  disabled={!activeMerge}
+                >
+                  병합 해제
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="sft-sheet__tb-sep" />
+
+        {/* T6: format painter + clear formatting */}
+        <div className="sft-sheet__tb-group">
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            data-active={paintActive || undefined}
+            onMouseDown={keepFocus}
+            onClick={startPaintFormat}
+            title="서식 복사"
+            aria-label="서식 복사"
+          >
+            <Paintbrush size={16} />
+          </button>
+          <button
+            type="button"
+            className="sft-sheet__tb-btn"
+            onMouseDown={keepFocus}
+            onClick={clearFormatting}
+            title="서식 지우기 (⌘\\)"
+            aria-label="서식 지우기"
+          >
+            <Eraser size={16} />
+          </button>
+        </div>
       </div>
 
       <div ref={gridRef} className="sft-sheet" tabIndex={0} role="grid" onKeyDown={onGridKeyDown}>
@@ -960,6 +1512,8 @@ export function Sheet({
               // Excel default: numbers (incl. formula results) right-align,
               // everything else left-aligns — per-cell format overrides it
               const align: CellAlign = fmt.align ?? (typeof value === 'number' ? 'right' : 'left');
+              const display =
+                typeof value === 'number' && fmt.numFmt ? formatNumber(value, fmt.numFmt) : value;
               const contentStyle: CSSProperties = {
                 textAlign: align,
                 fontWeight: fmt.bold ? 700 : undefined,
@@ -969,7 +1523,16 @@ export function Sheet({
                     .filter(Boolean)
                     .join(' ') || undefined,
                 color: fmt.color,
+                fontFamily: fmt.fontFamily || undefined,
+                fontSize: fmt.fontSize ? `${fmt.fontSize}px` : undefined,
+                whiteSpace: fmt.wrap === 'wrap' ? 'normal' : 'nowrap',
+                overflow: fmt.wrap === 'wrap' ? 'visible' : 'hidden',
               };
+              // a merge's covered (non-anchor) cells render nothing — the
+              // merge's own overlay (below) draws the union visually
+              const coveringMerge = mergeCovering(c, r);
+              const isMergeAnchor = coveringMerge?.c === c && coveringMerge?.r === r;
+              const hiddenByMerge = !!coveringMerge && !isMergeAnchor;
               return (
                 <div
                   key={addr}
@@ -978,12 +1541,43 @@ export function Sheet({
                   data-in-range={cellTinted(c, r) || undefined}
                   data-col-selected={selectedCol === c || undefined}
                   data-row-selected={selectedRow === r || undefined}
-                  style={{ width: colWidth(c), background: fmt.bg }}
+                  style={{
+                    width: colWidth(c),
+                    background: isMergeAnchor ? undefined : fmt.bg,
+                    alignItems:
+                      fmt.valign === 'top'
+                        ? 'flex-start'
+                        : fmt.valign === 'bottom'
+                          ? 'flex-end'
+                          : 'center',
+                    visibility: hiddenByMerge ? 'hidden' : undefined,
+                    borderTop: fmt.borders?.top
+                      ? `${fmt.borders.top.width}px ${fmt.borders.top.style} ${fmt.borders.top.color}`
+                      : undefined,
+                    borderRight: fmt.borders?.right
+                      ? `${fmt.borders.right.width}px ${fmt.borders.right.style} ${fmt.borders.right.color}`
+                      : undefined,
+                    borderBottom: fmt.borders?.bottom
+                      ? `${fmt.borders.bottom.width}px ${fmt.borders.bottom.style} ${fmt.borders.bottom.color}`
+                      : undefined,
+                    borderLeft: fmt.borders?.left
+                      ? `${fmt.borders.left.width}px ${fmt.borders.left.style} ${fmt.borders.left.color}`
+                      : undefined,
+                  }}
                   onMouseDown={(e) => {
                     // range-select drags would otherwise also trigger the
                     // browser's native text selection across cell contents
                     e.preventDefault();
-                    selectCell(c, r, {
+                    const target = mergeCovering(c, r);
+                    const tc = target?.c ?? c;
+                    const tr = target?.r ?? r;
+                    if (paintActive) {
+                      applyPaintFormatToAddrs([cellAddr(tc, tr)]);
+                      setPaintActive(false);
+                      selectCell(tc, tr);
+                      return;
+                    }
+                    selectCell(tc, tr, {
                       shift: e.shiftKey,
                       additive: !e.shiftKey && (e.metaKey || e.ctrlKey),
                     });
@@ -993,7 +1587,7 @@ export function Sheet({
                     if (fillDragging) setFillEnd({ c, r });
                     else if (dragging && !editing) setActiveFocus({ c, r });
                   }}
-                  onDoubleClick={() => startEdit()}
+                  onDoubleClick={() => !hiddenByMerge && startEdit()}
                 >
                   {isEditing ? (
                     <input
@@ -1018,11 +1612,11 @@ export function Sheet({
                         }
                       }}
                     />
-                  ) : (
+                  ) : !hiddenByMerge && !isMergeAnchor ? (
                     <span className="sft-sheet__value" style={contentStyle}>
-                      {String(value)}
+                      {String(display)}
                     </span>
-                  )}
+                  ) : null}
                 </div>
               );
             })}
@@ -1050,6 +1644,59 @@ export function Sheet({
           ))}
           <div className="sft-sheet__ghost" style={{ width: DEFAULT_COL_WIDTH }} />
         </div>
+
+        {/* T5 merge overlay: draws the merged block's union visually (value,
+          background, alignment) over the individually-hidden cells beneath it,
+          same floating-overlay technique as the selection outline below */}
+        {merges.map((m) => {
+          const anchorAddr = cellAddr(m.c, m.r);
+          const mFmt = formats[anchorAddr] ?? {};
+          const mValue = evaluateCell(anchorAddr, getRaw);
+          const mAlign: CellAlign = mFmt.align ?? (typeof mValue === 'number' ? 'right' : 'left');
+          const mDisplay =
+            typeof mValue === 'number' && mFmt.numFmt ? formatNumber(mValue, mFmt.numFmt) : mValue;
+          return (
+            <div
+              key={`merge-${anchorAddr}`}
+              className="sft-sheet__merge-overlay"
+              style={{
+                left: colOffsets[m.c]!,
+                top: rowOffsets[m.r]!,
+                width: colOffsets[m.c + m.colSpan]! - colOffsets[m.c]!,
+                height: rowOffsets[m.r + m.rowSpan]! - rowOffsets[m.r]!,
+                background: mFmt.bg ?? 'var(--sft-color-bg)',
+                justifyContent:
+                  mAlign === 'center' ? 'center' : mAlign === 'right' ? 'flex-end' : 'flex-start',
+                alignItems:
+                  mFmt.valign === 'top'
+                    ? 'flex-start'
+                    : mFmt.valign === 'bottom'
+                      ? 'flex-end'
+                      : 'center',
+              }}
+            >
+              {!(editing && anchor.c === m.c && anchor.r === m.r) && (
+                <span
+                  className="sft-sheet__value"
+                  style={{
+                    textAlign: mAlign,
+                    fontWeight: mFmt.bold ? 700 : undefined,
+                    fontStyle: mFmt.italic ? 'italic' : undefined,
+                    textDecoration:
+                      [mFmt.underline ? 'underline' : '', mFmt.strike ? 'line-through' : '']
+                        .filter(Boolean)
+                        .join(' ') || undefined,
+                    color: mFmt.color,
+                    fontFamily: mFmt.fontFamily || undefined,
+                    fontSize: mFmt.fontSize ? `${mFmt.fontSize}px` : undefined,
+                  }}
+                >
+                  {String(mDisplay)}
+                </span>
+              )}
+            </div>
+          );
+        })}
 
         {/* floating selection outline: one overlay per range, sized/positioned
           from column and row offsets, instead of per-cell borders that clip

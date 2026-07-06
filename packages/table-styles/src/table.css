@@ -1049,6 +1049,80 @@
   cursor: pointer;
 }
 
+.sft-sheet__tb-btn--wide {
+  width: auto;
+  padding: 0 6px;
+  gap: 2px;
+  font-size: var(--sft-font-size-xs);
+}
+
+.sft-sheet__tb-select,
+.sft-sheet__tb-num {
+  height: 28px;
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-sm);
+  background: var(--sft-color-bg);
+  color: var(--sft-color-text);
+  font-size: var(--sft-font-size-sm);
+  padding: 0 var(--sft-space-1);
+}
+
+.sft-sheet__tb-select {
+  max-width: 128px;
+}
+
+.sft-sheet__tb-num {
+  width: 48px;
+  text-align: center;
+}
+
+.sft-sheet__tb-menu-wrap {
+  position: relative;
+}
+
+.sft-sheet__tb-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  padding: var(--sft-space-1);
+  background: var(--sft-color-surface);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
+  box-shadow: var(--sft-shadow-md);
+}
+
+.sft-sheet__tb-menu-item {
+  border: none;
+  background: transparent;
+  color: var(--sft-color-text);
+  text-align: left;
+  padding: var(--sft-space-1) var(--sft-space-2);
+  border-radius: var(--sft-radius-sm);
+  font-size: var(--sft-font-size-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sft-sheet__tb-menu-item:hover {
+  background: var(--sft-color-bg-hover);
+}
+
+.sft-sheet__tb-menu-item[data-active] {
+  color: var(--sft-color-accent);
+}
+
+.sft-sheet__tb-menu-item:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.sft-sheet__tb-menu-item:disabled:hover {
+  background: transparent;
+}
+
 .sft-sheet {
   position: relative;
   display: inline-block;
@@ -1164,12 +1238,17 @@
 .sft-sheet__cell {
   position: relative;
   flex: none;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   box-shadow: inset -1px -1px 0 var(--sft-color-border);
   background: var(--sft-color-bg);
   cursor: cell;
 }
+
+/* T4 custom cell borders (top/left drawn per cell to avoid doubling at
+   shared edges) render as real `border-*`, layered over the base gridline
+   box-shadow above — box-sizing: border-box keeps column/row math exact */
 
 .sft-sheet__value {
   display: block;
@@ -1190,6 +1269,23 @@
    still reads as the one editable cell within the range (Sheets parity) */
 .sft-sheet__cell[data-in-range] {
   background: var(--sft-color-accent-subtle);
+}
+
+/* T5: a merged block's visual union — value, background, alignment — drawn
+   once as a floating overlay (same technique as the range outline below)
+   over its individually-hidden member cells. Not interactive: clicks fall
+   through to the underlying grid cells, which redirect selection to the
+   merge's anchor (see mergeCovering in Sheet.tsx). */
+.sft-sheet__merge-overlay {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sft-space-2);
+  overflow: hidden;
+  box-shadow: inset -1px -1px 0 var(--sft-color-border);
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* the range/active-cell border itself is drawn once as a floating overlay
