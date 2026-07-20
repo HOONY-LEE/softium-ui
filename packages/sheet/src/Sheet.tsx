@@ -18,6 +18,7 @@ import {
   Percent,
   Plus,
   Redo2,
+  Sigma,
   Strikethrough,
   Underline,
   Undo2,
@@ -41,8 +42,36 @@ import {
   evaluateCell,
   formatNumber,
   indexToCol,
+  shiftFormula,
+  SUPPORTED_FUNCTIONS,
   withDecimals,
 } from './engine';
+import {
+  DEFAULT_BORDER,
+  DEFAULT_COL_WIDTH,
+  DEFAULT_ROW_HEIGHT,
+  FONT_FAMILIES,
+  HEADER_HEIGHT,
+  MIN_COL_WIDTH,
+  MIN_ROW_HEIGHT,
+  NUM_FORMATS,
+  ROW_HEAD_WIDTH,
+} from './constants';
+import { makeSeriesExtender } from './series';
+import {
+  type BoolFormatKey,
+  type CellAlign,
+  type CellBorders,
+  type CellFormat,
+  type CellMerge,
+  type CellPos,
+  type CellRange,
+  type CellRect,
+  type CellValign,
+  type CellWrap,
+  rectOf,
+  type SheetSnapshot,
+} from './types';
 
 export interface SheetProps {
   /** initial row count. Users can add more via the "+" button at the bottom row. */
@@ -54,165 +83,6 @@ export interface SheetProps {
   onChange?: (cells: Record<string, string>) => void;
   className?: string;
 }
-
-interface CellPos {
-  c: number;
-  r: number;
-}
-
-/** one rectangular selection: `anchor` is its own editable cell, `focus` is
- * the far corner it's dragged/extended to. A single cell is anchor===focus. */
-interface CellRange {
-  anchor: CellPos;
-  focus: CellPos;
-}
-
-interface CellRect {
-  minC: number;
-  maxC: number;
-  minR: number;
-  maxR: number;
-}
-
-function rectOf(range: CellRange): CellRect {
-  return {
-    minC: Math.min(range.anchor.c, range.focus.c),
-    maxC: Math.max(range.anchor.c, range.focus.c),
-    minR: Math.min(range.anchor.r, range.focus.r),
-    maxR: Math.max(range.anchor.r, range.focus.r),
-  };
-}
-
-type CellAlign = 'left' | 'center' | 'right';
-type CellValign = 'top' | 'middle' | 'bottom';
-type CellWrap = 'overflow' | 'wrap' | 'clip';
-
-interface BorderSpec {
-  color: string;
-  width: number;
-  style: 'solid' | 'dashed' | 'dotted';
-}
-
-interface CellBorders {
-  top?: BorderSpec;
-  right?: BorderSpec;
-  bottom?: BorderSpec;
-  left?: BorderSpec;
-}
-
-/** per-cell character formatting, applied from the toolbar to the selection.
- * Separate from cell *values* so it can be undone/serialized independently. */
-interface CellFormat {
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-  strike?: boolean;
-  /** text color (any CSS color) */
-  color?: string;
-  /** fill / background color */
-  bg?: string;
-  /** per-cell horizontal align, overriding the column's type-based default */
-  align?: CellAlign;
-  /** display-only number format pattern (e.g. '#,##0.00', '0.00%', '$#,##0.00') */
-  numFmt?: string;
-  fontFamily?: string;
-  /** px */
-  fontSize?: number;
-  valign?: CellValign;
-  wrap?: CellWrap;
-  borders?: CellBorders;
-}
-
-/** a merged rectangular block of cells, anchored at (c, r) */
-interface CellMerge {
-  c: number;
-  r: number;
-  colSpan: number;
-  rowSpan: number;
-}
-
-/** the full undo/redo-able document state */
-interface SheetSnapshot {
-  cells: Record<string, string>;
-  formats: Record<string, CellFormat>;
-  colWidths: Record<number, number>;
-  rowHeights: Record<number, number>;
-  rowCount: number;
-  colCount: number;
-  merges: CellMerge[];
-}
-
-type BoolFormatKey = 'bold' | 'italic' | 'underline' | 'strike';
-
-const DEFAULT_BORDER: BorderSpec = { color: 'var(--sft-color-text)', width: 1, style: 'solid' };
-
-const FONT_FAMILIES = [
-  { label: '기본', value: '' },
-  { label: 'Arial', value: 'Arial, sans-serif' },
-  { label: 'Georgia', value: 'Georgia, serif' },
-  { label: 'Courier New', value: '"Courier New", monospace' },
-  { label: 'Times New Roman', value: '"Times New Roman", serif' },
-];
-
-const NUM_FORMATS = [
-  { label: '자동', value: undefined },
-  { label: '숫자 (1,000)', value: '#,##0' },
-  { label: '소수점 두 자리 (1,000.00)', value: '#,##0.00' },
-  { label: '백분율 (12%)', value: '0%' },
-  { label: '통화 ($1,000.00)', value: '$#,##0.00' },
-];
-
-const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'];
-
-function roundNum(n: number): number {
-  return Math.round(n * 1e9) / 1e9;
-}
-
-/**
- * Excel/Sheets-style autofill series detection. Given the raw source cells
- * in fill order, returns a function producing the raw value `offset` cells
- * past the source (1-based) — or null if no recognizable series exists, so
- * the caller falls back to cyclically repeating the source block.
- *
- * Recognizes: arithmetic numeric sequences (1,2,3,4 → 5,6,7 / 2,4,6,8 →
- * 10,12 / 1,1,1,1 → 1,1,1, a constant is just step-0 arithmetic) and the
- * Korean weekday cycle (월,화,수,목 → 금,토,일).
- */
-function makeSeriesExtender(rawValues: string[]): ((offset: number) => string) | null {
-  const trimmed = rawValues.map((v) => v.trim());
-  if (trimmed.length < 2 || trimmed.some((v) => v.startsWith('='))) return null;
-
-  if (trimmed.every((v) => v !== '' && !Number.isNaN(Number(v)))) {
-    const nums = trimmed.map(Number);
-    const step = nums[1]! - nums[0]!;
-    const isArithmetic = nums.every((n, i) => i === 0 || Math.abs(n - nums[i - 1]! - step) < 1e-9);
-    if (isArithmetic) {
-      const last = nums[nums.length - 1]!;
-      return (offset: number) => String(roundNum(last + step * offset));
-    }
-  }
-
-  const idxs = trimmed.map((v) => WEEKDAYS_KO.indexOf(v));
-  if (idxs.every((i) => i >= 0)) {
-    const step = (((idxs[1]! - idxs[0]!) % 7) + 7) % 7;
-    const stepOk = idxs.every((i, k) => k === 0 || (idxs[k - 1]! + step) % 7 === i);
-    if (stepOk) {
-      const lastIdx = idxs[idxs.length - 1]!;
-      return (offset: number) => WEEKDAYS_KO[(((lastIdx + step * offset) % 7) + 7) % 7]!;
-    }
-  }
-
-  return null;
-}
-
-const DEFAULT_COL_WIDTH = 120;
-const DEFAULT_ROW_HEIGHT = 34;
-const MIN_COL_WIDTH = 48;
-const MIN_ROW_HEIGHT = 22;
-/** fixed width of the row-header column */
-const ROW_HEAD_WIDTH = 48;
-/** fixed height of the column-header row */
-const HEADER_HEIGHT = 34;
 
 /**
  * Sheet — a minimal spreadsheet: A1-addressed editable grid with formulas
@@ -256,7 +126,9 @@ export function Sheet({
   const [past, setPast] = useState<SheetSnapshot[]>([]);
   const [future, setFuture] = useState<SheetSnapshot[]>([]);
   // which toolbar dropdown (number format / borders / merge / font) is open
-  const [openMenu, setOpenMenu] = useState<'numfmt' | 'borders' | 'merge' | 'font' | null>(null);
+  const [openMenu, setOpenMenu] = useState<
+    'numfmt' | 'borders' | 'merge' | 'font' | 'functions' | null
+  >(null);
   // format painter (T6): armed after clicking the paintbrush button, applies
   // the captured source format to the next cell clicked, then disarms
   const [paintActive, setPaintActive] = useState(false);
@@ -275,6 +147,16 @@ export function Sheet({
   const [fillEnd, setFillEnd] = useState<CellPos | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
+  const editInputRef = useRef<HTMLInputElement | null>(null);
+  // set right before opening the editor with an inserted "=FUNC()" draft, so
+  // the caret lands between the parens instead of at the end of the text
+  const pendingCaretRef = useRef<number | null>(null);
+  // shadow copy of the last cut/copied block, kept alongside the native OS
+  // clipboard (T7 remainder) — "paste values only" (⌘⇧V) is a keydown-driven
+  // shortcut, not a native paste event, so it has no ClipboardEvent to read
+  // from; it reads this instead, using the values already evaluated at
+  // copy/cut time rather than raw formula text
+  const internalClipboardRef = useRef<{ values: (string | number)[][] } | null>(null);
   // Excel-style whole-column / whole-row selection: only the selected header's
   // edge can be dragged to resize. Selecting one releases the cell range
   // (Google Sheets: only one selection kind is shown at a time).
@@ -396,19 +278,19 @@ export function Sheet({
   useEffect(() => {
     if (!dragging) return;
     const onUp = () => setDragging(false);
-    window.addEventListener('mouseup', onUp);
-    return () => window.removeEventListener('mouseup', onUp);
+    window.addEventListener('pointerup', onUp);
+    return () => window.removeEventListener('pointerup', onUp);
   }, [dragging]);
 
   // close an open toolbar dropdown (number format / borders / merge) on any
-  // click outside it
+  // click outside it (pointerdown covers mouse + touch + pen)
   useEffect(() => {
     if (!openMenu) return;
-    const onDown = (e: MouseEvent) => {
+    const onDown = (e: PointerEvent) => {
       if (!(e.target as HTMLElement).closest('.sft-sheet__tb-menu-wrap')) setOpenMenu(null);
     };
-    window.addEventListener('mousedown', onDown);
-    return () => window.removeEventListener('mousedown', onDown);
+    window.addEventListener('pointerdown', onDown);
+    return () => window.removeEventListener('pointerdown', onDown);
   }, [openMenu]);
 
   useEffect(() => {
@@ -433,7 +315,12 @@ export function Sheet({
                 next[cellAddr(c, r)] = extend(r - maxR);
               } else {
                 const srcR = minR + ((r - minR) % height);
-                next[cellAddr(c, r)] = prev[cellAddr(c, srcR)] ?? '';
+                const srcRaw = prev[cellAddr(c, srcR)] ?? '';
+                // formulas shift their relative refs by the repeated row
+                // distance instead of pasting verbatim (T12)
+                next[cellAddr(c, r)] = srcRaw.startsWith('=')
+                  ? shiftFormula(srcRaw, 0, r - srcR)
+                  : srcRaw;
               }
             }
           }
@@ -457,7 +344,10 @@ export function Sheet({
                 next[cellAddr(c, r)] = extend(c - maxC);
               } else {
                 const srcC = minC + ((c - minC) % width);
-                next[cellAddr(c, r)] = prev[cellAddr(srcC, r)] ?? '';
+                const srcRaw = prev[cellAddr(srcC, r)] ?? '';
+                next[cellAddr(c, r)] = srcRaw.startsWith('=')
+                  ? shiftFormula(srcRaw, c - srcC, 0)
+                  : srcRaw;
               }
             }
           }
@@ -469,8 +359,8 @@ export function Sheet({
       setFillDragging(false);
       setFillEnd(null);
     };
-    window.addEventListener('mouseup', onUp);
-    return () => window.removeEventListener('mouseup', onUp);
+    window.addEventListener('pointerup', onUp);
+    return () => window.removeEventListener('pointerup', onUp);
   }, [fillDragging, fillAxis, fillEnd, minC, maxC, minR, maxR, onChange]);
 
   const selectCell = (c: number, r: number, opts: { shift?: boolean; additive?: boolean } = {}) => {
@@ -798,6 +688,24 @@ export function Sheet({
     setEditing(true);
   };
 
+  /** toolbar Σ menu: opens the active cell's editor pre-filled with
+   * "=FUNC()" and parks the caret between the parens so the user can type
+   * a range straight away */
+  const insertFunction = (name: string) => {
+    const text = `=${name}()`;
+    startEdit(text);
+    pendingCaretRef.current = text.length - 1;
+  };
+
+  // places the caret once the editor input mounts after insertFunction
+  useEffect(() => {
+    if (!editing) return;
+    const pos = pendingCaretRef.current;
+    if (pos == null) return;
+    pendingCaretRef.current = null;
+    editInputRef.current?.setSelectionRange(pos, pos);
+  }, [editing]);
+
   const addColumn = () => {
     snapshot();
     setColCount((c) => c + 1);
@@ -928,6 +836,11 @@ export function Sheet({
         clearFormatting();
         return;
       }
+      if (k === 'v' && e.shiftKey) {
+        e.preventDefault();
+        pasteValuesOnly();
+        return;
+      }
     }
 
     const moveTo = (dc: number, dr: number, extend: boolean) => {
@@ -979,6 +892,11 @@ export function Sheet({
   // TSV (rows \n, cols \t) so it round-trips with Excel/Sheets; a second,
   // custom clipboard type carries our per-cell formats for internal pastes.
   const CLIPBOARD_FORMAT_MIME = 'application/x-softium-sheet-formats';
+  // carries the copied block's top-left address so a paste elsewhere can
+  // shift formulas' relative refs by the same delta a real drag/paste in
+  // Excel/Sheets would (T12) — absent (or stale, e.g. after an external
+  // copy) means "don't shift", so external paste text is used verbatim
+  const CLIPBOARD_ORIGIN_MIME = 'application/x-softium-sheet-origin';
 
   function onGridCopy(e: ReactClipboardEvent<HTMLDivElement>) {
     if (editing) return; // let the native <input> handle its own text copy
@@ -986,18 +904,74 @@ export function Sheet({
     const rect = effectiveRect();
     const rows: string[] = [];
     const fmtByOffset: Record<string, CellFormat> = {};
+    const values: (string | number)[][] = [];
     for (let r = rect.minR; r <= rect.maxR; r++) {
       const cols: string[] = [];
+      const valueCols: (string | number)[] = [];
       for (let c = rect.minC; c <= rect.maxC; c++) {
         const addr = cellAddr(c, r);
         cols.push(cells[addr] ?? '');
+        valueCols.push(evaluateCell(addr, getRaw));
         const fmt = formats[addr];
         if (fmt) fmtByOffset[`${r - rect.minR},${c - rect.minC}`] = fmt;
       }
       rows.push(cols.join('\t'));
+      values.push(valueCols);
     }
     e.clipboardData.setData('text/plain', rows.join('\n'));
     e.clipboardData.setData(CLIPBOARD_FORMAT_MIME, JSON.stringify(fmtByOffset));
+    e.clipboardData.setData(CLIPBOARD_ORIGIN_MIME, JSON.stringify({ c: rect.minC, r: rect.minR }));
+    internalClipboardRef.current = { values };
+  }
+
+  /** ⌘X — same capture as copy, then blanks the source cells + their formats */
+  function onGridCut(e: ReactClipboardEvent<HTMLDivElement>) {
+    if (editing) return;
+    onGridCopy(e);
+    const rect = effectiveRect();
+    snapshot();
+    setCells((prev) => {
+      const next = { ...prev };
+      for (let r = rect.minR; r <= rect.maxR; r++)
+        for (let c = rect.minC; c <= rect.maxC; c++) next[cellAddr(c, r)] = '';
+      onChange?.(next);
+      return next;
+    });
+    setFormats((prev) => {
+      const next = { ...prev };
+      for (let r = rect.minR; r <= rect.maxR; r++)
+        for (let c = rect.minC; c <= rect.maxC; c++) delete next[cellAddr(c, r)];
+      return next;
+    });
+  }
+
+  /** ⌘⇧V — paste only the evaluated values from the last cut/copy, dropping
+   * both formatting and formula text (a formula source pastes its computed
+   * number/string, not "=..."); reads the internal shadow clipboard since
+   * this shortcut never goes through a native ClipboardEvent */
+  function pasteValuesOnly() {
+    const clip = internalClipboardRef.current;
+    if (!clip || !clip.values.length) return;
+    const pasteRows = clip.values.length;
+    const pasteCols = Math.max(...clip.values.map((row) => row.length));
+    const endC = anchor.c + pasteCols - 1;
+    const endR = anchor.r + pasteRows - 1;
+    if (endC >= colCount) setColCount(endC + 1);
+    if (endR >= rowCount) setRowCount(endR + 1);
+
+    snapshot();
+    setCells((prev) => {
+      const next = { ...prev };
+      for (let r = 0; r < clip.values.length; r++) {
+        const row = clip.values[r]!;
+        for (let c = 0; c < row.length; c++) {
+          next[cellAddr(anchor.c + c, anchor.r + r)] = String(row[c] ?? '');
+        }
+      }
+      onChange?.(next);
+      return next;
+    });
+    setRanges([{ anchor: { c: anchor.c, r: anchor.r }, focus: { c: endC, r: endR } }]);
   }
 
   function onGridPaste(e: ReactClipboardEvent<HTMLDivElement>) {
@@ -1010,6 +984,12 @@ export function Sheet({
       fmtByOffset = JSON.parse(e.clipboardData.getData(CLIPBOARD_FORMAT_MIME) || '{}');
     } catch {
       fmtByOffset = {};
+    }
+    let origin: { c: number; r: number } | null = null;
+    try {
+      origin = JSON.parse(e.clipboardData.getData(CLIPBOARD_ORIGIN_MIME) || 'null');
+    } catch {
+      origin = null;
     }
     const grid = text
       .replace(/\r/g, '')
@@ -1026,6 +1006,8 @@ export function Sheet({
     // fall past the current row/column count
     if (endC >= colCount) setColCount(endC + 1);
     if (endR >= rowCount) setRowCount(endR + 1);
+    const dCol = origin ? anchor.c - origin.c : 0;
+    const dRow = origin ? anchor.r - origin.r : 0;
 
     snapshot();
     setCells((prev) => {
@@ -1033,7 +1015,9 @@ export function Sheet({
       for (let r = 0; r < grid.length; r++) {
         const row = grid[r]!;
         for (let c = 0; c < row.length; c++) {
-          next[cellAddr(anchor.c + c, anchor.r + r)] = row[c] ?? '';
+          const raw = row[c] ?? '';
+          next[cellAddr(anchor.c + c, anchor.r + r)] =
+            origin && raw.startsWith('=') ? shiftFormula(raw, dCol, dRow) : raw;
         }
       }
       onChange?.(next);
@@ -1491,6 +1475,44 @@ export function Sheet({
             <Eraser size={16} />
           </button>
         </div>
+
+        <div className="sft-sheet__tb-sep" />
+
+        {/* T11: function insert — opens the active cell's editor pre-filled
+          with "=FUNC()", caret parked between the parens */}
+        <div className="sft-sheet__tb-group">
+          <div className="sft-sheet__tb-menu-wrap">
+            <button
+              type="button"
+              className="sft-sheet__tb-btn sft-sheet__tb-btn--wide"
+              onMouseDown={keepFocus}
+              onClick={() => setOpenMenu((m) => (m === 'functions' ? null : 'functions'))}
+              title="함수 삽입"
+              aria-label="함수 삽입"
+            >
+              <Sigma size={16} /> <ChevronDown size={12} />
+            </button>
+            {openMenu === 'functions' && (
+              <div className="sft-sheet__tb-menu sft-sheet__tb-menu--functions" role="menu">
+                {SUPPORTED_FUNCTIONS.map((fn) => (
+                  <button
+                    key={fn.name}
+                    type="button"
+                    className="sft-sheet__tb-menu-item"
+                    onMouseDown={keepFocus}
+                    onClick={() => {
+                      insertFunction(fn.name);
+                      setOpenMenu(null);
+                    }}
+                  >
+                    <span className="sft-sheet__tb-menu-item-name">{fn.name}</span>
+                    <span className="sft-sheet__tb-menu-item-hint">{fn.hint}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div
@@ -1500,6 +1522,7 @@ export function Sheet({
         role="grid"
         onKeyDown={onGridKeyDown}
         onCopy={onGridCopy}
+        onCut={onGridCut}
         onPaste={onGridPaste}
       >
         <div className="sft-sheet__row sft-sheet__row--head">
@@ -1652,10 +1675,7 @@ export function Sheet({
                       ? `${fmt.borders.left.width}px ${fmt.borders.left.style} ${fmt.borders.left.color}`
                       : undefined,
                   }}
-                  onMouseDown={(e) => {
-                    // range-select drags would otherwise also trigger the
-                    // browser's native text selection across cell contents
-                    e.preventDefault();
+                  onPointerDown={(e) => {
                     const target = mergeCovering(c, r);
                     const tc = target?.c ?? c;
                     const tr = target?.r ?? r;
@@ -1669,9 +1689,19 @@ export function Sheet({
                       shift: e.shiftKey,
                       additive: !e.shiftKey && (e.metaKey || e.ctrlKey),
                     });
-                    setDragging(true);
+                    // range-drag is a mouse/pen affordance. On touch we skip it
+                    // (and skip preventDefault) so the grid scrolls natively and
+                    // the press reads as a plain tap-select. preventDefault on
+                    // mouse/pen keeps grid focus + suppresses text-selection.
+                    if (e.pointerType !== 'touch') {
+                      e.preventDefault();
+                      setDragging(true);
+                    }
                   }}
                   onMouseEnter={() => {
+                    // target tracking during a mouse/pen range or fill drag —
+                    // mouse compat events fire during those; touch never starts
+                    // a drag (gated above) so this stays a no-op on touch
                     if (fillDragging) setFillEnd({ c, r });
                     else if (dragging && !editing) setActiveFocus({ c, r });
                   }}
@@ -1681,6 +1711,7 @@ export function Sheet({
                     <input
                       // biome-ignore lint/a11y/noAutofocus: editing a freshly-opened cell
                       autoFocus
+                      ref={editInputRef}
                       className="sft-sheet__input"
                       style={contentStyle}
                       value={draft}
@@ -1800,7 +1831,11 @@ export function Sheet({
             {ro.isActive && !editing && (
               <span
                 className="sft-sheet__fill-handle"
-                onMouseDown={(e) => {
+                onPointerDown={(e) => {
+                  // fill drag tracks the target cell via onMouseEnter, which
+                  // fires for mouse/pen but not touch (touch implicitly captures
+                  // the pointer), so fill stays a mouse/pen affordance
+                  if (e.pointerType === 'touch') return;
                   e.preventDefault();
                   e.stopPropagation();
                   setFillEnd(null);

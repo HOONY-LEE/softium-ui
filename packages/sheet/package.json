@@ -1,0 +1,57 @@
+{
+  "name": "@softium/sheet",
+  "version": "0.0.0",
+  "description": "softium-ui Sheet: an A1-addressed spreadsheet with a no-eval formula engine (SUM/IF/VLOOKUP/INDEX-MATCH/…), copy/paste/cut, fill handle, and a formatting toolbar. Token-CSS, no Tailwind.",
+  "license": "MIT",
+  "author": "Sunghoon Lee",
+  "homepage": "https://github.com/HOONY-LEE/softium-ui/tree/main/packages/sheet#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HOONY-LEE/softium-ui.git",
+    "directory": "packages/sheet"
+  },
+  "bugs": {
+    "url": "https://github.com/HOONY-LEE/softium-ui/issues"
+  },
+  "keywords": ["spreadsheet", "sheet", "react", "formula", "erp", "softium-ui"],
+  "type": "module",
+  "sideEffects": ["*.css"],
+  "files": ["dist", "src/styles", "LICENSE"],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "scripts": {
+    "build": "tsup && node ../../scripts/add-use-client.mjs dist/index.js dist/index.cjs && node ../../scripts/bundle-css.mjs styles.css dist/styles.css",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@softium/styles": "workspace:*",
+    "lucide-react": "^0.460.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

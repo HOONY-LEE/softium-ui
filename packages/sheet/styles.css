@@ -1,0 +1,11 @@
+/**
+ * @softium/sheet — single-import stylesheet.
+ *
+ *   import '@softium/sheet/styles.css';
+ *
+ * Shared tokens/theme (@softium/styles) + the sheet component styles. The
+ * published dist build inlines these into one flat, @import-free file.
+ */
+
+@import "@softium/styles";
+@import "./src/styles/sheet.css";

@@ -32,8 +32,8 @@ export * from './components';
 // built-in cell renderers
 export * from './cells';
 
-// sheet (minimal spreadsheet)
-export * from './sheet';
+// NOTE: the spreadsheet (Sheet) moved to its own package, @softium/sheet, so
+// table consumers don't pull in the whole spreadsheet + its dnd-free grid.
 
 // export helpers (build the export matrix from a table instance + trigger a download)
 export { buildExportTable, downloadTableExport } from './export/download';
