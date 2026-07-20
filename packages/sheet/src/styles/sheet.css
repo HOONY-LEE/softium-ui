@@ -483,3 +483,151 @@
   box-shadow: inset -1px -1px 0 color-mix(in srgb, var(--sft-color-border) 45%, transparent);
   background: color-mix(in srgb, var(--sft-color-bg-subtle) 40%, transparent);
 }
+
+/* ── Workbook (multi-sheet tab bar) ──────────────────────── */
+.sft-sheet-wb {
+  display: inline-flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+/* only the active sheet is shown; the rest stay mounted (and keep their
+   values / undo history) but are taken out of layout entirely */
+.sft-sheet-wb__panel:not([data-active]) {
+  display: none;
+}
+
+.sft-sheet-wb__tabbar {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sft-space-1);
+  margin-top: var(--sft-space-2);
+  padding-top: var(--sft-space-2);
+  border-top: 1px solid var(--sft-color-border);
+  max-width: 100%;
+}
+
+.sft-sheet-wb__tabs {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sft-space-1);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.sft-sheet-wb__tabwrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+
+.sft-sheet-wb__tab {
+  height: 28px;
+  max-width: 180px;
+  padding: 0 var(--sft-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--sft-radius-sm);
+  background: transparent;
+  color: var(--sft-color-text-secondary);
+  font: inherit;
+  font-size: var(--sft-font-size-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background var(--sft-duration-fast) var(--sft-ease);
+}
+
+.sft-sheet-wb__tab:hover {
+  background: var(--sft-color-bg-hover);
+}
+
+.sft-sheet-wb__tab[data-active] {
+  background: color-mix(in srgb, var(--sft-color-accent) 12%, var(--sft-color-surface));
+  border-color: color-mix(in srgb, var(--sft-color-accent) 35%, transparent);
+  color: var(--sft-color-accent);
+  font-weight: var(--sft-font-weight-medium);
+  /* leave room for the delete button that only the active tab shows */
+  padding-right: var(--sft-space-6);
+}
+
+.sft-sheet-wb__tab:focus-visible,
+.sft-sheet-wb__add:focus-visible {
+  outline: 2px solid var(--sft-color-accent);
+  outline-offset: -1px;
+}
+
+.sft-sheet-wb__close {
+  position: absolute;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: var(--sft-radius-sm);
+  background: transparent;
+  color: var(--sft-color-accent);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sft-sheet-wb__close:hover {
+  background: color-mix(in srgb, var(--sft-color-danger) 15%, transparent);
+  color: var(--sft-color-danger);
+}
+
+.sft-sheet-wb__rename {
+  height: 28px;
+  width: 120px;
+  flex: none;
+  padding: 0 var(--sft-space-2);
+  border: 1px solid var(--sft-color-accent);
+  border-radius: var(--sft-radius-sm);
+  background: var(--sft-color-bg);
+  color: var(--sft-color-text);
+  font: inherit;
+  font-size: var(--sft-font-size-sm);
+  outline: none;
+}
+
+.sft-sheet-wb__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-sm);
+  background: var(--sft-color-surface);
+  color: var(--sft-color-text-secondary);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--sft-duration-fast) var(--sft-ease);
+}
+
+.sft-sheet-wb__add:hover {
+  background: var(--sft-color-bg-hover);
+  color: var(--sft-color-text);
+}
+
+/* coarse pointers need a bigger tap target than the 18px close glyph */
+@media (pointer: coarse) {
+  .sft-sheet-wb__tab,
+  .sft-sheet-wb__add,
+  .sft-sheet-wb__rename {
+    height: 34px;
+  }
+  .sft-sheet-wb__add {
+    width: 34px;
+  }
+  .sft-sheet-wb__close {
+    width: 24px;
+    height: 24px;
+  }
+}

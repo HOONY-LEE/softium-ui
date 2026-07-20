@@ -40,6 +40,37 @@ export function Demo() {
 The formula engine (`evaluateCell`, `cellAddr`, `colToIndex`, `indexToCol`) is
 also exported if you want to evaluate cells outside the component.
 
+### Multiple sheets
+
+`Workbook` puts a Google-Sheets-style tab bar under the grid — a tab per sheet,
+a `+` on the right to append one, and double-click (or <kbd>Enter</kbd>/<kbd>F2</kbd>)
+on a tab to rename it. The active tab shows an `×` to delete, disabled when only
+one sheet is left.
+
+```tsx
+import '@softium/sheet/styles.css';
+import { Workbook } from '@softium/sheet';
+
+export function Demo() {
+  return (
+    <Workbook
+      rows={20}
+      cols={7}
+      initialSheets={[
+        { name: 'Sales', initial: { A1: 'Qty', B1: 'Price', C1: '=A2*B2' } },
+        { name: 'Notes' },
+      ]}
+      onChange={(sheetId, cells) => console.log(sheetId, cells)}
+    />
+  );
+}
+```
+
+Every sheet keeps its own values, formats, column sizes and undo/redo history
+across tab switches. Inactive sheets stay mounted (hidden with CSS) rather than
+being torn down, which is what preserves that state — so a workbook is best kept
+to the handful of tabs it realistically needs.
+
 ## Theming
 
 Plain CSS custom properties (`--sft-*`). Dark mode via `prefers-color-scheme`

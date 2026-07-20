@@ -1,4 +1,4 @@
-import { Sheet } from '@softium/sheet';
+import { Workbook } from '@softium/sheet';
 import type { Locale } from '../i18n';
 
 const initial: Record<string, string> = {
@@ -60,14 +60,21 @@ export function SheetPage({ locale }: { locale: Locale }) {
           <h2 className="page-title">{t('시트', 'Sheet')}</h2>
           <p className="page-desc">
             {t(
-              '수식 지원 스프레드시트 — 셀 편집, 행/열 크기 조절, 열·행 추가.',
-              'A formula-aware spreadsheet — edit cells, resize, add rows/cols.',
+              '수식 지원 스프레드시트 — 셀 편집, 행/열 크기 조절, 하단 탭으로 시트 추가·이름변경.',
+              'A formula-aware spreadsheet — edit cells, resize, add/rename sheets from the bottom tabs.',
             )}
           </p>
         </div>
       </div>
 
-      <Sheet rows={20} cols={7} initial={initial} />
+      <Workbook
+        rows={20}
+        cols={7}
+        initialSheets={[
+          { name: t('매출', 'Sales'), initial },
+          { name: t('메모', 'Notes'), initial: { A1: t('메모', 'Notes'), A2: '=1+1' } },
+        ]}
+      />
     </div>
   );
 }
