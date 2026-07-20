@@ -104,3 +104,34 @@ export function formatDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+// ── time-grid drag math (week/day views) ────────────────────
+// Pure pixel↔minutes helpers shared by WeekView/DayView's drag-to-create and
+// drag-to-move/resize interactions, so both stay in exact agreement on how a
+// mouse position maps to a time-of-day.
+
+/** clientY inside a time-grid column's bounding rect → minutes-of-day (0–1440), unclamped-snap-ready */
+export function minutesFromY(clientY: number, rect: { top: number; height: number }): number {
+  const ratio = (clientY - rect.top) / rect.height;
+  return Math.max(0, Math.min(24 * 60, ratio * 24 * 60));
+}
+
+/** round to the nearest `step` minutes (default 15) */
+export function snapMinutes(minutes: number, step = 15): number {
+  return Math.round(minutes / step) * step;
+}
+
+/** minutes-of-day → "HH:MM", clamped to a valid time */
+export function minutesToHHMM(minutes: number): string {
+  const m = Math.max(0, Math.min(23 * 60 + 59, Math.round(minutes)));
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+/** "HH:MM" → minutes-of-day */
+export function hhmmToMinutes(hhmm: string | undefined): number {
+  if (!hhmm) return 0;
+  const [h, m] = hhmm.split(':').map((n) => Number(n));
+  return (h || 0) * 60 + (m || 0);
+}

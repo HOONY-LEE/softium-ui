@@ -31,6 +31,8 @@ export { RecurrenceSection } from './components/RecurrenceSection';
 export type { RecurrenceSectionProps, RecurrenceEndType } from './components/RecurrenceSection';
 export { DeleteOptionsDialog } from './components/DeleteOptionsDialog';
 export type { DeleteOptionsDialogProps, DeleteType } from './components/DeleteOptionsDialog';
+export { RecurrenceScopeDialog } from './components/RecurrenceScopeDialog';
+export type { RecurrenceScopeDialogProps } from './components/RecurrenceScopeDialog';
 export { CategoryItem } from './components/CategoryItem';
 export type { CategoryItemProps } from './components/CategoryItem';
 export { CategoryFilter } from './components/CategoryFilter';
@@ -45,6 +47,7 @@ export {
   getEventsForDate,
   getNextAvailableTime,
   eventCoversDate,
+  occurrencesInRange,
 } from './utils/events';
 export * from './utils/date';
 
@@ -56,5 +59,6 @@ export type {
   Category,
   CalendarEvent,
   PreviewEvent,
+  Holiday,
 } from './types';
 export type { CalLocale } from './i18n';

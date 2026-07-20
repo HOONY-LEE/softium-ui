@@ -1,14 +1,21 @@
-import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
-import { type ReactNode, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, Redo2, Search, Undo2, X } from 'lucide-react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { CategoryFilter } from './components/CategoryFilter';
 import type { DeleteType } from './components/DeleteOptionsDialog';
 import { EventModal, type EventSaveData } from './components/EventModal';
+import { RecurrenceScopeDialog } from './components/RecurrenceScopeDialog';
 import { SegmentTabs } from './components/SegmentTabs';
 import { type CalendarController, useCalendar } from './hooks/useCalendar';
 import { pick } from './i18n';
-import type { CalendarEvent, Category, PreviewEvent, ViewType } from './types';
-import { getNextPeriodDate, getPreviousPeriodDate, getWeekDays, monthNames } from './utils/date';
-import { getNextAvailableTime } from './utils/events';
+import type { CalendarEvent, Category, Holiday, PreviewEvent, ViewType } from './types';
+import {
+  getNextPeriodDate,
+  getPreviousPeriodDate,
+  getWeekDays,
+  minutesToHHMM,
+  monthNames,
+} from './utils/date';
+import { getNextAvailableTime, occurrencesInRange } from './utils/events';
 import { DayView } from './views/DayView';
 import { MonthView } from './views/MonthView';
 import { WeekView } from './views/WeekView';
@@ -23,10 +30,25 @@ export interface CalendarProps {
   initialCategories?: Category[];
   initialDate?: Date;
   initialView?: ViewType;
+  /** holidays/observances shown as a label in the month view's date header */
+  holidays?: Holiday[];
   className?: string;
 }
 
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+/** a drag-move on a recurring event/instance, awaiting the user's "this /
+ * following / all" scope choice before it's actually applied */
+interface PendingMove {
+  master: CalendarEvent;
+  /** the dragged occurrence's original date (its identity within the series) */
+  instanceDate: Date;
+  /** target date (day-granular) the event was dropped on */
+  newDate: Date;
+  /** set only when the drag also changed the time (week/day view) */
+  newStartTime?: string;
+  newEndTime?: string;
+}
 
 /**
  * Calendar — the full calendar UI: a toolbar (title, prev/next/today, search,
@@ -42,6 +64,7 @@ export function Calendar({
   initialCategories,
   initialDate,
   initialView = 'month',
+  holidays = [],
   className,
 }: CalendarProps): ReactNode {
   const internal = useCalendar({ initialEvents, initialCategories });
@@ -52,6 +75,10 @@ export function Calendar({
     updateEvent,
     deleteEvent,
     setEvents,
+    canUndo,
+    canRedo,
+    undo,
+    redo,
     categories,
     selectedCategoryIds,
     toggleCategory,
@@ -75,6 +102,8 @@ export function Calendar({
   const [defaultEnd, setDefaultEnd] = useState('10:00');
   const instanceDateRef = useRef<Date | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
+  const [moveScope, setMoveScope] = useState<DeleteType>('this');
 
   const filteredEvents = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -113,6 +142,100 @@ export function Calendar({
     return pick(language, `${y}년 ${mon(currentDate)}`, `${mon(currentDate)} ${y}`);
   }, [currentDate, viewType, language]);
 
+  // ⌘Z / ⌘⇧Z (or Ctrl) undo/redo, plus single-key shortcuts (t/m/w/d/y) —
+  // all disabled while typing in the modal/search box or with the event
+  // modal open, so they don't fight native text-field editing
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      const typing = !!target && /^(input|textarea)$/i.test(target.tagName);
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        if (typing) return;
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+
+      if (typing || e.metaKey || e.ctrlKey || e.altKey || modalOpen) return;
+      switch (e.key.toLowerCase()) {
+        case 't':
+          goToToday();
+          break;
+        case 'm':
+          setViewType('month');
+          break;
+        case 'w':
+          setViewType('week');
+          break;
+        case 'd':
+          setViewType('day');
+          break;
+        case 'y':
+          setViewType('year');
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [undo, redo, modalOpen, goToToday, setViewType]);
+
+  /** drag-to-move an event chip/bar onto a different day (month view); for a
+   * recurring event/instance this defers to the scope dialog instead of
+   * committing straight away */
+  const handleEventMove = (event: CalendarEvent, newDate: Date) => {
+    const deltaDays = Math.round(
+      (startOfDay(newDate).getTime() - startOfDay(event.date).getTime()) / 86_400_000,
+    );
+    if (deltaDays === 0) return;
+    const shift = (d: Date) =>
+      new Date(
+        d.getFullYear(),
+        d.getMonth(),
+        d.getDate() + deltaDays,
+        d.getHours(),
+        d.getMinutes(),
+      );
+
+    if (event.recurrence || event.isRecurringInstance) {
+      const master = event.isRecurringInstance
+        ? (events.find((e) => e.id === event.recurringEventId) ?? event)
+        : event;
+      setMoveScope('this');
+      setPendingMove({ master, instanceDate: event.date, newDate: shift(event.date) });
+      return;
+    }
+
+    updateEvent(event.id, {
+      date: shift(event.date),
+      endDate: event.endDate ? shift(event.endDate) : undefined,
+    });
+  };
+
+  /** drag a period bar's start/end edge (month view) onto another day to resize it */
+  const handleEventResize = (event: CalendarEvent, edge: 'start' | 'end', newDate: Date) => {
+    const onDay = (base: Date, day: Date) =>
+      new Date(
+        day.getFullYear(),
+        day.getMonth(),
+        day.getDate(),
+        base.getHours(),
+        base.getMinutes(),
+      );
+    if (edge === 'start') {
+      const end = event.endDate ?? event.date;
+      if (startOfDay(newDate) > startOfDay(end)) return; // can't push start past the end
+      updateEvent(event.id, { date: onDay(event.date, newDate) });
+    } else {
+      if (startOfDay(newDate) < startOfDay(event.date)) return; // can't pull end before the start
+      updateEvent(event.id, { endDate: onDay(event.endDate ?? event.date, newDate) });
+    }
+  };
+
   const openCreate = (date: Date, endDate: Date | null, hour?: number) => {
     setSelectedEvent(null);
     instanceDateRef.current = null;
@@ -143,6 +266,55 @@ export function Calendar({
 
   const handleAddEventClick = (date: Date, hour?: number) => openCreate(date, null, hour);
   const handleRangeSelect = (start: Date, end: Date) => openCreate(start, end);
+
+  /** drag an empty week/day timegrid area (week/day views) into a timed create */
+  const handleTimeRangeSelect = (date: Date, startMin: number, endMin: number) => {
+    setSelectedEvent(null);
+    instanceDateRef.current = null;
+    setSelectedDate(date);
+    setSelectedEndDate(null);
+    setDefaultStart(minutesToHHMM(startMin));
+    setDefaultEnd(minutesToHHMM(endMin));
+    setModalOpen(true);
+  };
+
+  /** drag/resize a timed event in week/day view onto a new start/end time;
+   * `newDate` is set only when a week-view drag also moved the event to a
+   * different day column. Recurring events/instances defer to the scope
+   * dialog instead of committing straight away (resize is blocked for them
+   * upstream in WeekView/DayView, so this only ever sees a move here). */
+  const handleEventTimeChange = (
+    event: CalendarEvent,
+    startMin: number,
+    endMin: number,
+    newDate?: Date,
+  ) => {
+    if (event.recurrence || event.isRecurringInstance) {
+      const master = event.isRecurringInstance
+        ? (events.find((e) => e.id === event.recurringEventId) ?? event)
+        : event;
+      const resolvedDate = newDate
+        ? new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate())
+        : startOfDay(event.date);
+      setMoveScope('this');
+      setPendingMove({
+        master,
+        instanceDate: event.date,
+        newDate: resolvedDate,
+        newStartTime: minutesToHHMM(startMin),
+        newEndTime: minutesToHHMM(endMin),
+      });
+      return;
+    }
+
+    const patch: Partial<CalendarEvent> = {
+      startTime: minutesToHHMM(startMin),
+      endTime: minutesToHHMM(endMin),
+    };
+    if (newDate)
+      patch.date = new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+    updateEvent(event.id, patch);
+  };
 
   const handleSave = (data: EventSaveData) => {
     const base: Omit<CalendarEvent, 'id'> = {
@@ -184,6 +356,76 @@ export function Calendar({
     setPreviewEvent(null);
   };
 
+  /** apply a pending recurring-event move once the user has picked a scope
+   * ('this' occurrence only / 'this and following' / 'all') */
+  const handleRecurrenceScopeConfirm = () => {
+    if (!pendingMove) return;
+    const { master, instanceDate, newDate, newStartTime, newEndTime } = pendingMove;
+
+    if (moveScope === 'all' || !master.recurrence) {
+      const deltaDays = Math.round(
+        (startOfDay(newDate).getTime() - startOfDay(instanceDate).getTime()) / 86_400_000,
+      );
+      const shift = (d: Date) =>
+        new Date(
+          d.getFullYear(),
+          d.getMonth(),
+          d.getDate() + deltaDays,
+          d.getHours(),
+          d.getMinutes(),
+        );
+      updateEvent(master.id, {
+        date: shift(master.date),
+        endDate: master.endDate ? shift(master.endDate) : undefined,
+        startTime: newStartTime ?? master.startTime,
+        endTime: newEndTime ?? master.endTime,
+      });
+    } else if (moveScope === 'this') {
+      // a single setEvents call so the exclusion + the new standalone event
+      // land as one undo step, matching handleDelete's granularity
+      setEvents((prev) => [
+        ...prev.map((e) =>
+          e.id === master.id ? { ...e, exdate: [...(e.exdate ?? []), instanceDate] } : e,
+        ),
+        {
+          id: `${master.id}-moved-${instanceDate.getTime()}`,
+          title: master.title,
+          date: newDate,
+          startTime: newStartTime ?? master.startTime,
+          endTime: newEndTime ?? master.endTime,
+          description: master.description,
+          categoryId: master.categoryId,
+        },
+      ]);
+    } else if (moveScope === 'following' && master.recurrence) {
+      const recurrence = master.recurrence;
+      const until = startOfDay(instanceDate);
+      until.setDate(until.getDate() - 1);
+      const elapsed = occurrencesInRange(master.date, recurrence, master.date, until).length;
+      const remainingCount =
+        recurrence.count != null ? Math.max(1, recurrence.count - elapsed) : undefined;
+      setEvents((prev) => [
+        ...prev.map((e) =>
+          e.id === master.id && e.recurrence ? { ...e, recurrence: { ...e.recurrence, until } } : e,
+        ),
+        {
+          id: `${master.id}-split-${instanceDate.getTime()}`,
+          title: master.title,
+          date: newDate,
+          startTime: newStartTime ?? master.startTime,
+          endTime: newEndTime ?? master.endTime,
+          description: master.description,
+          categoryId: master.categoryId,
+          recurrence: { ...recurrence, count: remainingCount },
+        },
+      ]);
+    }
+
+    setPendingMove(null);
+  };
+
+  const handleRecurrenceScopeCancel = () => setPendingMove(null);
+
   const viewOptions: { value: ViewType; label: string }[] = [
     { value: 'day', label: pick(language, '일간', 'Day') },
     { value: 'week', label: pick(language, '주간', 'Week') },
@@ -221,6 +463,28 @@ export function Calendar({
           >
             {pick(language, '오늘', 'Today')}
           </button>
+          <div className="sft-cal__nav">
+            <button
+              type="button"
+              className="sft-cal__navbtn"
+              aria-label={pick(language, '실행 취소', 'Undo')}
+              title={pick(language, '실행 취소 (⌘Z)', 'Undo (⌘Z)')}
+              disabled={!canUndo}
+              onClick={undo}
+            >
+              <Undo2 size={16} />
+            </button>
+            <button
+              type="button"
+              className="sft-cal__navbtn"
+              aria-label={pick(language, '다시 실행', 'Redo')}
+              title={pick(language, '다시 실행 (⌘⇧Z)', 'Redo (⌘⇧Z)')}
+              disabled={!canRedo}
+              onClick={redo}
+            >
+              <Redo2 size={16} />
+            </button>
+          </div>
           <div className="sft-cal__search">
             {showSearch ? (
               <div className="sft-cal__searchbox">
@@ -289,6 +553,7 @@ export function Calendar({
             selectedCategoryIds={selectedCategoryIds}
             categories={categories}
             language={language}
+            holidays={holidays}
             selectedEvent={selectedEvent}
             previewEvent={modalOpen ? previewEvent : null}
             expandedRows={expandedRows}
@@ -296,6 +561,8 @@ export function Calendar({
             onEventClick={handleEventClick}
             onAddEventClick={handleAddEventClick}
             onRangeSelect={handleRangeSelect}
+            onEventMove={handleEventMove}
+            onEventResize={handleEventResize}
           />
         )}
         {viewType === 'week' && (
@@ -309,6 +576,8 @@ export function Calendar({
             previewEvent={modalOpen ? previewEvent : null}
             onEventClick={handleEventClick}
             onAddEventClick={handleAddEventClick}
+            onTimeRangeSelect={handleTimeRangeSelect}
+            onEventTimeChange={handleEventTimeChange}
           />
         )}
         {viewType === 'day' && (
@@ -322,6 +591,8 @@ export function Calendar({
             previewEvent={modalOpen ? previewEvent : null}
             onEventClick={handleEventClick}
             onAddEventClick={handleAddEventClick}
+            onTimeRangeSelect={handleTimeRangeSelect}
+            onEventTimeChange={handleEventTimeChange}
           />
         )}
         {viewType === 'year' && (
@@ -363,6 +634,16 @@ export function Calendar({
         onDeleteCategory={deleteCategory}
         onReorderCategories={reorderCategories}
       />
+
+      {pendingMove && (
+        <RecurrenceScopeDialog
+          language={language}
+          selectedScope={moveScope}
+          setSelectedScope={setMoveScope}
+          onCancel={handleRecurrenceScopeCancel}
+          onConfirm={handleRecurrenceScopeConfirm}
+        />
+      )}
     </div>
   );
 }

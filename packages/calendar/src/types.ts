@@ -29,6 +29,12 @@ export interface Category {
   color: string;
 }
 
+/** a single day's holiday/observance label, shown in the month view's date header */
+export interface Holiday {
+  date: Date;
+  name: string;
+}
+
 export interface CalendarEvent {
   id: string;
   title: string;

@@ -1,6 +1,7 @@
+import { useRef } from 'react';
 import { pick } from '../i18n';
 import type { CalendarEvent, Category } from '../types';
-import { isToday } from '../utils/date';
+import { formatDate, isToday } from '../utils/date';
 import { expandRecurringEvents } from '../utils/events';
 
 export interface YearViewProps {
@@ -30,6 +31,26 @@ export function YearView({
 }: YearViewProps) {
   const year = currentDate.getFullYear();
   const months = Array.from({ length: 12 }, (_, i) => i);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // arrow-key day-to-day navigation across month boundaries — DOM lookup by
+  // a data-daykey instead of tracked state, since a flat index across 12
+  // variable-length mini-grids is awkward to maintain
+  const handleDayKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, date: Date) => {
+    let delta = 0;
+    if (e.key === 'ArrowRight') delta = 1;
+    else if (e.key === 'ArrowLeft') delta = -1;
+    else if (e.key === 'ArrowDown') delta = 7;
+    else if (e.key === 'ArrowUp') delta = -7;
+    else return;
+    e.preventDefault();
+    const next = new Date(date.getFullYear(), date.getMonth(), date.getDate() + delta);
+    if (next.getFullYear() !== year) return; // stays within this year view
+    const target = containerRef.current?.querySelector<HTMLButtonElement>(
+      `[data-daykey="${formatDate(next)}"]`,
+    );
+    target?.focus();
+  };
 
   const expanded = expandRecurringEvents(
     events,
@@ -111,7 +132,10 @@ export function YearView({
                 className="sft-cal-mini__day"
                 data-today={today || undefined}
                 data-empty={!day || undefined}
+                data-daykey={date ? formatDate(date) : undefined}
                 disabled={!day}
+                aria-label={date ? `${year}-${monthIndex + 1}-${day}` : undefined}
+                onKeyDown={(e) => date && handleDayKeyDown(e, date)}
                 onClick={() => {
                   if (day) {
                     onDateClick(new Date(year, monthIndex, 1));
@@ -144,7 +168,7 @@ export function YearView({
   };
 
   return (
-    <div className="sft-cal-year">
+    <div className="sft-cal-year" ref={containerRef}>
       <div className="sft-cal-year__grid">
         {months.map((m) => (
           <div key={m} className="sft-cal-year__cell">

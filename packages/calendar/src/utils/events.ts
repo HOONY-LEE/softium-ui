@@ -11,9 +11,12 @@ const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDat
 /**
  * All occurrence *dates* of a recurring series that fall in [from, to]
  * (inclusive), honouring interval / byweekday / until / count. No rrule dep —
- * a compact engine covering DAILY / WEEKLY / MONTHLY / YEARLY.
+ * a compact engine covering DAILY / WEEKLY / MONTHLY / YEARLY. Exported for
+ * "this and following" recurrence splits (see Calendar.tsx's
+ * handleRecurrenceScopeConfirm), which needs to know how many occurrences
+ * land before a given split date to carry over a correct remaining `count`.
  */
-function occurrencesInRange(base: Date, rec: Recurrence, from: Date, to: Date): Date[] {
+export function occurrencesInRange(base: Date, rec: Recurrence, from: Date, to: Date): Date[] {
   const interval = Math.max(1, rec.interval || 1);
   const out: Date[] = [];
   const until = rec.until ? startOfDay(rec.until) : null;

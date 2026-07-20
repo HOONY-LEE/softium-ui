@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { CalendarEvent, Category } from '../types';
 
 let idSeq = 0;
@@ -15,6 +15,12 @@ export interface CalendarController {
   addEvent: (data: Omit<CalendarEvent, 'id'>) => CalendarEvent;
   updateEvent: (id: string, data: Partial<CalendarEvent>) => void;
   deleteEvent: (id: string) => void;
+
+  /** undo/redo over event add/update/delete/move (see setEvents) */
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
 
   categories: Category[];
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
@@ -40,7 +46,7 @@ const DEFAULT_CATEGORIES: Category[] = [
  * host would otherwise wire to its own backend.
  */
 export function useCalendar(options: UseCalendarOptions = {}): CalendarController {
-  const [events, setEvents] = useState<CalendarEvent[]>(options.initialEvents ?? []);
+  const [events, setEventsRaw] = useState<CalendarEvent[]>(options.initialEvents ?? []);
   const [categories, setCategories] = useState<Category[]>(
     options.initialCategories ?? DEFAULT_CATEGORIES,
   );
@@ -48,19 +54,62 @@ export function useCalendar(options: UseCalendarOptions = {}): CalendarControlle
     (options.initialCategories ?? DEFAULT_CATEGORIES).map((c) => c.id),
   );
 
-  const addEvent = useCallback((data: Omit<CalendarEvent, 'id'>) => {
-    const event: CalendarEvent = { ...data, id: uid('evt') };
-    setEvents((prev) => [...prev, event]);
-    return event;
+  // undo/redo: every events mutation goes through setEvents below, which
+  // snapshots the pre-mutation array onto `past` and clears `future` — the
+  // same pattern as the Sheet component's history stacks
+  const [past, setPast] = useState<CalendarEvent[][]>([]);
+  const [future, setFuture] = useState<CalendarEvent[][]>([]);
+  const eventsRef = useRef(events);
+  eventsRef.current = events;
+
+  const setEvents = useCallback((updater: React.SetStateAction<CalendarEvent[]>) => {
+    setPast((p) => [...p, eventsRef.current]);
+    setFuture([]);
+    setEventsRaw(updater);
   }, []);
 
-  const updateEvent = useCallback((id: string, data: Partial<CalendarEvent>) => {
-    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...data } : e)));
+  const undo = useCallback(() => {
+    setPast((p) => {
+      if (!p.length) return p;
+      const prev = p[p.length - 1] as CalendarEvent[];
+      setFuture((f) => [...f, eventsRef.current]);
+      setEventsRaw(prev);
+      return p.slice(0, -1);
+    });
   }, []);
 
-  const deleteEvent = useCallback((id: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
+  const redo = useCallback(() => {
+    setFuture((f) => {
+      if (!f.length) return f;
+      const next = f[f.length - 1] as CalendarEvent[];
+      setPast((p) => [...p, eventsRef.current]);
+      setEventsRaw(next);
+      return f.slice(0, -1);
+    });
   }, []);
+
+  const addEvent = useCallback(
+    (data: Omit<CalendarEvent, 'id'>) => {
+      const event: CalendarEvent = { ...data, id: uid('evt') };
+      setEvents((prev) => [...prev, event]);
+      return event;
+    },
+    [setEvents],
+  );
+
+  const updateEvent = useCallback(
+    (id: string, data: Partial<CalendarEvent>) => {
+      setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...data } : e)));
+    },
+    [setEvents],
+  );
+
+  const deleteEvent = useCallback(
+    (id: string) => {
+      setEvents((prev) => prev.filter((e) => e.id !== id));
+    },
+    [setEvents],
+  );
 
   const addCategory = useCallback((data: { name: string; color: string }) => {
     const id = uid('cat');
@@ -73,11 +122,14 @@ export function useCalendar(options: UseCalendarOptions = {}): CalendarControlle
     setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)));
   }, []);
 
-  const deleteCategory = useCallback((id: string) => {
-    setCategories((prev) => (prev.length <= 1 ? prev : prev.filter((c) => c.id !== id)));
-    setSelectedCategoryIds((prev) => prev.filter((c) => c !== id));
-    setEvents((prev) => prev.filter((e) => e.categoryId !== id));
-  }, []);
+  const deleteCategory = useCallback(
+    (id: string) => {
+      setCategories((prev) => (prev.length <= 1 ? prev : prev.filter((c) => c.id !== id)));
+      setSelectedCategoryIds((prev) => prev.filter((c) => c !== id));
+      setEvents((prev) => prev.filter((e) => e.categoryId !== id));
+    },
+    [setEvents],
+  );
 
   const reorderCategories = useCallback((from: number, to: number) => {
     setCategories((prev) => {
@@ -103,6 +155,10 @@ export function useCalendar(options: UseCalendarOptions = {}): CalendarControlle
     addEvent,
     updateEvent,
     deleteEvent,
+    canUndo: past.length > 0,
+    canRedo: future.length > 0,
+    undo,
+    redo,
     categories,
     setCategories,
     addCategory,
