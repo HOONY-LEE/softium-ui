@@ -1,6 +1,6 @@
 {
   "name": "@softium/styles",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Shared design tokens (CSS custom properties) + base theme for all softium-ui packages. Dark mode included.",
   "license": "MIT",
   "author": "Sunghoon Lee",
@@ -13,9 +13,22 @@
   "bugs": {
     "url": "https://github.com/HOONY-LEE/softium-ui/issues"
   },
-  "keywords": ["css", "design-tokens", "theme", "dark-mode", "erp", "softium-ui"],
-  "sideEffects": ["*.css"],
-  "files": ["src", "index.css", "LICENSE"],
+  "keywords": [
+    "css",
+    "design-tokens",
+    "theme",
+    "dark-mode",
+    "erp",
+    "softium-ui"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "src",
+    "index.css",
+    "LICENSE"
+  ],
   "main": "index.css",
   "exports": {
     ".": "./index.css",

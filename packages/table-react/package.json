@@ -1,6 +1,6 @@
 {
   "name": "@softium/table-react",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "React bindings for softium-ui Table: useTable hook, styled components, i18n.",
   "license": "MIT",
   "author": "Sunghoon Lee",
@@ -13,10 +13,20 @@
   "bugs": {
     "url": "https://github.com/HOONY-LEE/softium-ui/issues"
   },
-  "keywords": ["table", "datagrid", "react", "spreadsheet", "erp", "softium-ui"],
+  "keywords": [
+    "table",
+    "datagrid",
+    "react",
+    "spreadsheet",
+    "erp",
+    "softium-ui"
+  ],
   "type": "module",
   "sideEffects": false,
-  "files": ["dist", "LICENSE"],
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
