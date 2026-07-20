@@ -1,6 +1,6 @@
 {
   "name": "softium-ui",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "All of softium-ui in one install: Table/DataGrid, Sheet (spreadsheet + formulas), Calendar, and the app-shell primitives — with a single stylesheet.",
   "license": "MIT",
   "author": "Sunghoon Lee",
@@ -13,10 +13,24 @@
   "bugs": {
     "url": "https://github.com/HOONY-LEE/softium-ui/issues"
   },
-  "keywords": ["react", "ui", "table", "datagrid", "spreadsheet", "calendar", "erp", "softium-ui"],
+  "keywords": [
+    "react",
+    "ui",
+    "table",
+    "datagrid",
+    "spreadsheet",
+    "calendar",
+    "erp",
+    "softium-ui"
+  ],
   "type": "module",
-  "sideEffects": ["*.css"],
-  "files": ["dist", "LICENSE"],
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
