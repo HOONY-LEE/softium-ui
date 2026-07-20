@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -30,14 +30,18 @@ jobs:
       - name: Lint (Biome)
         run: pnpm lint
 
+      # Build first: dist/ is gitignored, and cross-package typechecking
+      # resolves workspace deps through their built dist/index.d.ts
+      # (e.g. table-react -> @softium/table-core), so a fresh checkout
+      # cannot typecheck until the dependency packages are built.
+      - name: Build
+        run: pnpm build
+
       - name: Typecheck
         run: pnpm typecheck
 
       - name: Test
         run: pnpm test
-
-      - name: Build
-        run: pnpm build
 
       # the published CSS must be fully self-contained — a leaked bare
       # @import would break plain <link> / non-Vite consumers (REVIEW P1)
