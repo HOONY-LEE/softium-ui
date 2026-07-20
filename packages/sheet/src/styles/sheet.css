@@ -11,7 +11,13 @@
   display: flex;
   align-items: center;
   gap: var(--sft-space-1);
-  flex-wrap: wrap;
+  /* never wrap: whatever doesn't fit collapses into the "⋮" overflow button
+     (see SheetToolbar). overflow must stay VISIBLE — the group dropdowns
+     (number format, borders, Σ …) hang below the bar and would be clipped.
+     Width probing happens in an out-of-flow measure row instead. */
+  flex-wrap: nowrap;
+  position: relative;
+  min-width: 0;
   padding: var(--sft-space-1) var(--sft-space-2);
   margin-bottom: var(--sft-space-2);
   background: var(--sft-color-bg-subtle);
@@ -630,4 +636,61 @@
     width: 24px;
     height: 24px;
   }
+}
+
+/* ── toolbar overflow ("⋮" 더보기) ───────────────────────── */
+.sft-sheet__tb-slot {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-1);
+  flex: none;
+}
+
+/* pins the trigger to the right edge of the bar */
+.sft-sheet__tb-overflow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: none;
+  margin-left: auto;
+}
+
+.sft-sheet__tb-overflow-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sft-space-1);
+  max-width: min(420px, 90vw);
+  padding: var(--sft-space-2);
+  background: var(--sft-color-surface);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
+  box-shadow: var(--sft-shadow-overlay, var(--sft-shadow-md));
+  /* a group's own dropdown (number format, borders, Σ …) has to escape
+     this panel rather than be clipped inside it */
+  overflow: visible;
+}
+
+/* inside the panel the groups stack in a grid, so the row separators the bar
+   uses would only add noise */
+.sft-sheet__tb-overflow-panel .sft-sheet__tb-sep {
+  display: none;
+}
+
+/* out-of-flow width probe for the toolbar overflow calculation */
+.sft-sheet__tb-measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-1);
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  visibility: hidden;
+  pointer-events: none;
 }

@@ -36,6 +36,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { SheetToolbar, type ToolbarGroup } from './SheetToolbar';
 import {
   DEFAULT_BORDER,
   DEFAULT_COL_WIDTH,
@@ -1040,10 +1041,14 @@ export function Sheet({
   // current selection before its handler runs
   const keepFocus = (e: ReactMouseEvent) => e.preventDefault();
 
-  return (
-    <div className={className ? `sft-sheet-wrap ${className}` : 'sft-sheet-wrap'}>
-      <div className="sft-sheet__toolbar" role="toolbar" aria-label="시트 도구 모음">
-        <div className="sft-sheet__tb-group">
+  // Toolbar groups are declared here (not in SheetToolbar) so each one keeps
+  // closing over this component's state and handlers instead of threading
+  // ~30 props through. SheetToolbar only decides which ones fit.
+  const toolbarGroups: ToolbarGroup[] = [
+    {
+      id: 'history',
+      node: (
+        <>
           <button
             type="button"
             className="sft-sheet__tb-btn"
@@ -1066,11 +1071,13 @@ export function Sheet({
           >
             <Redo2 size={16} />
           </button>
-        </div>
-
-        <div className="sft-sheet__tb-sep" />
-
-        <div className="sft-sheet__tb-group">
+        </>
+      ),
+    },
+    {
+      id: 'text-style',
+      node: (
+        <>
           <button
             type="button"
             className="sft-sheet__tb-btn"
@@ -1115,11 +1122,13 @@ export function Sheet({
           >
             <Strikethrough size={16} />
           </button>
-        </div>
-
-        <div className="sft-sheet__tb-sep" />
-
-        <div className="sft-sheet__tb-group">
+        </>
+      ),
+    },
+    {
+      id: 'colors',
+      node: (
+        <>
           <label
             className="sft-sheet__tb-btn sft-sheet__tb-color"
             title="텍스트 색상"
@@ -1152,11 +1161,13 @@ export function Sheet({
               onChange={(e) => setFormatValue('bg', e.target.value)}
             />
           </label>
-        </div>
-
-        <div className="sft-sheet__tb-sep" />
-
-        <div className="sft-sheet__tb-group">
+        </>
+      ),
+    },
+    {
+      id: 'align',
+      node: (
+        <>
           <button
             type="button"
             className="sft-sheet__tb-btn"
@@ -1190,12 +1201,13 @@ export function Sheet({
           >
             <AlignRight size={16} />
           </button>
-        </div>
-
-        <div className="sft-sheet__tb-sep" />
-
-        {/* T3: vertical align + wrap */}
-        <div className="sft-sheet__tb-group">
+        </>
+      ),
+    },
+    {
+      id: 'valign',
+      node: (
+        <>
           <button
             type="button"
             className="sft-sheet__tb-btn"
@@ -1240,12 +1252,13 @@ export function Sheet({
           >
             <WrapText size={16} />
           </button>
-        </div>
-
-        <div className="sft-sheet__tb-sep" />
-
-        {/* T1: number formats */}
-        <div className="sft-sheet__tb-group">
+        </>
+      ),
+    },
+    {
+      id: 'numfmt',
+      node: (
+        <>
           <button
             type="button"
             className="sft-sheet__tb-btn"
@@ -1323,12 +1336,13 @@ export function Sheet({
               </div>
             )}
           </div>
-        </div>
-
-        <div className="sft-sheet__tb-sep" />
-
-        {/* T2: font family + size */}
-        <div className="sft-sheet__tb-group">
+        </>
+      ),
+    },
+    {
+      id: 'font',
+      node: (
+        <>
           <select
             className="sft-sheet__tb-select"
             value={activeFormat.fontFamily ?? ''}
@@ -1357,12 +1371,13 @@ export function Sheet({
             title="글자 크기"
             aria-label="글자 크기"
           />
-        </div>
-
-        <div className="sft-sheet__tb-sep" />
-
-        {/* T4: borders */}
-        <div className="sft-sheet__tb-group">
+        </>
+      ),
+    },
+    {
+      id: 'borders',
+      node: (
+        <>
           <div className="sft-sheet__tb-menu-wrap">
             <button
               type="button"
@@ -1447,12 +1462,13 @@ export function Sheet({
               </div>
             )}
           </div>
-        </div>
-
-        <div className="sft-sheet__tb-sep" />
-
-        {/* T6: format painter + clear formatting */}
-        <div className="sft-sheet__tb-group">
+        </>
+      ),
+    },
+    {
+      id: 'paint',
+      node: (
+        <>
           <button
             type="button"
             className="sft-sheet__tb-btn"
@@ -1474,13 +1490,13 @@ export function Sheet({
           >
             <Eraser size={16} />
           </button>
-        </div>
-
-        <div className="sft-sheet__tb-sep" />
-
-        {/* T11: function insert — opens the active cell's editor pre-filled
-          with "=FUNC()", caret parked between the parens */}
-        <div className="sft-sheet__tb-group">
+        </>
+      ),
+    },
+    {
+      id: 'functions',
+      node: (
+        <>
           <div className="sft-sheet__tb-menu-wrap">
             <button
               type="button"
@@ -1512,8 +1528,14 @@ export function Sheet({
               </div>
             )}
           </div>
-        </div>
-      </div>
+        </>
+      ),
+    },
+  ];
+
+  return (
+    <div className={className ? `sft-sheet-wrap ${className}` : 'sft-sheet-wrap'}>
+      <SheetToolbar groups={toolbarGroups} ariaLabel="시트 도구 모음" keepFocus={keepFocus} />
 
       <div
         ref={gridRef}
