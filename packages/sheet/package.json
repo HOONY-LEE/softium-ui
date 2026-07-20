@@ -1,6 +1,6 @@
 {
   "name": "@softium/sheet",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "softium-ui Sheet: an A1-addressed spreadsheet with a no-eval formula engine (SUM/IF/VLOOKUP/INDEX-MATCH/…), copy/paste/cut, fill handle, and a formatting toolbar. Token-CSS, no Tailwind.",
   "license": "MIT",
   "author": "Sunghoon Lee",
