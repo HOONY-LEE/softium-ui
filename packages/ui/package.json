@@ -3,9 +3,20 @@
   "version": "0.0.0",
   "description": "General softium-ui React primitives and app-shell layout: Button, AppShell, Sidebar, Header, ThemeToggle.",
   "license": "MIT",
+  "author": "Sunghoon Lee",
+  "homepage": "https://github.com/HOONY-LEE/softium-ui/tree/main/packages/ui#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HOONY-LEE/softium-ui.git",
+    "directory": "packages/ui"
+  },
+  "bugs": {
+    "url": "https://github.com/HOONY-LEE/softium-ui/issues"
+  },
+  "keywords": ["react", "ui", "components", "app-shell", "erp", "softium-ui"],
   "type": "module",
   "sideEffects": ["*.css"],
-  "files": ["dist", "styles.css", "src/styles"],
+  "files": ["dist", "src/styles", "LICENSE"],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,10 +26,10 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./styles.css": "./styles.css"
+    "./styles.css": "./dist/styles.css"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node ../../scripts/add-use-client.mjs dist/index.js dist/index.cjs && node ../../scripts/bundle-css.mjs styles.css dist/styles.css",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
@@ -39,5 +50,8 @@
     "tsup": "^8.3.5",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

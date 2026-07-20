@@ -16,10 +16,26 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "clean": "pnpm -r exec rm -rf dist node_modules/.cache"
+    "clean": "pnpm -r exec rm -rf dist node_modules/.cache",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HOONY-LEE/softium-ui.git"
+  },
+  "homepage": "https://github.com/HOONY-LEE/softium-ui#readme",
+  "bugs": {
+    "url": "https://github.com/HOONY-LEE/softium-ui/issues"
+  },
+  "author": "Sunghoon Lee",
+  "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@changesets/cli": "^2.27.11",
+    "postcss": "^8.4.49",
+    "postcss-import": "^16.1.0",
     "typescript": "^5.7.3"
   }
 }

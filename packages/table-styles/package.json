@@ -3,14 +3,32 @@
   "version": "0.0.0",
   "description": "Table component styles for softium-ui. Builds on @softium/styles tokens. Dark mode + responsive.",
   "license": "MIT",
+  "author": "Sunghoon Lee",
+  "homepage": "https://github.com/HOONY-LEE/softium-ui/tree/main/packages/table-styles#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HOONY-LEE/softium-ui.git",
+    "directory": "packages/table-styles"
+  },
+  "bugs": {
+    "url": "https://github.com/HOONY-LEE/softium-ui/issues"
+  },
+  "keywords": ["css", "table", "datagrid", "theme", "erp", "softium-ui"],
   "sideEffects": ["*.css"],
-  "files": ["src", "index.css"],
-  "main": "index.css",
+  "files": ["src", "dist", "index.css", "LICENSE"],
+  "main": "./dist/index.css",
   "exports": {
-    ".": "./index.css",
-    "./table.css": "./src/table.css"
+    ".": "./dist/index.css",
+    "./table.css": "./src/table.css",
+    "./source.css": "./index.css"
+  },
+  "scripts": {
+    "build": "node ../../scripts/bundle-css.mjs index.css dist/index.css"
   },
   "dependencies": {
     "@softium/styles": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

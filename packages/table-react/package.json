@@ -3,9 +3,20 @@
   "version": "0.0.0",
   "description": "React bindings for softium-ui Table: useTable hook, styled components, i18n.",
   "license": "MIT",
+  "author": "Sunghoon Lee",
+  "homepage": "https://github.com/HOONY-LEE/softium-ui/tree/main/packages/table-react#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HOONY-LEE/softium-ui.git",
+    "directory": "packages/table-react"
+  },
+  "bugs": {
+    "url": "https://github.com/HOONY-LEE/softium-ui/issues"
+  },
+  "keywords": ["table", "datagrid", "react", "spreadsheet", "erp", "softium-ui"],
   "type": "module",
   "sideEffects": false,
-  "files": ["dist"],
+  "files": ["dist", "LICENSE"],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,7 +28,7 @@
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node ../../scripts/add-use-client.mjs dist/index.js dist/index.cjs",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
@@ -41,5 +52,8 @@
     "tsup": "^8.3.5",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
