@@ -31,4 +31,6 @@ if (/@import\s/.test(result.css)) {
 
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, result.css);
-console.log(`✓ bundled ${entry} → ${out} (${(result.css.length / 1024).toFixed(1)} KB, no @import)`);
+console.log(
+  `✓ bundled ${entry} → ${out} (${(result.css.length / 1024).toFixed(1)} KB, no @import)`,
+);

@@ -212,7 +212,9 @@ function tokenize(src: string): Token[] {
 
 /** a parsed function argument: either a flat range of addresses (with its
  * rectangular shape, for lookup functions) or a lazily-evaluated scalar */
-type ArgNode = { kind: 'range'; addrs: string[]; nrows: number; ncols: number } | { kind: 'val'; get: () => Val };
+type ArgNode =
+  | { kind: 'range'; addrs: string[]; nrows: number; ncols: number }
+  | { kind: 'val'; get: () => Val };
 
 function rangeAddrs(a: string, b: string): { addrs: string[]; nrows: number; ncols: number } {
   const ma = CELL_RE.exec(a);
@@ -238,7 +240,11 @@ function evalFormula(src: string, getRaw: RawGetter, seen: Set<string>): Val {
   function comparison(): () => Val {
     const l = concat();
     const t = peek();
-    if (t && t.t === 'op' && (t.v === '=' || t.v === '<>' || t.v === '<' || t.v === '>' || t.v === '<=' || t.v === '>=')) {
+    if (
+      t &&
+      t.t === 'op' &&
+      (t.v === '=' || t.v === '<>' || t.v === '<' || t.v === '>' || t.v === '<=' || t.v === '>=')
+    ) {
       eat();
       const r = concat();
       const op = t.v;
@@ -359,7 +365,8 @@ function evalFormula(src: string, getRaw: RawGetter, seen: Set<string>): Val {
   function nums(args: ArgNode[]): number[] {
     const out: number[] = [];
     for (const a of args) {
-      if (a.kind === 'range') for (const addr of a.addrs) out.push(toNum(cellValue(addr, getRaw, seen)));
+      if (a.kind === 'range')
+        for (const addr of a.addrs) out.push(toNum(cellValue(addr, getRaw, seen)));
       else out.push(toNum(a.get()));
     }
     return out;
@@ -431,10 +438,13 @@ function evalFormula(src: string, getRaw: RawGetter, seen: Set<string>): Val {
         return () => {
           const cond = args[0];
           if (!cond) return fail('#VALUE!');
-          const condVal = cond.kind === 'range' ? cellValue(cond.addrs[0] ?? '', getRaw, seen) : cond.get();
+          const condVal =
+            cond.kind === 'range' ? cellValue(cond.addrs[0] ?? '', getRaw, seen) : cond.get();
           const branch = isTruthy(condVal) ? args[1] : args[2];
           if (!branch) return '';
-          return branch.kind === 'range' ? cellValue(branch.addrs[0] ?? '', getRaw, seen) : branch.get();
+          return branch.kind === 'range'
+            ? cellValue(branch.addrs[0] ?? '', getRaw, seen)
+            : branch.get();
         };
       case 'IFERROR':
         return () => {
@@ -517,8 +527,12 @@ function evalFormula(src: string, getRaw: RawGetter, seen: Set<string>): Val {
         const criteria = args[1];
         return () => {
           if (!range || range.kind !== 'range' || !criteria) return fail('#VALUE!');
-          const c = criteria.kind === 'range' ? cellValue(criteria.addrs[0] ?? '', getRaw, seen) : criteria.get();
-          return range.addrs.filter((addr) => matchesCriteria(cellValue(addr, getRaw, seen), c)).length;
+          const c =
+            criteria.kind === 'range'
+              ? cellValue(criteria.addrs[0] ?? '', getRaw, seen)
+              : criteria.get();
+          return range.addrs.filter((addr) => matchesCriteria(cellValue(addr, getRaw, seen), c))
+            .length;
         };
       }
       case 'SUMIF': {
@@ -529,7 +543,10 @@ function evalFormula(src: string, getRaw: RawGetter, seen: Set<string>): Val {
           if (!range || range.kind !== 'range' || !criteria) return fail('#VALUE!');
           const rangeNode = range;
           const sumNode = sumRange && sumRange.kind === 'range' ? sumRange : rangeNode;
-          const c = criteria.kind === 'range' ? cellValue(criteria.addrs[0] ?? '', getRaw, seen) : criteria.get();
+          const c =
+            criteria.kind === 'range'
+              ? cellValue(criteria.addrs[0] ?? '', getRaw, seen)
+              : criteria.get();
           let total = 0;
           rangeNode.addrs.forEach((addr, idx) => {
             if (matchesCriteria(cellValue(addr, getRaw, seen), c)) {
@@ -600,7 +617,11 @@ function evalFormula(src: string, getRaw: RawGetter, seen: Set<string>): Val {
           const { addrs, nrows, ncols } = range;
           const k = key.kind === 'range' ? cellValue(key.addrs[0] ?? '', getRaw, seen) : key.get();
           const idx = idxArg.kind === 'val' ? toNum(idxArg.get()) : 1;
-          const approx = approxArg ? (approxArg.kind === 'val' ? isTruthy(approxArg.get()) : true) : true;
+          const approx = approxArg
+            ? approxArg.kind === 'val'
+              ? isTruthy(approxArg.get())
+              : true
+            : true;
           const vertical = name === 'VLOOKUP';
           const lookupCount = vertical ? nrows : ncols;
           const otherCount = vertical ? ncols : nrows;

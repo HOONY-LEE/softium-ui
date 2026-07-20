@@ -37,16 +37,6 @@ import {
   useState,
 } from 'react';
 import {
-  cellAddr,
-  decimalsOf,
-  evaluateCell,
-  formatNumber,
-  indexToCol,
-  shiftFormula,
-  SUPPORTED_FUNCTIONS,
-  withDecimals,
-} from './engine';
-import {
   DEFAULT_BORDER,
   DEFAULT_COL_WIDTH,
   DEFAULT_ROW_HEIGHT,
@@ -57,6 +47,16 @@ import {
   NUM_FORMATS,
   ROW_HEAD_WIDTH,
 } from './constants';
+import {
+  SUPPORTED_FUNCTIONS,
+  cellAddr,
+  decimalsOf,
+  evaluateCell,
+  formatNumber,
+  indexToCol,
+  shiftFormula,
+  withDecimals,
+} from './engine';
 import { makeSeriesExtender } from './series';
 import {
   type BoolFormatKey,
@@ -69,8 +69,8 @@ import {
   type CellRect,
   type CellValign,
   type CellWrap,
-  rectOf,
   type SheetSnapshot,
+  rectOf,
 } from './types';
 
 export interface SheetProps {
@@ -172,6 +172,7 @@ export function Sheet({
 
   // cumulative pixel offsets, used to place the floating selection overlay
   // without measuring the DOM
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the colWidths state, not the colWidth() reader that is re-created every render — depending on the function would defeat the memo
   const colOffsets = useMemo(() => {
     const offsets: number[] = [];
     let x = ROW_HEAD_WIDTH;
@@ -181,9 +182,9 @@ export function Sheet({
     }
     offsets.push(x);
     return offsets;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colCount, colWidths]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: same as colOffsets — keyed on the rowHeights state, not the per-render rowHeight() reader
   const rowOffsets = useMemo(() => {
     const offsets: number[] = [];
     let y = HEADER_HEIGHT;
@@ -193,7 +194,6 @@ export function Sheet({
     }
     offsets.push(y);
     return offsets;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowCount, rowHeights]);
 
   const activeRange = ranges[ranges.length - 1]!;

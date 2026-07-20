@@ -13,23 +13,10 @@
   "bugs": {
     "url": "https://github.com/HOONY-LEE/softium-ui/issues"
   },
-  "keywords": [
-    "spreadsheet",
-    "sheet",
-    "react",
-    "formula",
-    "erp",
-    "softium-ui"
-  ],
+  "keywords": ["spreadsheet", "sheet", "react", "formula", "erp", "softium-ui"],
   "type": "module",
-  "sideEffects": [
-    "*.css"
-  ],
-  "files": [
-    "dist",
-    "src/styles",
-    "LICENSE"
-  ],
+  "sideEffects": ["*.css"],
+  "files": ["dist", "src/styles", "LICENSE"],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

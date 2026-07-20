@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# a newer push to the same branch/PR supersedes an in-flight run
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: lint / typecheck / test / build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # reads the packageManager field in package.json for the pinned version
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint (Biome)
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # the published CSS must be fully self-contained — a leaked bare
+      # @import would break plain <link> / non-Vite consumers (REVIEW P1)
+      - name: Verify published CSS has no @import
+        run: |
+          set -e
+          for f in packages/table-styles/dist/index.css \
+                   packages/sheet/dist/styles.css \
+                   packages/calendar/dist/styles.css \
+                   packages/ui/dist/styles.css; do
+            if grep -qE '^\s*@import\s' "$f"; then
+              echo "::error file=$f::unresolved @import in published CSS"
+              exit 1
+            fi
+            echo "ok: $f"
+          done
+
+      # React packages must carry the directive or Next.js App Router breaks
+      - name: Verify "use client" directive
+        run: |
+          set -e
+          for p in sheet calendar ui table-react; do
+            for f in "packages/$p/dist/index.js" "packages/$p/dist/index.cjs"; do
+              head -c 13 "$f" | grep -q '"use client"' || {
+                echo "::error file=$f::missing \"use client\" directive"; exit 1; }
+              echo "ok: $f"
+            done
+          done

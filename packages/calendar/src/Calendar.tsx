@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Redo2, Search, Undo2, X } from 'lucide-react';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CategoryFilter } from './components/CategoryFilter';
 import type { DeleteType } from './components/DeleteOptionsDialog';
 import { EventModal, type EventSaveData } from './components/EventModal';
@@ -115,7 +115,9 @@ export function Calendar({
 
   const previousPeriod = () => setCurrentDate(getPreviousPeriodDate(currentDate, viewType));
   const nextPeriod = () => setCurrentDate(getNextPeriodDate(currentDate, viewType));
-  const goToToday = () => setCurrentDate(new Date());
+  // stable identity: the global-shortcut effect below depends on it, and a
+  // per-render function would re-subscribe the keydown listener every render
+  const goToToday = useCallback(() => setCurrentDate(new Date()), []);
 
   const headerTitle = useMemo(() => {
     const y = currentDate.getFullYear();
@@ -182,7 +184,8 @@ export function Calendar({
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [undo, redo, modalOpen, goToToday, setViewType]);
+    // setViewType is a useState setter — stable, so it isn't a dependency
+  }, [undo, redo, modalOpen, goToToday]);
 
   /** drag-to-move an event chip/bar onto a different day (month view); for a
    * recurring event/instance this defers to the scope dialog instead of

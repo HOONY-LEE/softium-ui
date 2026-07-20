@@ -150,6 +150,7 @@ export function WeekView({
     return null;
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: listeners read weekDays/findColIndexAtX at event time via live geometry; re-subscribing when those re-created values change would tear down the drag mid-gesture
   useEffect(() => {
     if (!interacting) return;
 
@@ -248,7 +249,6 @@ export function WeekView({
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interacting, onTimeRangeSelect, onEventTimeChange]);
 
   const beginCreate = (e: ReactPointerEvent, dayIndex: number) => {
@@ -314,7 +314,13 @@ export function WeekView({
     slotRefs.current[`${focusedCell.dayIndex}-${focusedCell.hour}`]?.focus();
   }, [focusedCell]);
 
-  const defaultCell = { dayIndex: Math.max(0, weekDays.findIndex((d) => isToday(d))), hour: 9 };
+  const defaultCell = {
+    dayIndex: Math.max(
+      0,
+      weekDays.findIndex((d) => isToday(d)),
+    ),
+    hour: 9,
+  };
   const activeCell = focusedCell ?? defaultCell;
 
   return (
