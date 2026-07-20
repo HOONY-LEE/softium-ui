@@ -41,8 +41,8 @@ export function PivotPage({ locale }: { locale: Locale }) {
           <h2 className="page-title">{t('피벗', 'Pivot')}</h2>
           <p className="page-desc">
             {t(
-              '행·열 필드로 그룹핑하고 값(급여)을 집계하는 교차표. AG-Grid 피벗 형태. (전체 300명)',
-              'Cross-tab grouping rows × columns and aggregating a value (salary). AG-Grid-style pivot. (300 people)',
+              '행·열로 그룹핑해 값을 집계하는 교차표 (AG-Grid 피벗 스타일).',
+              'Cross-tab: group by rows × columns and aggregate a value.',
             )}
           </p>
         </div>

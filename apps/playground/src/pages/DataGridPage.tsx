@@ -5,7 +5,7 @@ import type { Locale } from '../i18n';
 
 export function DataGridPage({ locale }: { locale: Locale }) {
   const t = (ko: string, en: string) => (locale === 'ko' ? ko : en);
-  const [data, setData] = useState<Employee[]>(() => makeEmployees(50));
+  const [data, setData] = useState<Employee[]>(() => makeEmployees(12043));
 
   const columns = useMemo<ReactColumnDef<Employee>[]>(
     () => [
@@ -48,8 +48,8 @@ export function DataGridPage({ locale }: { locale: Locale }) {
           <h2 className="page-title">{t('데이터 그리드', 'Data Grid')}</h2>
           <p className="page-desc">
             {t(
-              '편집 모드형 데이터 그리드. 평소엔 읽기 전용이고, 우측 상단 「편집」을 눌러야 셀을 고칠 수 있습니다. 변경한 셀은 노란색으로 표시(미저장)되고, 「저장」을 누르면 모든 변경이 한 번에 반영됩니다. 「취소」는 모든 변경을 되돌립니다. 셀을 클릭한 뒤 Ctrl/Cmd+C로 값을 복사할 수 있으며(칼럼별로 켜고 끌 수 있음), 이 예시에서는 「급여」컬럼만 복사를 막아뒀습니다.',
-              'Toggle-edit data grid. Read-only by default — press “Edit” (top right) to edit cells. Changed cells are highlighted amber (unsaved); “Save” commits all changes at once, “Cancel” discards them. Click a cell then Ctrl/Cmd+C to copy its value — configurable per column; this demo disables copying on the “Salary” column.',
+              '편집 모드형 데이터 그리드 — 「편집」으로 켜고 「저장/취소」로 반영.',
+              'Toggle-edit data grid — press “Edit”, then “Save” or “Cancel”.',
             )}
           </p>
         </div>

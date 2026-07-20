@@ -27,6 +27,14 @@ body {
   flex-wrap: wrap;
 }
 
+/* the title+desc wrapper needs min-width:0 to actually shrink inside the flex
+   row — otherwise its intrinsic (unwrapped) text width wins and the subtitle
+   never gets a chance to ellipsize. */
+.page-head > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .page-title {
   margin: 0;
   font-size: var(--sft-font-size-xl);
@@ -37,6 +45,16 @@ body {
 .page-desc {
   margin: var(--sft-space-1) 0 0;
   color: var(--sft-color-text-secondary);
+}
+
+/* the page subtitle (title's sibling, right under it) is kept short in copy,
+   but this is the hard guarantee: always one line, truncated with an ellipsis
+   if the viewport is ever too narrow. Scoped to .page-head so it doesn't
+   clip the longer .page-desc paragraphs reused inside demo cards elsewhere. */
+.page-head .page-desc {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .table-settings {

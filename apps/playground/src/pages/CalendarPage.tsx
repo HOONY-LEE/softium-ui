@@ -1,8 +1,8 @@
-import { Calendar, type CalendarEvent, type Category } from '@softium/calendar';
+import { Calendar, type CalendarEvent, type Category, type Holiday } from '@softium/calendar';
 import { useMemo } from 'react';
 import type { Locale } from '../i18n';
 
-function seed(): { events: CalendarEvent[]; categories: Category[] } {
+function seed(): { events: CalendarEvent[]; categories: Category[]; holidays: Holiday[] } {
   const categories: Category[] = [
     { id: 'personal', name: '개인', color: '#E30000' },
     { id: 'work', name: '업무', color: '#007AFF' },
@@ -63,30 +63,22 @@ function seed(): { events: CalendarEvent[]; categories: Category[] } {
     },
   ];
 
-  return { events, categories };
+  const holidays: Holiday[] = [{ date: at(6), name: '임시공휴일' }];
+
+  return { events, categories, holidays };
 }
 
 export function CalendarPage({ locale }: { locale: Locale }) {
-  const { events, categories } = useMemo(seed, []);
+  const { events, categories, holidays } = useMemo(seed, []);
 
   return (
     <div className="page-body" style={{ height: 'calc(100vh - 120px)' }}>
-      <div className="page-head">
-        <div>
-          <h2 className="page-title">{locale === 'ko' ? '캘린더' : 'Calendar'}</h2>
-          <p className="page-desc">
-            {locale === 'ko'
-              ? '월·주·일·연 뷰, 일정 생성/편집 모달, 카테고리, 반복 일정까지 — 토큰 CSS로 이식한 풀 캘린더. 빈 셀을 드래그해 기간 일정을 만들거나, 셀 위에서 「새 일정」을 누르세요.'
-              : 'Month / week / day / year views, an event create-edit modal, categories, and recurrence — a full calendar ported to token CSS. Drag empty cells for a multi-day event, or use “New event” on hover.'}
-          </p>
-        </div>
-      </div>
-
       <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
         <Calendar
           language={locale}
           initialEvents={events}
           initialCategories={categories}
+          holidays={holidays}
           className="playground-calendar"
         />
       </div>

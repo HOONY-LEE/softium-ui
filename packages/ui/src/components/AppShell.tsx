@@ -10,7 +10,7 @@ export interface AppShellProps {
   children: ReactNode;
   /** collapse the sidebar to an icon-only rail (controlled) */
   collapsed?: boolean;
-  /** expanded sidebar width in px. Default 248. */
+  /** expanded sidebar width in px. Default 224. */
   sidebarWidth?: number;
   /** on mobile: whether the sidebar drawer is open (controlled) */
   sidebarOpen?: boolean;
@@ -31,7 +31,7 @@ export function AppShell({
   header,
   children,
   collapsed,
-  sidebarWidth = 248,
+  sidebarWidth = 224,
   sidebarOpen = false,
   onSidebarClose,
   className,

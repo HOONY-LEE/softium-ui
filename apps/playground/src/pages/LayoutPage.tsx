@@ -30,8 +30,8 @@ export function LayoutPage({ locale }: { locale: Locale }) {
           <h2 className="page-title">{t('레이아웃', 'Layout')}</h2>
           <p className="page-desc">
             {t(
-              '이 문서 사이트 자체를 구성하는 3개 컴포넌트 — AppShell(전체 골격) · Header(상단바) · Sidebar(내비게이션). 아래는 축소판 미리보기이며, 접기 버튼과 항목 클릭이 실제로 동작합니다.',
-              'The 3 components that make up this very docs site — AppShell (overall skeleton) · Header (top bar) · Sidebar (navigation). The scaled-down preview below is fully interactive: try the collapse toggle and clicking items.',
+              'AppShell·Header·Sidebar 3종 — 아래 미리보기는 실제로 동작합니다.',
+              'AppShell, Header, Sidebar — the preview below is fully interactive.',
             )}
           </p>
         </div>

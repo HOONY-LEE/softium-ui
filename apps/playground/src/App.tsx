@@ -21,11 +21,12 @@ import { OverviewPage } from './pages/OverviewPage';
 import { PivotPage } from './pages/PivotPage';
 import { SheetPage } from './pages/SheetPage';
 import { TablePage } from './pages/TablePage';
+import { usePageRouter } from './router';
 
 const REPO_URL = 'https://github.com/HOONY-LEE/softium-ui';
 
 export function App() {
-  const [page, setPage] = useState<PageKey>('overview');
+  const [page, navigate] = usePageRouter();
   const [locale, setLocale] = useState<Locale>('ko');
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -49,7 +50,7 @@ export function App() {
   })();
 
   const go = (key: PageKey) => {
-    setPage(key);
+    navigate(key);
     setDrawerOpen(false);
   };
 
@@ -147,7 +148,7 @@ export function App() {
       sidebarOpen={drawerOpen}
       onSidebarClose={() => setDrawerOpen(false)}
     >
-      {page === 'overview' && <OverviewPage locale={locale} onNavigate={setPage} />}
+      {page === 'overview' && <OverviewPage locale={locale} onNavigate={navigate} />}
       {page === 'table' && <TablePage locale={locale} />}
       {page === 'data-grid' && <DataGridPage locale={locale} />}
       {page === 'sheet' && <SheetPage locale={locale} />}

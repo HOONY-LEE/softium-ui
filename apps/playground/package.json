@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@softium/calendar": "workspace:*",
+    "@softium/sheet": "workspace:*",
     "@softium/table-core": "workspace:*",
     "@softium/table-react": "workspace:*",
     "@softium/table-styles": "workspace:*",
