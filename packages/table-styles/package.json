@@ -13,23 +13,9 @@
   "bugs": {
     "url": "https://github.com/HOONY-LEE/softium-ui/issues"
   },
-  "keywords": [
-    "css",
-    "table",
-    "datagrid",
-    "theme",
-    "erp",
-    "softium-ui"
-  ],
-  "sideEffects": [
-    "*.css"
-  ],
-  "files": [
-    "src",
-    "dist",
-    "index.css",
-    "LICENSE"
-  ],
+  "keywords": ["css", "table", "datagrid", "theme", "erp", "softium-ui"],
+  "sideEffects": ["*.css"],
+  "files": ["src", "dist", "index.css", "LICENSE"],
   "main": "./dist/index.css",
   "exports": {
     ".": "./dist/index.css",

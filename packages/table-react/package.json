@@ -13,20 +13,10 @@
   "bugs": {
     "url": "https://github.com/HOONY-LEE/softium-ui/issues"
   },
-  "keywords": [
-    "table",
-    "datagrid",
-    "react",
-    "spreadsheet",
-    "erp",
-    "softium-ui"
-  ],
+  "keywords": ["table", "datagrid", "react", "spreadsheet", "erp", "softium-ui"],
   "type": "module",
   "sideEffects": false,
-  "files": [
-    "dist",
-    "LICENSE"
-  ],
+  "files": ["dist", "LICENSE"],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

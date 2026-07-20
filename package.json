@@ -18,7 +18,7 @@
     "format": "biome format --write .",
     "clean": "pnpm -r exec rm -rf dist node_modules/.cache",
     "changeset": "changeset",
-    "version": "changeset version",
+    "version": "changeset version && pnpm format",
     "release": "pnpm build && changeset publish"
   },
   "repository": {
