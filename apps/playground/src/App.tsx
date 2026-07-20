@@ -5,7 +5,6 @@ import {
   Sidebar,
   SidebarBrand,
   SidebarItem,
-  SidebarSection,
   ThemeToggle,
 } from '@softium/ui';
 import { Github, Menu } from 'lucide-react';
@@ -65,21 +64,21 @@ export function App() {
       onCollapse={() => setCollapsed(true)}
       onExpand={() => setCollapsed(false)}
     >
-      {nav.map((group) => (
-        <SidebarSection key={group.section} label={sectionLabel(group.section)} collapsible>
-          {group.items.map((item) => (
-            <SidebarItem
-              key={item.key}
-              icon={<item.icon size={18} />}
-              tooltip={navLabel(item, locale)}
-              active={page === item.key}
-              onClick={() => go(item.key)}
-            >
-              {navLabel(item, locale)}
-            </SidebarItem>
-          ))}
-        </SidebarSection>
-      ))}
+      {/* one flat list — the section headings ("시작하기" / "컴포넌트") only
+        repeated what the breadcrumb already says */}
+      {nav
+        .flatMap((group) => group.items)
+        .map((item) => (
+          <SidebarItem
+            key={item.key}
+            icon={<item.icon size={18} />}
+            tooltip={navLabel(item, locale)}
+            active={page === item.key}
+            onClick={() => go(item.key)}
+          >
+            {navLabel(item, locale)}
+          </SidebarItem>
+        ))}
     </Sidebar>
   );
 

@@ -16,7 +16,7 @@ body {
 .page-body {
   display: flex;
   flex-direction: column;
-  gap: var(--sft-space-5);
+  gap: var(--sft-space-3);
 }
 
 .page-head {
