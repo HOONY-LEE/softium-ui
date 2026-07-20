@@ -21,22 +21,29 @@ npm i @softium/table-react @softium/table-styles
 Import the stylesheet once at your app entry, then render:
 
 ```tsx
-import '@softium/table-styles';
+import '@softium/table-styles/styles.css';
 import { Table, useTable } from '@softium/table-react';
 
-const data = [
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+}
+
+const data: Product[] = [
   { id: 1, name: 'Widget', price: 1200 },
   { id: 2, name: 'Gadget', price: 890 },
 ];
 
-const columns = [
-  { key: 'name', label: 'Name' },
-  { key: 'price', label: 'Price', align: 'right' },
-];
-
 export function Demo() {
-  const table = useTable({ data, columns });
-  return <Table instance={table} />;
+  const table = useTable<Product>({
+    data,
+    columns: [
+      { key: 'name', label: 'Name', flex: 1 },
+      { key: 'price', label: 'Price', type: 'number', width: 120 },
+    ],
+  });
+  return <Table table={table} />;
 }
 ```
 

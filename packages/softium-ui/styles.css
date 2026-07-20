@@ -1,0 +1,17 @@
+/**
+ * softium-ui — one stylesheet for every component.
+ *
+ *   import 'softium-ui/styles.css';
+ *
+ * Pulls the shared design tokens in ONCE, then each component's token-free
+ * rules. (Importing each package's own styles.css instead would inline the
+ * token layer four times.) The published dist build flattens this into a
+ * single @import-free file.
+ */
+
+@import "@softium/styles";
+@import "@softium/table-styles/src/table.css";
+@import "@softium/table-styles/src/cells.css";
+@import "@softium/sheet/src/styles/sheet.css";
+@import "@softium/calendar/src/styles/calendar.css";
+@import "@softium/ui/src/styles/ui.css";

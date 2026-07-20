@@ -51,7 +51,8 @@ jobs:
           for f in packages/table-styles/dist/index.css \
                    packages/sheet/dist/styles.css \
                    packages/calendar/dist/styles.css \
-                   packages/ui/dist/styles.css; do
+                   packages/ui/dist/styles.css \
+                   packages/softium-ui/dist/styles.css; do
             if grep -qE '^\s*@import\s' "$f"; then
               echo "::error file=$f::unresolved @import in published CSS"
               exit 1
@@ -63,7 +64,7 @@ jobs:
       - name: Verify "use client" directive
         run: |
           set -e
-          for p in sheet calendar ui table-react; do
+          for p in sheet calendar ui table-react softium-ui; do
             for f in "packages/$p/dist/index.js" "packages/$p/dist/index.cjs"; do
               head -c 13 "$f" | grep -q '"use client"' || {
                 echo "::error file=$f::missing \"use client\" directive"; exit 1; }

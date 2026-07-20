@@ -19,6 +19,7 @@
   "main": "./dist/index.css",
   "exports": {
     ".": "./dist/index.css",
+    "./styles.css": "./dist/index.css",
     "./table.css": "./src/table.css",
     "./source.css": "./index.css"
   },

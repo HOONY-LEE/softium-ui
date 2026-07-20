@@ -1,0 +1,87 @@
+{
+  "name": "softium-ui",
+  "version": "0.0.0",
+  "description": "All of softium-ui in one install: Table/DataGrid, Sheet (spreadsheet + formulas), Calendar, and the app-shell primitives — with a single stylesheet.",
+  "license": "MIT",
+  "author": "Sunghoon Lee",
+  "homepage": "https://github.com/HOONY-LEE/softium-ui#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HOONY-LEE/softium-ui.git",
+    "directory": "packages/softium-ui"
+  },
+  "bugs": {
+    "url": "https://github.com/HOONY-LEE/softium-ui/issues"
+  },
+  "keywords": ["react", "ui", "table", "datagrid", "spreadsheet", "calendar", "erp", "softium-ui"],
+  "type": "module",
+  "sideEffects": ["*.css"],
+  "files": ["dist", "LICENSE"],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./table": {
+      "types": "./dist/table.d.ts",
+      "import": "./dist/table.js",
+      "require": "./dist/table.cjs"
+    },
+    "./sheet": {
+      "types": "./dist/sheet.d.ts",
+      "import": "./dist/sheet.js",
+      "require": "./dist/sheet.cjs"
+    },
+    "./calendar": {
+      "types": "./dist/calendar.d.ts",
+      "import": "./dist/calendar.js",
+      "require": "./dist/calendar.cjs"
+    },
+    "./ui": {
+      "types": "./dist/ui.d.ts",
+      "import": "./dist/ui.js",
+      "require": "./dist/ui.cjs"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.js",
+      "require": "./dist/core.cjs"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "scripts": {
+    "build": "tsup && node ../../scripts/add-use-client.mjs dist/index.js dist/index.cjs dist/table.js dist/table.cjs dist/sheet.js dist/sheet.cjs dist/calendar.js dist/calendar.cjs dist/ui.js dist/ui.cjs && node ../../scripts/bundle-css.mjs styles.css dist/styles.css",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@softium/calendar": "workspace:*",
+    "@softium/sheet": "workspace:*",
+    "@softium/styles": "workspace:*",
+    "@softium/table-core": "workspace:*",
+    "@softium/table-react": "workspace:*",
+    "@softium/table-styles": "workspace:*",
+    "@softium/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

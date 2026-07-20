@@ -132,6 +132,52 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9
 
+  packages/softium-ui:
+    dependencies:
+      '@softium/calendar':
+        specifier: workspace:*
+        version: link:../calendar
+      '@softium/sheet':
+        specifier: workspace:*
+        version: link:../sheet
+      '@softium/styles':
+        specifier: workspace:*
+        version: link:../styles
+      '@softium/table-core':
+        specifier: workspace:*
+        version: link:../table-core
+      '@softium/table-react':
+        specifier: workspace:*
+        version: link:../table-react
+      '@softium/table-styles':
+        specifier: workspace:*
+        version: link:../table-styles
+      '@softium/ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.18
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ^18.3.5
+        version: 18.3.7(@types/react@18.3.31)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(postcss@8.5.15)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9
+
   packages/styles: {}
 
   packages/table-core:

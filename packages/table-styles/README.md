@@ -18,8 +18,13 @@ npm i @softium/table-styles
 Import once at your app entry:
 
 ```ts
-import '@softium/table-styles';
+import '@softium/table-styles/styles.css';
 ```
+
+> Prefer the `/styles.css` subpath. The bare `import '@softium/table-styles'`
+> also works at runtime, but TypeScript can't type a bare specifier that
+> resolves to CSS (`TS2882`), whereas `*.css` is covered by the standard
+> bundler ambient types (e.g. `vite/client`).
 
 The published entry is a single flat CSS file with no `@import` statements
 (design tokens are inlined), so it also works via a plain `<link>` or a
