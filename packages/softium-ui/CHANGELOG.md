@@ -1,5 +1,14 @@
 # softium-ui
 
+## 0.1.3
+
+### Patch Changes
+
+- b88cd32: Add npm version + license badges to the package READMEs so the npm page shows
+  the current version and license at a glance.
+- Updated dependencies [b88cd32]
+  - @softium/sheet@0.3.1
+
 ## 0.1.2
 
 ### Patch Changes
