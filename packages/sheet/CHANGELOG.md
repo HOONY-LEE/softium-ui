@@ -1,5 +1,12 @@
 # @softium/sheet
 
+## 0.3.1
+
+### Patch Changes
+
+- b88cd32: Add npm version + license badges to the package READMEs so the npm page shows
+  the current version and license at a glance.
+
 ## 0.3.0
 
 ### Minor Changes
