@@ -1,5 +1,8 @@
 # @softium/sheet
 
+[![npm](https://img.shields.io/npm/v/@softium/sheet)](https://www.npmjs.com/package/@softium/sheet)
+[![license](https://img.shields.io/npm/l/@softium/sheet)](https://github.com/HOONY-LEE/softium-ui/blob/main/LICENSE)
+
 A minimal, A1-addressed spreadsheet for React: an editable grid with a no-`eval`
 formula engine (`SUM`, `IF`, `VLOOKUP`, `INDEX`/`MATCH`, `COUNTIF`, and more),
 relative/absolute references, copy / cut / paste (+ paste-values-only), a fill

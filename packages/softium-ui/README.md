@@ -1,5 +1,8 @@
 # softium-ui
 
+[![npm](https://img.shields.io/npm/v/softium-ui)](https://www.npmjs.com/package/softium-ui)
+[![license](https://img.shields.io/npm/l/softium-ui)](https://github.com/HOONY-LEE/softium-ui/blob/main/LICENSE)
+
 Every softium-ui component in **one install, one stylesheet** — the ERP-focused
 React set: `Table` / `DataGrid` / `PivotTable`, `Sheet` (spreadsheet with a
 formula engine), `Calendar`, and the app-shell primitives (`AppShell`,
