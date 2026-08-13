@@ -3,13 +3,20 @@ import { type PageKey, nav } from './nav';
 
 const ALL_KEYS = new Set<PageKey>(nav.flatMap((group) => group.items.map((item) => item.key)));
 
-/** `overview` lives at `/`; every other page is `/<key>`. */
+/** deploy base without the trailing slash — '' locally, '/softium-ui' on GitHub
+ * Pages (Vite sets BASE_URL from the build's --base). Making the router
+ * base-aware is what lets it live under a Pages sub-path instead of the root. */
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+/** `overview` lives at the base root; every other page is `<base>/<key>`. */
 export function pathForPage(key: PageKey): string {
-  return key === 'overview' ? '/' : `/${key}`;
+  return key === 'overview' ? `${BASE}/` : `${BASE}/${key}`;
 }
 
 export function pageForPath(pathname: string): PageKey {
-  const slug = pathname.replace(/^\/+/, '').replace(/\/+$/, '');
+  let path = pathname;
+  if (BASE && path.startsWith(BASE)) path = path.slice(BASE.length);
+  const slug = path.replace(/^\/+/, '').replace(/\/+$/, '');
   if (!slug) return 'overview';
   return ALL_KEYS.has(slug as PageKey) ? (slug as PageKey) : 'overview';
 }
