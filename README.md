@@ -79,10 +79,15 @@ pnpm lint:fix     # 자동 수정
 ## 배포 (changesets)
 
 ```bash
-pnpm changeset    # 변경분 기록 (영향 패키지 + semver bump 선택)
-pnpm version      # 버전·CHANGELOG 반영
-pnpm release      # 빌드 후 changeset publish (pnpm 경유 필수 — workspace:* 치환)
+pnpm changeset      # 변경분 기록 (영향 패키지 + semver bump 선택)
+pnpm run version    # 버전·CHANGELOG 반영 — "run" 필수! pnpm 자체 내장 version
+                     # 명령과 이름이 겹쳐서, run 없이 치면 그 내장 명령이 실행됨
+pnpm run release    # 빌드 후 changeset publish (pnpm 경유 필수 — workspace:* 치환)
 ```
+
+보통은 이 명령을 직접 칠 일이 없습니다 — `pnpm changeset` 후 푸시하면 CI가 버전
+PR을 자동으로 만들고, 그 PR을 머지하면 CI가 자동으로 발행까지 합니다(자세한
+흐름과 npm OIDC 전환 상태는 [`RELEASE.md`](./RELEASE.md) 참고).
 
 컴포넌트 CSS는 빌드 시 `@import` 없는 flat 파일로 번들되어(`dist/*.css`) plain
 `<link>`·비-Vite 번들러에서도 동작합니다. React 패키지는 `"use client"`가

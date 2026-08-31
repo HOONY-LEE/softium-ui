@@ -11,6 +11,14 @@ concurrency:
 permissions:
   contents: write # push the version commit + tags
   pull-requests: write # open/update the "Version Packages" PR
+  # lets this job mint a short-lived OIDC token and trade it for a scoped
+  # publish token via npm's "trusted publishing" — no NPM_TOKEN needed once a
+  # package has a trusted publisher configured on npmjs.com (see RELEASE.md).
+  # Packages without one configured yet are unaffected: npm's OIDC detection
+  # is non-invasive and falls back to NODE_AUTH_TOKEN/NPM_TOKEN below when no
+  # trusted publisher matches, so this secret stays as the safety net during
+  # the transition.
+  id-token: write
 
 jobs:
   release:
@@ -28,6 +36,17 @@ jobs:
           node-version: 22
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
+
+      # `pnpm publish` shells out to whatever `npm` is first on PATH (see
+      # pnpm's exec/run-npm) rather than bundling its own — and OIDC trusted
+      # publishing needs npm >=11.5.1. actions/setup-node's Node 22 build
+      # doesn't reliably ship one recent enough, so pin it explicitly. This
+      # self-updates the same npm install pnpm will resolve, since npm's
+      # default global prefix is the Node.js install directory itself.
+      - name: Ensure npm supports OIDC trusted publishing (>=11.5.1)
+        run: |
+          npm install -g npm@latest
+          npm --version
 
       - run: pnpm install --frozen-lockfile
 
