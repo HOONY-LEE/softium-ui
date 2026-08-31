@@ -129,8 +129,164 @@ body {
 
 .overview-lead {
   margin: var(--sft-space-3) 0 0;
-  max-width: 60ch;
+  max-width: 68ch;
   color: var(--sft-color-text-secondary);
+}
+
+/* npm / GitHub call-to-action pills under the lead paragraph */
+.overview-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sft-space-2);
+  margin: var(--sft-space-4) 0 0;
+}
+
+.overview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sft-space-1);
+  padding: var(--sft-space-2) var(--sft-space-3);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-full);
+  background: var(--sft-color-surface);
+  color: var(--sft-color-text);
+  font-size: var(--sft-font-size-sm);
+  font-weight: var(--sft-font-weight-medium);
+  text-decoration: none;
+  transition: border-color var(--sft-duration-fast) var(--sft-ease), background
+    var(--sft-duration-fast) var(--sft-ease);
+}
+
+.overview-link:hover {
+  border-color: var(--sft-color-border-strong);
+  background: var(--sft-color-bg-hover);
+}
+
+.overview-link--primary {
+  border-color: var(--sft-color-accent);
+  background: var(--sft-color-accent);
+  color: var(--sft-color-text-on-accent);
+}
+
+.overview-link--primary:hover {
+  background: var(--sft-color-accent-hover);
+  border-color: var(--sft-color-accent-hover);
+}
+
+/* terminal-style install snippet with a copy button */
+.overview-install {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sft-space-3);
+  max-width: 480px;
+  margin: var(--sft-space-4) 0 0;
+  padding: var(--sft-space-3) var(--sft-space-4);
+  background: var(--sft-color-text);
+  border-radius: var(--sft-radius-md);
+}
+
+.overview-install__cmd {
+  font-family: var(--sft-font-family-mono);
+  font-size: var(--sft-font-size-sm);
+  color: var(--sft-color-bg);
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.overview-install__cmd .overview-install__prompt {
+  opacity: 0.5;
+  margin-right: var(--sft-space-1);
+}
+
+.overview-install__copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: var(--sft-radius-sm);
+  background: transparent;
+  color: var(--sft-color-bg);
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.overview-install__copy:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--sft-color-bg) 18%, transparent);
+}
+
+.overview-install__copy[data-copied] {
+  opacity: 1;
+  color: var(--sft-color-success);
+}
+
+/* "designed for AI coding assistants" callout */
+.overview-ai {
+  padding: var(--sft-space-5);
+  background: color-mix(in srgb, var(--sft-color-accent) 6%, var(--sft-color-surface));
+  border: 1px solid color-mix(in srgb, var(--sft-color-accent) 22%, transparent);
+  border-radius: var(--sft-radius-lg);
+}
+
+.overview-ai__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+  margin: 0 0 var(--sft-space-1);
+  font-size: var(--sft-font-size-lg);
+  font-weight: var(--sft-font-weight-bold);
+  color: var(--sft-color-text);
+}
+
+.overview-ai__lead {
+  margin: 0 0 var(--sft-space-4);
+  max-width: 68ch;
+  color: var(--sft-color-text-secondary);
+}
+
+.overview-ai__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--sft-space-3) var(--sft-space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.overview-ai__item {
+  display: flex;
+  gap: var(--sft-space-2);
+  align-items: flex-start;
+}
+
+.overview-ai__item-icon {
+  flex: none;
+  color: var(--sft-color-accent);
+  margin-top: 2px;
+}
+
+.overview-ai__item-title {
+  display: block;
+  font-weight: var(--sft-font-weight-medium);
+  color: var(--sft-color-text);
+}
+
+.overview-ai__item-desc {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--sft-font-size-sm);
+  color: var(--sft-color-text-secondary);
+}
+
+.overview-section-title {
+  margin: 0;
+  font-size: var(--sft-font-size-lg);
+  font-weight: var(--sft-font-weight-bold);
+  color: var(--sft-color-text);
 }
 
 .overview-grid {
@@ -181,6 +337,12 @@ body {
   font-size: var(--sft-font-size-lg);
   font-weight: var(--sft-font-weight-bold);
   color: var(--sft-color-text);
+}
+
+.overview-card__pkg {
+  font-family: var(--sft-font-family-mono);
+  font-size: var(--sft-font-size-xs);
+  color: var(--sft-color-text-muted);
 }
 
 .overview-card__desc {
