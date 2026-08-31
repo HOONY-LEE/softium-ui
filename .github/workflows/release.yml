@@ -43,9 +43,17 @@ jobs:
       # doesn't reliably ship one recent enough, so pin it explicitly. This
       # self-updates the same npm install pnpm will resolve, since npm's
       # default global prefix is the Node.js install directory itself.
+      #
+      # Pinned to the 11.x line (^11.5.1), NOT `npm@latest`: a real run with
+      # `npm@latest` silently pulled npm 12.0.2 and broke @changesets/cli's
+      # `npm info` pre-publish check (its already-published guard stopped
+      # firing, so it tried to re-publish every package and got rejected by
+      # the registry — no packages were actually harmed, but every release
+      # failed). Caret-range 11.x stays on the major changesets is known to
+      # work with while still satisfying npm's own >=11.5.1 OIDC floor.
       - name: Ensure npm supports OIDC trusted publishing (>=11.5.1)
         run: |
-          npm install -g npm@latest
+          npm install -g npm@^11.5.1
           npm --version
 
       - run: pnpm install --frozen-lockfile
