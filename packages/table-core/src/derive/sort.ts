@@ -69,7 +69,9 @@ export function sortRows<T>(data: T[], rules: SortRule[], getSort: SortLookup<T>
 }
 
 /**
- * Cycle a column's sort for click-to-sort headers: none → asc → desc → none.
+ * Cycle a column's sort: none → asc → desc → none. The built-in header sorts from
+ * its "⋮" menu (which sets a direction outright), so this is for hosts wiring up
+ * their own click-to-sort affordance.
  * `multi` keeps existing rules (appending/updating this column); otherwise this
  * column becomes the sole sort.
  */

@@ -414,10 +414,6 @@
   text-overflow: ellipsis;
 }
 
-.sft-th__label[data-sortable] {
-  cursor: pointer;
-}
-
 .sft-th__sort {
   flex: none;
   display: inline-flex;

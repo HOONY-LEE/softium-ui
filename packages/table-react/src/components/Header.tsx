@@ -91,7 +91,6 @@ export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
                   sortPriority={sortRules.length > 1 && rule ? ruleIndex + 1 : undefined}
                   filtered={filteredKeys.has(column.key)}
                   onResize={(width) => table.setColumnWidth(column.key, width)}
-                  onSort={(multi) => table.toggleSort(column.key, multi)}
                 />
               );
             })}
@@ -108,7 +107,6 @@ interface HeaderCellProps<T> {
   sortPriority?: number;
   filtered: boolean;
   onResize: (width: number) => void;
-  onSort: (multi: boolean) => void;
 }
 
 function HeaderCell<T>({
@@ -117,7 +115,6 @@ function HeaderCell<T>({
   sortPriority,
   filtered,
   onResize,
-  onSort,
 }: HeaderCellProps<T>): ReactNode {
   const { scrollX, resizeMode, messages } = useTableContext<T>();
   const autoFitHint = messages.autoFitHint;
@@ -180,13 +177,9 @@ function HeaderCell<T>({
       data-filtered={filtered || undefined}
       style={style}
     >
-      <span
-        className="sft-th__label"
-        {...attributes}
-        {...listeners}
-        onClick={!resizeMode && column.sortable ? (e) => onSort(e.shiftKey) : undefined}
-        data-sortable={(!resizeMode && column.sortable) || undefined}
-      >
+      {/* the label only drags — sorting lives in the "⋮" menu, so a stray click
+          on a header can't silently reorder the whole table */}
+      <span className="sft-th__label" {...attributes} {...listeners}>
         <span className="sft-th__text">
           {column.renderHeader
             ? column.renderHeader({ column: column.def, displayLabel: column.displayLabel })

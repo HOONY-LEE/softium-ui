@@ -89,7 +89,8 @@ export interface TableInstance<T> {
   // ── sort / filter / search (derived; original data never mutated) ──
   /** current sort rules, in priority order */
   getSortRules: () => SortRule[];
-  /** click-to-sort cycle (none→asc→desc→none). `multi` keeps other sorts. */
+  /** sort cycle (none→asc→desc→none). `multi` keeps other sorts, which is how a
+   *  host builds multi-sort — the built-in header menu sets a single sort. */
   toggleSort: (columnKey: string, multi?: boolean) => void;
   /** replace all sort rules */
   setSortRules: (rules: SortRule[]) => void;
