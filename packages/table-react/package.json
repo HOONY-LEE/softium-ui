@@ -1,6 +1,6 @@
 {
   "name": "@softium/table-react",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "React bindings for softium-ui Table: useTable hook, styled components, i18n.",
   "license": "MIT",
   "author": "Sunghoon Lee",

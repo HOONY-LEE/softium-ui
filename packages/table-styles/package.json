@@ -1,6 +1,6 @@
 {
   "name": "@softium/table-styles",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Table component styles for softium-ui. Builds on @softium/styles tokens. Dark mode + responsive.",
   "license": "MIT",
   "author": "Sunghoon Lee",
