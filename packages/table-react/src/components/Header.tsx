@@ -12,17 +12,18 @@ import { ChevronUp } from 'lucide-react';
 import { type ReactNode, type PointerEvent as ReactPointerEvent, useEffect, useRef } from 'react';
 import type { ResolvedReactColumn } from '../types';
 import { cellStyle } from './Cell';
+import { ColumnMenu } from './ColumnMenu';
+import { MIN_RESIZE_WIDTH, fitColumnWidth } from './autoFit';
 import { INDEX_COL_WIDTH, SELECT_COL_WIDTH, useTableContext } from './context';
 
 export interface HeaderProps<T> {
   columns: ResolvedReactColumn<T>[];
 }
 
-const MIN_RESIZE_WIDTH = 48;
-
 export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
   const { table, selectable, settings, scrollX, messages } = useTableContext<T>();
   const sortRules = table.getSortRules();
+  const filteredKeys = new Set(table.getFilters().map((f) => f.columnKey));
 
   const pageRows = table.getRows();
   const selectedOnPage = pageRows.filter((r) => r.selected).length;
@@ -88,6 +89,7 @@ export function Header<T>({ columns }: HeaderProps<T>): ReactNode {
                   column={column}
                   sortDirection={rule?.direction}
                   sortPriority={sortRules.length > 1 && rule ? ruleIndex + 1 : undefined}
+                  filtered={filteredKeys.has(column.key)}
                   onResize={(width) => table.setColumnWidth(column.key, width)}
                   onSort={(multi) => table.toggleSort(column.key, multi)}
                 />
@@ -104,6 +106,7 @@ interface HeaderCellProps<T> {
   column: ResolvedReactColumn<T>;
   sortDirection?: 'asc' | 'desc';
   sortPriority?: number;
+  filtered: boolean;
   onResize: (width: number) => void;
   onSort: (multi: boolean) => void;
 }
@@ -112,6 +115,7 @@ function HeaderCell<T>({
   column,
   sortDirection,
   sortPriority,
+  filtered,
   onResize,
   onSort,
 }: HeaderCellProps<T>): ReactNode {
@@ -154,18 +158,11 @@ function HeaderCell<T>({
   function autoFit() {
     const root = cellRef.current?.closest('.sft-table');
     if (!root) return;
-    const key = window.CSS?.escape ? window.CSS.escape(column.key) : column.key;
-    let widest = 0;
-    const head = root.querySelector(`.sft-th[data-col-key="${key}"] .sft-th__text`);
-    if (head instanceof HTMLElement) widest = head.scrollWidth;
-    for (const el of root.querySelectorAll(`.sft-td[data-col-key="${key}"] .sft-td__content`)) {
-      if (el instanceof HTMLElement) widest = Math.max(widest, el.scrollWidth);
-    }
-    if (widest === 0) return;
-    const min = column.minWidth ?? MIN_RESIZE_WIDTH;
-    const max = column.maxWidth ?? 480;
-    // + horizontal cell padding (2×12) + a little breathing room for sort glyphs
-    onResize(Math.min(max, Math.max(min, Math.ceil(widest + 32))));
+    const width = fitColumnWidth(root, column.key, {
+      minWidth: column.minWidth,
+      maxWidth: column.maxWidth,
+    });
+    if (width !== null) onResize(width);
   }
 
   return (
@@ -180,6 +177,7 @@ function HeaderCell<T>({
       data-align={column.align}
       data-pinned={column.pinned ?? undefined}
       data-dragging={isDragging || undefined}
+      data-filtered={filtered || undefined}
       style={style}
     >
       <span
@@ -205,6 +203,7 @@ function HeaderCell<T>({
           </span>
         )}
       </span>
+      <ColumnMenu column={column} sortDirection={sortDirection} filtered={filtered} />
       {resizeMode && column.resizable !== false && (
         <span
           className="sft-th__resizer"

@@ -503,6 +503,273 @@
   border-color: var(--sft-color-accent);
 }
 
+/* ── column header menu ("⋮") ───────────────────────────── */
+/* The trigger sits OUT OF FLOW over the trailing edge so the header label keeps
+   the whole cell width. Reserving 20px in flow instead truncated labels that
+   previously fit ("급여 (만원)" → "급여 (만…"). It is invisible until hovered and
+   paints the header background when shown, masking the text beneath it cleanly. */
+.sft-th__menu {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--sft-radius-sm);
+  background: var(--sft-color-bg-subtle);
+  color: var(--sft-color-text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--sft-duration-fast) var(--sft-ease), background var(--sft-duration-fast)
+    var(--sft-ease);
+}
+
+/* A sorted column already announces itself with the chevron, so only a FILTERED
+   column pins the trigger on — there it doubles as the "filtered" badge. */
+.sft-th:hover .sft-th__menu,
+.sft-th__menu[data-open],
+.sft-th__menu[data-active],
+.sft-th__menu:focus-visible {
+  opacity: 1;
+}
+
+/* a permanently-shown trigger gets real space, so it never covers the label */
+.sft-th[data-filtered] {
+  padding-right: calc(var(--sft-table-cell-padding-x) + 20px);
+}
+
+.sft-th__menu:hover,
+.sft-th__menu[data-open] {
+  background: var(--sft-color-bg-hover);
+  color: var(--sft-color-text);
+}
+
+.sft-th__menu[data-active] {
+  color: var(--sft-color-accent);
+}
+
+/* keep the trigger clear of the resize handle, which overlays the trailing edge */
+.sft-table[data-resizing] .sft-th__menu {
+  right: 10px;
+}
+
+.sft-colmenu__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--sft-z-overlay);
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+/* portaled to <body>, so it is positioned in viewport coordinates */
+.sft-colmenu {
+  position: fixed;
+  z-index: calc(var(--sft-z-overlay) + 1);
+  width: 248px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: var(--sft-space-1);
+  background: var(--sft-color-surface);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-md);
+  box-shadow: var(--sft-shadow-overlay);
+  font-size: var(--sft-font-size-sm);
+}
+
+.sft-colmenu__group + .sft-colmenu__group {
+  margin-top: var(--sft-space-1);
+  padding-top: var(--sft-space-1);
+  border-top: 1px solid var(--sft-color-border);
+}
+
+.sft-colmenu__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-1);
+  padding: var(--sft-space-1) var(--sft-space-2);
+  color: var(--sft-color-text-muted);
+  font-size: var(--sft-font-size-xs);
+  font-weight: var(--sft-font-weight-medium);
+}
+
+.sft-colmenu__clear {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--sft-color-accent);
+  font: inherit;
+  font-size: var(--sft-font-size-xs);
+  padding: 0;
+  cursor: pointer;
+}
+
+.sft-colmenu__clear:hover {
+  text-decoration: underline;
+}
+
+.sft-colmenu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+  width: 100%;
+  padding: var(--sft-space-2);
+  border: none;
+  background: transparent;
+  color: var(--sft-color-text);
+  font: inherit;
+  font-size: var(--sft-font-size-sm);
+  text-align: left;
+  border-radius: var(--sft-radius-sm);
+  cursor: pointer;
+}
+
+.sft-colmenu__item:hover {
+  background: var(--sft-color-bg-hover);
+}
+
+.sft-colmenu__item[data-active] {
+  color: var(--sft-color-accent);
+  font-weight: var(--sft-font-weight-medium);
+}
+
+/* ── column filter editors (inside the menu) ─────────────── */
+.sft-colfilter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sft-space-2);
+  padding: var(--sft-space-1) var(--sft-space-2) var(--sft-space-2);
+}
+
+.sft-colfilter__input,
+.sft-colfilter__op {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: var(--sft-font-size-sm);
+  color: var(--sft-color-text);
+  background: var(--sft-color-bg);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-sm);
+  padding: var(--sft-space-1) var(--sft-space-2);
+}
+
+.sft-colfilter__input:focus,
+.sft-colfilter__op:focus {
+  outline: none;
+  border-color: var(--sft-color-accent);
+}
+
+.sft-colfilter__field {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+}
+
+.sft-colfilter__field-label {
+  flex: none;
+  width: 48px;
+  color: var(--sft-color-text-secondary);
+  font-size: var(--sft-font-size-xs);
+}
+
+.sft-colfilter__seg {
+  width: 100%;
+}
+
+.sft-colfilter__seg .sft-seg__btn {
+  flex: 1;
+}
+
+.sft-colfilter__search {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-1);
+  padding: var(--sft-space-1) var(--sft-space-2);
+  background: var(--sft-color-bg);
+  border: 1px solid var(--sft-color-border);
+  border-radius: var(--sft-radius-sm);
+  color: var(--sft-color-text-muted);
+}
+
+.sft-colfilter__search:focus-within {
+  border-color: var(--sft-color-accent);
+}
+
+.sft-colfilter__search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--sft-color-text);
+  font: inherit;
+  font-size: var(--sft-font-size-sm);
+  outline: none;
+}
+
+/* the option list scrolls on its own so a high-cardinality column can't push the
+   menu's other sections out of reach */
+.sft-colfilter__options {
+  display: flex;
+  flex-direction: column;
+  max-height: 184px;
+  overflow-y: auto;
+}
+
+.sft-colfilter__option {
+  display: flex;
+  align-items: center;
+  gap: var(--sft-space-2);
+  padding: var(--sft-space-1);
+  border-radius: var(--sft-radius-sm);
+  color: var(--sft-color-text);
+  cursor: pointer;
+}
+
+.sft-colfilter__option:hover {
+  background: var(--sft-color-bg-hover);
+}
+
+.sft-colfilter__option span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sft-colfilter__option--all {
+  color: var(--sft-color-text-secondary);
+  border-bottom: 1px solid var(--sft-color-border);
+  border-radius: 0;
+  margin-bottom: 2px;
+  padding-bottom: var(--sft-space-1);
+}
+
+.sft-colfilter__empty {
+  padding: var(--sft-space-2);
+  color: var(--sft-color-text-muted);
+  font-size: var(--sft-font-size-sm);
+}
+
+/* touch targets: coarse pointers get no hover, so the trigger is always visible */
+@media (pointer: coarse) {
+  .sft-th__menu {
+    opacity: 1;
+    width: 24px;
+    height: 24px;
+  }
+
+  .sft-colfilter__option {
+    padding: var(--sft-space-2) var(--sft-space-1);
+  }
+}
+
 /* ── body cells ─────────────────────────────────────────── */
 .sft-td {
   position: relative;

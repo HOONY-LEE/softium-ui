@@ -49,6 +49,55 @@ export interface TableMessages {
   hideColumn: string;
   /** rename a column (labelOverride) */
   renameColumn: string;
+
+  // ── per-column header menu (the "⋮" button) ──
+  /** aria-label / tooltip on the header's kebab trigger */
+  columnMenu: string;
+  sortAsc: string;
+  sortDesc: string;
+  clearSort: string;
+  /** section heading above the filter editor */
+  filterLabel: string;
+  /** section heading above the pin choices */
+  pinColumn: string;
+  /** "unpinned" choice in the pin group */
+  noPin: string;
+  autosizeColumn: string;
+  autosizeAll: string;
+  resetColumns: string;
+  /** clear this column's filter */
+  clearFilter: string;
+  /** set-filter: toggle every option at once */
+  selectAll: string;
+  /** set-filter: placeholder for the option search box */
+  filterSearchPlaceholder: string;
+  /** set-filter: shown when the option search matches nothing */
+  noMatches: string;
+  /** generic value input placeholder */
+  filterValuePlaceholder: string;
+  /** date-range bounds */
+  filterFrom: string;
+  filterTo: string;
+  /** numeric-range bounds (a date range uses filterFrom/filterTo instead) */
+  filterMin: string;
+  filterMax: string;
+  /** boolean filter choices */
+  filterAny: string;
+  filterTrue: string;
+  filterFalse: string;
+  /** filter operator labels */
+  opContains: string;
+  opEquals: string;
+  opNotEquals: string;
+  opStartsWith: string;
+  opEndsWith: string;
+  opBlank: string;
+  opNotBlank: string;
+  opGt: string;
+  opGte: string;
+  opLt: string;
+  opLte: string;
+  opBetween: string;
   /** selection summary, e.g. "{count} selected" */
   selectedCount: (count: number) => string;
   /** total row count summary, e.g. "{count} rows" */
@@ -104,6 +153,40 @@ export const ko: TableMessages = {
   alignRight: '오른쪽 정렬',
   hideColumn: '컬럼 숨기기',
   renameColumn: '이름 변경',
+  columnMenu: '컬럼 메뉴',
+  sortAsc: '오름차순 정렬',
+  sortDesc: '내림차순 정렬',
+  clearSort: '정렬 해제',
+  filterLabel: '필터',
+  pinColumn: '컬럼 고정',
+  noPin: '고정 안 함',
+  autosizeColumn: '이 컬럼 너비 맞춤',
+  autosizeAll: '모든 컬럼 너비 맞춤',
+  resetColumns: '컬럼 초기화',
+  clearFilter: '필터 지우기',
+  selectAll: '전체 선택',
+  filterSearchPlaceholder: '값 검색',
+  noMatches: '일치하는 값 없음',
+  filterValuePlaceholder: '값',
+  filterFrom: '시작일',
+  filterTo: '종료일',
+  filterMin: '최소',
+  filterMax: '최대',
+  filterAny: '전체',
+  filterTrue: '예',
+  filterFalse: '아니오',
+  opContains: '포함',
+  opEquals: '같음',
+  opNotEquals: '같지 않음',
+  opStartsWith: '시작 문자',
+  opEndsWith: '끝 문자',
+  opBlank: '비어 있음',
+  opNotBlank: '비어 있지 않음',
+  opGt: '초과',
+  opGte: '이상',
+  opLt: '미만',
+  opLte: '이하',
+  opBetween: '범위',
   selectedCount: (count) => `${count}개 선택됨`,
   totalCount: (count) => `전체 ${count.toLocaleString()}행`,
   perPage: (count) => `${count}개씩 보기`,
@@ -149,6 +232,40 @@ export const en: TableMessages = {
   alignRight: 'Align right',
   hideColumn: 'Hide column',
   renameColumn: 'Rename',
+  columnMenu: 'Column menu',
+  sortAsc: 'Sort ascending',
+  sortDesc: 'Sort descending',
+  clearSort: 'Clear sort',
+  filterLabel: 'Filter',
+  pinColumn: 'Pin column',
+  noPin: 'No pin',
+  autosizeColumn: 'Autosize this column',
+  autosizeAll: 'Autosize all columns',
+  resetColumns: 'Reset columns',
+  clearFilter: 'Clear filter',
+  selectAll: 'Select all',
+  filterSearchPlaceholder: 'Search values',
+  noMatches: 'No matching values',
+  filterValuePlaceholder: 'Value',
+  filterFrom: 'From',
+  filterTo: 'To',
+  filterMin: 'Min',
+  filterMax: 'Max',
+  filterAny: 'Any',
+  filterTrue: 'True',
+  filterFalse: 'False',
+  opContains: 'Contains',
+  opEquals: 'Equals',
+  opNotEquals: 'Not equals',
+  opStartsWith: 'Starts with',
+  opEndsWith: 'Ends with',
+  opBlank: 'Blank',
+  opNotBlank: 'Not blank',
+  opGt: 'Greater than',
+  opGte: 'Greater or equal',
+  opLt: 'Less than',
+  opLte: 'Less or equal',
+  opBetween: 'Between',
   selectedCount: (count) => `${count} selected`,
   totalCount: (count) => `${count.toLocaleString()} rows`,
   perPage: (count) => `${count} / page`,

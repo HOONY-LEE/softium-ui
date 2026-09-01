@@ -11,6 +11,7 @@
  */
 
 import type { ColumnDef, ColumnState, ColumnType, PinSide, ResolvedColumn } from '../types';
+import { defaultFilterVariant } from './filter';
 
 /** Build the default view state for a set of column defs (order = declaration order). */
 export function createInitialColumnState<T, TNode>(defs: ColumnDef<T, TNode>[]): ColumnState[] {
@@ -106,6 +107,8 @@ export function resolveColumns<T, TNode>(
       // interaction defaults: on unless opted out; filtering is opt-in via `filterable`
       sortable: def.sortable ?? true,
       filterable: def.filterable ?? false,
+      filterVariant: def.filterVariant ?? defaultFilterVariant(type),
+      filterOptions: def.filterOptions,
       resizable: def.resizable ?? true,
       pinnable: def.pinnable ?? true,
       hideable: def.hideable ?? true,

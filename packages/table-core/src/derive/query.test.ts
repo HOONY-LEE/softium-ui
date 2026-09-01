@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ColumnType, Filter, SortRule } from '../types';
-import { applyFilters, matchesFilter } from './filter';
+import { applyFilters, defaultFilterVariant, getDistinctValues, matchesFilter } from './filter';
 import { applySearch } from './search';
 import { sortRows, toggleSort } from './sort';
 
@@ -136,6 +136,84 @@ describe('matchesFilter / applyFilters', () => {
 
   it('returns input untouched when no filters', () => {
     expect(applyFilters(data, [], getType)).toBe(data);
+  });
+
+  it('matches the text sub-string operators', () => {
+    const f = (operator: 'startsWith' | 'endsWith', value: string) =>
+      matchesFilter('영업팀', { columnKey: 'dept', operator, value }, 'text');
+    expect(f('startsWith', '영업')).toBe(true);
+    expect(f('startsWith', '팀')).toBe(false);
+    expect(f('endsWith', '팀')).toBe(true);
+    expect(f('endsWith', '영업')).toBe(false);
+  });
+
+  it('treats null / empty / whitespace as blank', () => {
+    const blank = (v: unknown) =>
+      matchesFilter(v, { columnKey: 'dept', operator: 'blank', value: null }, 'text');
+    expect(blank(null)).toBe(true);
+    expect(blank(undefined)).toBe(true);
+    expect(blank('')).toBe(true);
+    expect(blank('  ')).toBe(true);
+    expect(blank('영업')).toBe(false);
+    expect(
+      matchesFilter('영업', { columnKey: 'dept', operator: 'notBlank', value: null }, 'text'),
+    ).toBe(true);
+  });
+
+  // regression: comparisons used to coerce with Number(), so an ISO date string
+  // became NaN and every date range silently matched nothing
+  it('compares ISO date strings by calendar day', () => {
+    const range = (v: string) =>
+      matchesFilter(
+        v,
+        { columnKey: 'hiredAt', operator: 'between', value: '2024-03-01', value2: '2024-03-31' },
+        'date',
+      );
+    expect(range('2024-03-15')).toBe(true);
+    expect(range('2024-03-01')).toBe(true); // lower bound inclusive
+    expect(range('2024-03-31')).toBe(true); // upper bound inclusive
+    expect(range('2024-02-29')).toBe(false);
+    expect(range('2024-04-01')).toBe(false);
+    expect(range('not-a-date')).toBe(false);
+  });
+
+  it('compares dates independent of the value representation', () => {
+    const gte = (v: unknown) =>
+      matchesFilter(v, { columnKey: 'hiredAt', operator: 'gte', value: '2024-03-15' }, 'date');
+    // a Date object and its ISO string must agree, with no timezone drift
+    expect(gte(new Date(2024, 2, 15))).toBe(true);
+    expect(gte('2024-03-15')).toBe(true);
+    expect(gte(new Date(2024, 2, 14))).toBe(false);
+    expect(
+      matchesFilter(
+        '2024-03-15',
+        { columnKey: 'hiredAt', operator: 'eq', value: '2024-03-15' },
+        'date',
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('getDistinctValues', () => {
+  it('collects sorted, de-duplicated, non-empty values', () => {
+    expect(getDistinctValues(data, 'dept')).toEqual(['영업', '인사', '재무']);
+  });
+
+  it('skips null / undefined / empty and honours the cap', () => {
+    const rows = [{ v: 'a' }, { v: null }, { v: undefined }, { v: '' }, { v: 'b' }, { v: 'a' }];
+    expect(getDistinctValues(rows, 'v')).toEqual(['a', 'b']);
+    expect(getDistinctValues(rows, 'v', 1)).toEqual(['a']);
+  });
+});
+
+describe('defaultFilterVariant', () => {
+  it('maps column types to their editor', () => {
+    expect(defaultFilterVariant('select')).toBe('set');
+    expect(defaultFilterVariant('date')).toBe('date');
+    expect(defaultFilterVariant('number')).toBe('number');
+    expect(defaultFilterVariant('boolean')).toBe('boolean');
+    expect(defaultFilterVariant('text')).toBe('text');
+    expect(defaultFilterVariant(undefined)).toBe('text');
   });
 });
 

@@ -11,8 +11,8 @@ export function DataGridPage({ locale }: { locale: Locale }) {
     () => [
       { key: 'id', label: '사번', width: 110 },
       { key: 'name', label: '사원명', flex: 1, minWidth: 140, editable: true },
-      { key: 'dept', label: '부서', editable: true },
-      { key: 'position', label: '직급', editable: true },
+      { key: 'dept', label: '부서', type: 'select', editable: true },
+      { key: 'position', label: '직급', type: 'select', editable: true },
       {
         key: 'salary',
         label: '급여 (만원)',

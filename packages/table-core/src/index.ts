@@ -16,6 +16,7 @@ export type {
   CellContext,
   Filter,
   FilterOperator,
+  FilterVariant,
   HeaderContext,
   PinSide,
   ResolvedColumn,

@@ -51,6 +51,35 @@ export function Demo() {
 from the same entry. See the repo README for the full component list and the
 column-state / adapter model.
 
+## Column menu & filters
+
+Every header carries a "⋮" menu (revealed on hover) with sort, pin, autosize,
+hide, and a filter editor picked from the column's `type`:
+
+| `type` | filter editor |
+|---|---|
+| `select` | checklist of the column's distinct values (searchable past 8) |
+| `date` | inclusive from–to range |
+| `number` | operator (`=` `≠` `>` `≥` `<` `≤` / between) with one or two operands |
+| `boolean` | any / true / false |
+| `text`, `custom` | contains / equals / starts with / ends with / blank |
+
+```tsx
+columns: [
+  { key: 'name', label: 'Name', flex: 1 },
+  // a closed value set → checklist filter. `filterOptions` pins the order and
+  // the choices; omit it to scan the distinct values out of the data instead.
+  { key: 'status', label: 'Status', type: 'select', filterOptions: ['open', 'closed'] },
+  { key: 'dueAt', label: 'Due', type: 'date' },
+  { key: 'price', label: 'Price', type: 'number' },
+  // override the derived editor, or opt a column out entirely
+  { key: 'notes', label: 'Notes', filterVariant: 'none' },
+]
+```
+
+Filters combine with AND across columns and are separate from the toolbar's
+global search. A filtered column keeps its trigger lit as a badge.
+
 ## Theming
 
 Styles are plain CSS custom properties (`--sft-*`) — no Tailwind. Dark mode

@@ -33,6 +33,10 @@ export interface ColumnDef<T, TNode = unknown> {
   /** full custom comparator (ascending); overrides type/accessor. Receives raw rows. */
   sortComparator?: (a: T, b: T) => number;
   filterable?: boolean;
+  /** which filter editor the column menu shows. Defaults from `type`. */
+  filterVariant?: FilterVariant;
+  /** explicit choice list for a `set` filter. Defaults to the column's distinct data values. */
+  filterOptions?: readonly string[];
   resizable?: boolean;
   pinnable?: boolean;
   hideable?: boolean;
@@ -104,8 +108,25 @@ export type FilterOperator =
   | 'gte'
   | 'lte'
   | 'contains'
+  | 'startsWith'
+  | 'endsWith'
   | 'between'
-  | 'in';
+  | 'in'
+  | 'blank'
+  | 'notBlank';
+
+/**
+ * Which filter editor a column offers in its header menu. Derived from
+ * `ColumnType` by default (see `defaultFilterVariant`), overridable per column:
+ *
+ *   - `text`    — contains / equals / starts with / ends with
+ *   - `number`  — = ≠ > ≥ < ≤ / between
+ *   - `date`    — a from–to date range (day-granular, inclusive)
+ *   - `set`     — enum checklist of the column's distinct values (`in`)
+ *   - `boolean` — true / false
+ *   - `none`    — no filter editor for this column
+ */
+export type FilterVariant = 'text' | 'number' | 'date' | 'set' | 'boolean' | 'none';
 
 export interface Filter {
   columnKey: string;
@@ -148,6 +169,10 @@ export interface ResolvedColumn<T, TNode = unknown> {
   flex?: number;
   sortable: boolean;
   filterable: boolean;
+  /** resolved filter editor kind (def.filterVariant ?? derived from `type`) */
+  filterVariant: FilterVariant;
+  /** explicit `set`-filter choices, when the column declares them */
+  filterOptions?: readonly string[];
   resizable: boolean;
   pinnable: boolean;
   hideable: boolean;
